@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>日麻计分器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", Georgia, serif; background: #f5f4ee; color: #3d3929; min-height: 100vh; padding: 12px; max-width: 480px; margin: 0 auto; }
+
+/* 顶部状态栏 */
+.status-bar { background: #fff; border: 1px solid #e8e5d8; border-radius: 12px; padding: 14px; margin-bottom: 12px; text-align: center; }
+.status-bar .round-info { font-size: 18px; font-weight: 600; color: #c96442; }
+.status-bar .sub-info { font-size: 13px; color: #8a8470; margin-top: 4px; }
+
+/* 玩家卡片 */
+.players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.player-card { background: #fff; border: 1px solid #e8e5d8; border-radius: 12px; padding: 12px; text-align: center; position: relative; transition: all .2s; }
+.player-card.dealer { border: 2px solid #c96442; }
+.player-card.riichi { background: #fdf6f2; }
+.player-card .seat { font-size: 12px; color: #c96442; font-weight: 500; }
+.player-card .name { font-size: 15px; margin: 4px 0; color: #3d3929; }
+.player-card .points { font-size: 22px; font-weight: 600; color: #3d3929; }
+.player-card .delta { font-size: 13px; height: 16px; color: #5a7a4a; }
+.player-card .delta.minus { color: #c96442; }
+.player-card .riichi-mark { position: absolute; top: 4px; right: 6px; font-size: 11px; color: #c96442; }
+
+/* 按钮 */
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.btn { background: #c96442; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: opacity .2s; }
+.btn:active { opacity: 0.7; }
+.btn-secondary { background: #e8e5d8; color: #3d3929; }
+.btn-danger { background: #8a8470; }
+.btn-small { padding: 8px 12px; font-size: 13px; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+
+/* 弹窗 */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(60, 55, 40, 0.4); z-index: 100; justify-content: center; align-items: flex-end; }
+.overlay.active { display: flex; }
+.modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+.modal h3 { text-align: center; margin-bottom: 16px; color: #3d3929; font-weight: 600; }
+.modal label { display: block; font-size: 13px; color: #8a8470; margin: 12px 0 6px; font-weight: 500; }
+.modal select, .modal input { width: 100%; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; font-size: 16px; }
+.seg-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-btn { flex: 1; min-width: 60px; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; text-align: center; cursor: pointer; font-size: 14px; }
+.seg-btn.active { background: #c96442; border-color: #c96442; color: #fff; }
+.result-box { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 14px; margin: 14px 0; text-align: center; }
+.result-box .points { font-size: 28px; font-weight: 600; color: #5a7a4a; }
+.result-box .detail { font-size: 13px; color: #8a8470; margin-top: 6px; }
+.result-box .breakdown { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.6; }
+
+/* 历史 */
+.history-list { margin-top: 12px; }
+.history-item { background: #fff; border: 1px solid #e8e5d8; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 12px; color: #8a8470; }
+.history-item .who { color: #c96442; font-weight: 600; }
+
+/* 工具栏 */
+.toolbar { display: flex; gap: 8px; margin-top: 12px; }
+.toolbar .btn { flex: 1; }
+
+/* 选牌器 */
+.hand-area { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 10px; min-height: 56px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.hand-area .empty-hint { color: #b8b299; font-size: 13px; width: 100%; text-align: center; }
+.hand-tile-img { width: 34px; height: 46px; cursor: pointer; border-radius: 4px; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+.hand-tile-img:active { transform: scale(0.9); }
+.hand-tile-img.win-tile { outline: 3px solid #5a7a4a; outline-offset: 2px; }
+.win-tile-picker { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px; background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; min-height: 48px; }
+.win-tile-option { width: 30px; height: 41px; border: 2px solid transparent; border-radius: 5px; cursor: pointer; background: transparent; padding: 0; }
+.win-tile-option img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.win-tile-option.active { border-color: #5a7a4a; box-shadow: 0 0 0 2px rgba(90,122,74,.16); }
+.win-tile-hint { color: #b8b299; font-size: 12px; width: 100%; text-align: center; align-self: center; }
+.tile-keyboard { display: flex; flex-direction: column; gap: 6px; }
+.tile-row { display: flex; gap: 4px; justify-content: center; }
+.tile-key { background: #fff; border: 1px solid #e8e5d8; border-radius: 6px; flex: 1; max-width: 42px; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.tile-key img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+/* 白板本身没有图案，浅色界面中为牌体补上清晰轮廓 */
+img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 1px 2px rgba(61,57,41,.18); }
+.tile-key .count-badge { position: absolute; top: -2px; right: -2px; background: #c96442; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.tile-key.disabled { opacity: 0.3; pointer-events: none; }
+.tile-key:active { transform: scale(0.92); }
+.hand-info { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #8a8470; margin-bottom: 6px; font-weight: 500; }
+
+/* 分组编辑 */
+.mentsu-group { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; padding: 8px; margin-bottom: 6px; }
+.mentsu-group .mentsu-tiles { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.mentsu-group .mentsu-tiles img { width: 26px; height: 35px; }
+.mentsu-group .mentsu-type { display: flex; flex-direction: column; gap: 2px; }
+.mentsu-group .type-btn { font-size: 10px; padding: 4px 6px; background: #f5f4ee; border: 1px solid #e8e5d8; border-radius: 4px; color: #8a8470; cursor: pointer; white-space: nowrap; }
+.mentsu-group .type-btn.active { background: #c96442; color: #fff; border-color: #c96442; }
+.mentsu-group .pair-label { font-size: 11px; color: #c96442; font-weight: 600; padding: 2px 6px; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <div class="round-info" id="roundDisplay">东一局</div>
+  <div class="sub-info" id="subInfo">本场 0 · 供托 0</div>
+</div>
+
+<div class="players" id="playersContainer"></div>
+
+<div class="actions">
+  <button class="btn" onclick="openWinModal()">和牌结算</button>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-small" onclick="toggleRiichi()">立直</button>
+    <button class="btn btn-secondary btn-small" onclick="openDrawModal()">流局</button>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-danger btn-small" onclick="undoLast()">撤销</button>
+    <button class="btn btn-danger btn-small" onclick="showHistory()">记录</button>
+    <button class="btn btn-danger btn-small" onclick="resetGame()">重置</button>
+  </div>
+</div>
+
+<!-- 和牌弹窗 -->
+<div class="overlay" id="winOverlay">
+  <div class="modal">
+    <h3>和牌结算</h3>
+    <label>和牌者</label>
+    <div class="seg-group" id="winnerSelect"></div>
+    <label>方式</label>
+    <div class="seg-group" id="winTypeSelect">
+      <div class="seg-btn active" data-val="ron">荣和</div>
+      <div class="seg-btn" data-val="tsumo">自摸</div>
+    </div>
+    <div id="loserRow">
+      <label>放铳者</label>
+      <div class="seg-group" id="loserSelect"></div>
+    </div>
+    <div class="hand-info">
+      <span>手牌（选牌）</span>
+      <span id="handCount">0 张</span>
+    </div>
+    <div id="autoJudgeHint" style="font-size:12px;text-align:center;margin-bottom:6px;color:#888">选好牌和最终和牌张后，点击“分析牌型”</div>
+    <div class="hand-area" id="handArea">
+      <span class="empty-hint">点击下方麻将牌加入手牌</span>
+    </div>
+    <div style="margin:0 0 12px">
+      <div class="hand-info">
+        <span>最终和牌张</span>
+        <span id="winTileLabel">未选择</span>
+      </div>
+      <div class="win-tile-picker" id="winTilePicker">
+        <span class="win-tile-hint">选牌后在这里指定胡牌的最后一张</span>
+      </div>
+    </div>
+    <div class="tile-keyboard" id="tileKeyboard"></div>
+    <div class="btn-row" style="margin:8px 0">
+      <button class="btn btn-secondary btn-small" onclick="clearHand()">清空</button>
+      <button class="btn btn-secondary btn-small" onclick="undoTile()">撤销</button>
+    </div>
+    <div style="margin:8px 0">
+      <div class="hand-info"><span>立直状态</span><span id="riichiStateHint"></span></div>
+      <div class="seg-group" id="riichiStateSelect">
+        <div class="seg-btn active" data-riichi="none">未立直</div>
+        <div class="seg-btn" data-riichi="riichi">立直</div>
+        <div class="seg-btn" data-riichi="double">两立直</div>
+      </div>
+    </div>
+    <div style="margin:6px 0">
+      <label style="font-size:12px;color:#888">表宝牌指示牌（可多选）</label>
+      <div class="tile-row" id="doraIndicatorPicker" style="flex-wrap:wrap;margin-top:4px"></div>
+      <label style="font-size:12px;color:#888;margin-top:6px">裏宝牌指示牌（立直后，可多选）</label>
+      <div class="tile-row" id="uraDoraIndicatorPicker" style="flex-wrap:wrap;margin-top:4px"></div>
+      <div id="doraCountDisplay" style="font-size:12px;color:#888;margin-top:4px;text-align:center"></div>
+    </div>
+    <div id="winConditions" style="display:none;margin:8px 0">
+      <div class="hand-info"><span>和牌条件（按实际情况选择）</span></div>
+      <div class="seg-group" id="conditionSelect">
+        <div class="seg-btn" data-condition="isIppatsu">一发</div>
+        <div class="seg-btn" data-condition="isLastTileTsumo">海底摸月</div>
+        <div class="seg-btn" data-condition="isLastTileRon">河底捞鱼</div>
+        <div class="seg-btn" data-condition="isRobbingKan">抢杠</div>
+        <div class="seg-btn" data-condition="isWinFromDeadWall">岭上开花</div>
+      </div>
+      <div id="conditionHint" style="font-size:11px;color:#8a8470;margin-top:5px"></div>
+    </div>
+    <div style="margin:8px 0">
+      <button class="btn btn-secondary btn-small" id="analyzeHandBtn" onclick="analyzeHandFlow()" style="width:100%">分析牌型</button>
+      <div id="fuBreakdownDisplay" style="font-size:11px;color:#8a8470;margin-top:6px;display:none;background:#fff;border:1px solid #e8e5d8;border-radius:8px;padding:10px;line-height:1.8"></div>
+    </div>
+    <div id="mentsuEditor" style="display:none;margin:6px 0">
+      <div class="hand-info"><span>副露标记（点切换明/暗）</span></div>
+      <div id="mentsuGroups"></div>
+    </div>
+    <div class="btn-row" style="margin:12px 0">
+      <div style="flex:1">
+        <label>翻数（手动确认）</label>
+        <select id="hanSelect">
+          <option value="1">1翻</option><option value="2">2翻</option>
+          <option value="3" selected>3翻</option><option value="4">4翻</option>
+          <option value="5">5翻(满贯)</option>
+          <option value="6">6翻(跳满)</option><option value="7">7翻(跳满)</option>
+          <option value="8">8翻(倍满)</option><option value="9">9翻(倍满)</option>
+          <option value="10">10翻(倍满)</option>
+          <option value="11">11翻(三倍满)</option><option value="12">12翻(三倍满)</option>
+          <option value="13">13翻+(役满)</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label>符数（手动确认）</label>
+        <select id="fuSelect">
+          <option value="20">20符</option><option value="25">25符(七对)</option>
+          <option value="30" selected>30符</option><option value="40">40符</option>
+          <option value="50">50符</option><option value="60">60符</option>
+          <option value="70">70符</option><option value="80">80符</option>
+          <option value="90">90符</option><option value="100">100符</option>
+          <option value="110">110符</option>
+        </select>
+      </div>
+    </div>
+    <div class="result-box" id="resultPreview" style="display:none">
+      <div class="points" id="previewPoints">—</div>
+      <div class="detail" id="previewDetail"></div>
+      <div class="breakdown" id="previewBreakdown"></div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal('winOverlay')">取消</button>
+      <button class="btn" onclick="confirmWin()">确认结算</button>
+    </div>
+  </div>
+</div>
+
+<!-- 流局弹窗 -->
+<div class="overlay" id="drawOverlay">
+  <div class="modal">
+    <h3>流局 - 听牌宣告</h3>
+    <p style="font-size:13px;color:#aaa;margin-bottom:12px;text-align:center">勾选听牌的玩家</p>
+    <div id="tenpaiSelect"></div>
+    <div class="result-box">
+      <div class="breakdown" id="drawBreakdown"></div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal('drawOverlay')">取消</button>
+      <button class="btn" onclick="confirmDraw()">确认流局</button>
+    </div>
+  </div>
+</div>
+
+<!-- 历史弹窗 -->
+<div class="overlay" id="historyOverlay">
+  <div class="modal">
+    <h3>对局记录</h3>
+    <div class="history-list" id="historyList"></div>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal('historyOverlay')">关闭</button>
+  </div>
+</div>
+
+<!-- 游戏结束弹窗 -->
+<div class="overlay" id="endOverlay">
+  <div class="modal">
+    <h3>对局结束</h3>
+    <div id="finalResult"></div>
+    <button class="btn" style="margin-top:14px" onclick="closeModal('endOverlay');resetGame()">新对局</button>
+  </div>
+</div>
+
+<script src="mahjong-logic.js"></script>
+<script>
+// 把 mahjong-logic.js 导出的函数挂到 window（浏览器环境没有 module.exports）
+// 实际上浏览器里这些函数已经是全局的，不需要 require
+const MahjongLogic = {
+  evaluateHand: typeof evaluateHand !== 'undefined' ? evaluateHand : null,
+};
+
+// ============ 状态 ============
+const SEATS = ['东', '南', '西', '北'];
+const ROUND_NAMES = ['东一','东二','东三','东四','南一','南二','南三','南四','西一','西二','西三','西四'];
+const START_POINTS = 25000;
+const RETURN_POINTS = 30000;
+
+let game = null;
+
+function newGame() {
+  return {
+    players: [
+      { name: '东家', points: START_POINTS, riichi: false },
+      { name: '南家', points: START_POINTS, riichi: false },
+      { name: '西家', points: START_POINTS, riichi: false },
+      { name: '北家', points: START_POINTS, riichi: false },
+    ],
+    roundIndex: 0,   // 0=东一 ... 3=东四, 4=南一 ...
+    dealerIndex: 0,  // 当前亲
+    honba: 0,
+    riichiSticks: 0,
+    history: [],
+    ended: false,
+  };
+}
+
+game = newGame();
+// 尝试读取存档
+try {
+  const saved = localStorage.getItem('mj_game');
+  if (saved) game = JSON.parse(saved);
+} catch(e) {}
+
+function saveGame() {
+  localStorage.setItem('mj_game', JSON.stringify(game));
+}
+
+// ============ 点数计算 ============
+function calcBasePoint(han, fu) {
+  han = parseInt(han); fu = parseInt(fu);
+  if (han >= 13) return 8000;
+  if (han >= 11) return 6000;
+  if (han >= 8)  return 4000;
+  if (han >= 6)  return 3000;
+  if (han >= 5)  return 2000;
+  let base = fu * Math.pow(2, han + 2);
+  return Math.min(base, 2000);
+}
+
+function ceil100(n) { return Math.ceil(n / 100) * 100; }
+
+// 返回 {payments: [{from, to, amount}], total: 和牌者获得总额}
+function calcWinPayments(winnerIdx, han, fu, isTsumo, loserIdx, baseOverride = null) {
+  const base = baseOverride !== null ? baseOverride : calcBasePoint(han, fu);
+  const winner = game.players[winnerIdx];
+  const isDealer = winnerIdx === game.dealerIndex;
+  const payments = [];
+  let honbaBonus = game.honba * 300; // 每本场300点（荣和全部由放铳者出，自摸每人100）
+
+  if (isTsumo) {
+    const honbaPer = game.honba * 100;
+    if (isDealer) {
+      // 亲自摸：三家各出 base*2 + honbaPer
+      for (let i = 0; i < 4; i++) {
+        if (i === winnerIdx) continue;
+        payments.push({ from: i, to: winnerIdx, amount: ceil100(base * 2) + honbaPer });
+      }
+    } else {
+      // 子自摸：亲出 base*2 + honbaPer，其他子各出 base + honbaPer
+      for (let i = 0; i < 4; i++) {
+        if (i === winnerIdx) continue;
+        const amt = (i === game.dealerIndex) ? ceil100(base * 2) : ceil100(base);
+        payments.push({ from: i, to: winnerIdx, amount: amt + honbaPer });
+      }
+    }
+  } else {
+    // 荣和：放铳者全付
+    if (isDealer) {
+      payments.push({ from: loserIdx, to: winnerIdx, amount: ceil100(base * 6) + honbaBonus });
+    } else {
+      payments.push({ from: loserIdx, to: winnerIdx, amount: ceil100(base * 4) + honbaBonus });
+    }
+  }
+  // 加供托
+  let stickBonus = game.riichiSticks * 1000;
+  const total = payments.reduce((s, p) => s + p.amount, 0) + stickBonus;
+  return { payments, total, stickBonus, base };
+}
+
+// 流局听牌分配：听者从不听者收钱。通常3000点分配。
+// 标准规则：听者=1人不听者=3人 → 每个不听者付1000给听者
+//          听者=2人不听者=2人 → 每个不听者付1500给听者
+//          听者=3人不听者=1人 → 不听者付3000，听者各收1000
+function calcDrawPayments(tenpaiSet) {
+  const tCount = tenpaiSet.size;
+  const ntCount = 4 - tCount;
+  const payments = [];
+  if (tCount === 0 || tCount === 4) return payments; // 全听/全不听不付
+  const perNotTenpai = [0, 3000, 1500, 1000][tCount];
+  const perTenpai = [0, 1000, 1500, 3000][tCount];
+  for (let i = 0; i < 4; i++) {
+    if (tenpaiSet.has(i)) {
+      // 听者收
+    } else {
+      // 不听者付 perNotTenpai/tCount 给每个听者
+      payments.push({ from: i, to: -1, amount: perNotTenpai, split: true, tenpaiSet });
+    }
+  }
+  return payments;
+}
+
+// ============ UI 渲染 ============
+function render() {
+  // 局数
+  document.getElementById('roundDisplay').textContent = ROUND_NAMES[game.roundIndex] + '局';
+  document.getElementById('subInfo').textContent = `本场 ${game.honba} · 供托 ${game.riichiSticks * 1000}`;
+
+  // 玩家
+  const container = document.getElementById('playersContainer');
+  container.innerHTML = '';
+  game.players.forEach((p, i) => {
+    const isDealer = i === game.dealerIndex;
+    const card = document.createElement('div');
+    card.className = 'player-card' + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
+    card.innerHTML = `
+      <div class="seat">${SEATS[i]}${isDealer ? ' · 亲' : ''}</div>
+      <div class="name">${p.name}</div>
+      <div class="points" id="pts-${i}">${p.points}</div>
+      <div class="delta" id="delta-${i}"></div>
+      ${p.riichi ? '<div class="riichi-mark">●</div>' : ''}
+    `;
+    container.appendChild(card);
+  });
+
+  saveGame();
+}
+
+function flashDelta(changes) {
+  // changes: {idx: delta}
+  setTimeout(() => {
+    Object.entries(changes).forEach(([idx, delta]) => {
+      const el = document.getElementById('delta-' + idx);
+      if (!el) return;
+      if (delta === 0) return;
+      el.textContent = (delta > 0 ? '+' : '') + delta;
+      el.className = 'delta' + (delta < 0 ? ' minus' : '');
+    });
+    setTimeout(() => {
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById('delta-' + i);
+        if (el) { el.textContent = ''; el.className = 'delta'; }
+      }
+    }, 2500);
+  }, 50);
+}
+
+// ============ 弹窗 ============
+function buildPlayerSeg(containerId, exclude = -1) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  game.players.forEach((p, i) => {
+    if (i === exclude) return;
+    const btn = document.createElement('div');
+    btn.className = 'seg-btn';
+    btn.textContent = `${SEATS[i]} (${p.points})`;
+    btn.dataset.val = i;
+    btn.onclick = () => {
+      c.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (containerId === 'winnerSelect') {
+        winState.winnerIdx = parseInt(btn.dataset.val);
+        initRiichiStateSelector();
+        if (winState.conditions && Object.keys(winState.conditions).length) syncConditionButtons();
+        if (winState.analysisStage) document.getElementById('conditionHint').textContent = '和牌者已修改，请重新分析';
+      }
+      if (containerId === 'winnerSelect' || containerId === 'loserSelect') previewWin();
+    };
+    c.appendChild(btn);
+  });
+}
+
+let winState = { winnerIdx: 0, isTsumo: false, loserIdx: -1 };
+
+// ============ 选牌器 ============
+// tile id → svg 文件名映射（FluffyStuff riichi-mahjong-tiles）
+const TILE_IMG = {
+  '1m':'Man1','2m':'Man2','3m':'Man3','4m':'Man4','5m':'Man5','6m':'Man6','7m':'Man7','8m':'Man8','9m':'Man9',
+  '1p':'Pin1','2p':'Pin2','3p':'Pin3','4p':'Pin4','5p':'Pin5','6p':'Pin6','7p':'Pin7','8p':'Pin8','9p':'Pin9',
+  '1s':'Sou1','2s':'Sou2','3s':'Sou3','4s':'Sou4','5s':'Sou5','6s':'Sou6','7s':'Sou7','8s':'Sou8','9s':'Sou9',
+  '1z':'Ton','2z':'Nan','3z':'Shaa','4z':'Pei','5z':'Haku','6z':'Hatsu','7z':'Chun',
+  // 红宝牌变体
+  '0m':'Man5-Dora','0p':'Pin5-Dora','0s':'Sou5-Dora',
+};
+
+const TILE_DEFS = [
+  ...[1,2,3,4,5,6,7,8,9].map(n => ({ id: n+'m', display: n+'万', suit: 'm', num: n })),
+  ...[1,2,3,4,5,6,7,8,9].map(n => ({ id: n+'p', display: n+'筒', suit: 'p', num: n })),
+  ...[1,2,3,4,5,6,7,8,9].map(n => ({ id: n+'s', display: n+'索', suit: 's', num: n })),
+  { id: '1z', display: '东', suit: 'z', num: 1 },
+  { id: '2z', display: '南', suit: 'z', num: 2 },
+  { id: '3z', display: '西', suit: 'z', num: 3 },
+  { id: '4z', display: '北', suit: 'z', num: 4 },
+  { id: '5z', display: '白', suit: 'z', num: 5 },
+  { id: '6z', display: '发', suit: 'z', num: 6 },
+  { id: '7z', display: '中', suit: 'z', num: 7 },
+];
+
+function tileImgSrc(tileId) {
+  const name = TILE_IMG[tileId];
+  return name ? `tiles/${name}.svg` : '';
+}
+
+let handTiles = []; // 选中的牌的 id 数组
+let tileHistory = []; // 用于撤销
+
+function countTile(tileId) {
+  return handTiles.filter(t => t === tileId).length;
+}
+
+function addTile(tileId) {
+  if (countTile(tileId) >= 4) return; // 每种最多4张
+  handTiles.push(tileId);
+  tileHistory.push(tileId);
+  invalidateAnalysis();
+  renderHand();
+}
+
+function removeTileAt(index) {
+  const removed = handTiles.splice(index, 1);
+  if (winState.winTile === removed[0] && !handTiles.includes(removed[0])) {
+    winState.winTile = null;
+  }
+  tileHistory.push({ removed: removed[0], at: index });
+  invalidateAnalysis();
+  renderHand();
+  previewWin();
+}
+
+function clearHand() {
+  handTiles = [];
+  tileHistory = [];
+  winState.winTile = null;
+  invalidateAnalysis();
+  renderHand();
+  previewWin();
+}
+
+function undoTile() {
+  if (tileHistory.length === 0) return;
+  const last = tileHistory.pop();
+  if (typeof last === 'string') {
+    // 添加操作 → 撤销删除
+    const idx = handTiles.lastIndexOf(last);
+    if (idx >= 0) handTiles.splice(idx, 1);
+  } else if (last.removed) {
+    // 删除操作 → 恢复
+    handTiles.splice(last.at, 0, last.removed);
+  }
+  invalidateAnalysis();
+  renderHand();
+  previewWin();
+}
+
+function invalidateAnalysis() {
+  if (!winState) return;
+  winState.analysisStage = 0;
+  winState.mentsuOverride = null;
+  winState.pairOverride = null;
+  winState.decompIndex = 0;
+  const editor = document.getElementById('mentsuEditor');
+  const conditions = document.getElementById('winConditions');
+  const output = document.getElementById('fuBreakdownDisplay');
+  const button = document.getElementById('analyzeHandBtn');
+  if (editor) editor.style.display = 'none';
+  if (conditions) conditions.style.display = 'none';
+  if (output) output.style.display = 'none';
+  if (button) button.textContent = '分析牌型';
+}
+
+function sortHand() {
+  handTiles.sort((a, b) => {
+    const ai = TILE_DEFS.findIndex(t => t.id === a);
+    const bi = TILE_DEFS.findIndex(t => t.id === b);
+    return ai - bi;
+  });
+}
+
+function renderHand() {
+  sortHand();
+  const area = document.getElementById('handArea');
+  const countEl = document.getElementById('handCount');
+  countEl.textContent = handTiles.length + ' 张';
+
+  if (handTiles.length === 0) {
+    area.innerHTML = '<span class="empty-hint">点击下方麻将牌加入手牌</span>';
+  } else {
+    area.innerHTML = '';
+    handTiles.forEach((id, idx) => {
+      const def = TILE_DEFS.find(t => t.id === id);
+      const el = document.createElement('img');
+      el.className = 'hand-tile-img';
+      el.src = tileImgSrc(id);
+      el.alt = def.display;
+      el.title = '点击删除 ' + def.display;
+      if (winState.winTile === id && handTiles.findLastIndex(t => t === id) === idx) {
+        el.classList.add('win-tile');
+      }
+      el.onclick = () => removeTileAt(idx);
+      area.appendChild(el);
+    });
+  }
+
+  renderWinTilePicker();
+
+  // 手牌变化时清空副露标记
+  if (winState.mentsuOverride && (handTiles.length < 14 || handTiles.length > 18)) {
+    winState.mentsuOverride = null;
+    winState.decompIndex = 0;
+  }
+  // 第一次点击分析后才显示面子修正区
+  if (winState.analysisStage && typeof buildMentsuEditor === 'function') buildMentsuEditor();
+
+  // 更新键盘的计数标记和禁用状态
+  TILE_DEFS.forEach(def => {
+    const key = document.getElementById('key-' + def.id);
+    if (!key) return;
+    const count = countTile(def.id);
+    let badge = key.querySelector('.count-badge');
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'count-badge';
+        key.appendChild(badge);
+      }
+      badge.textContent = count;
+    } else if (badge) {
+      badge.remove();
+    }
+    key.classList.toggle('disabled', count >= 4);
+  });
+}
+
+function renderWinTilePicker() {
+  const picker = document.getElementById('winTilePicker');
+  const label = document.getElementById('winTileLabel');
+  if (!picker || !label) return;
+
+  if (winState.winTile && !handTiles.includes(winState.winTile)) {
+    winState.winTile = null;
+  }
+
+  const uniqueTiles = [...new Set(handTiles)];
+  picker.innerHTML = '';
+  if (uniqueTiles.length === 0) {
+    picker.innerHTML = '<span class="win-tile-hint">选牌后在这里指定胡牌的最后一张</span>';
+    label.textContent = '未选择';
+    return;
+  }
+
+  uniqueTiles.forEach(id => {
+    const def = TILE_DEFS.find(t => t.id === id);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'win-tile-option' + (winState.winTile === id ? ' active' : '');
+    btn.title = def.display;
+    btn.innerHTML = `<img src="${tileImgSrc(id)}" alt="${def.display}">`;
+    btn.onclick = () => {
+      invalidateAnalysis();
+      winState.winTile = id;
+      renderHand();
+      previewWin();
+    };
+    picker.appendChild(btn);
+  });
+
+  const selected = TILE_DEFS.find(t => t.id === winState.winTile);
+  label.textContent = selected ? selected.display : '未选择';
+}
+
+function buildTileKeyboard() {
+  const kb = document.getElementById('tileKeyboard');
+  kb.innerHTML = '';
+  const suits = [
+    { label: '万', prefix: 'm' },
+    { label: '筒', prefix: 'p' },
+    { label: '索', prefix: 's' },
+  ];
+  suits.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'tile-row';
+    for (let n = 1; n <= 9; n++) {
+      const def = TILE_DEFS.find(t => t.id === n + s.prefix);
+      const key = document.createElement('div');
+      key.className = 'tile-key';
+      key.id = 'key-' + def.id;
+      key.innerHTML = `<img src="${tileImgSrc(def.id)}" alt="${def.display}">`;
+      key.onclick = () => addTile(def.id);
+      row.appendChild(key);
+    }
+    kb.appendChild(row);
+  });
+  // 字牌两行
+  const honorRow1 = document.createElement('div');
+  honorRow1.className = 'tile-row';
+  ['1z','2z','3z','4z'].forEach(id => {
+    const def = TILE_DEFS.find(t => t.id === id);
+    const key = document.createElement('div');
+    key.className = 'tile-key';
+    key.id = 'key-' + def.id;
+    key.innerHTML = `<img src="${tileImgSrc(def.id)}" alt="${def.display}">`;
+    key.onclick = () => addTile(def.id);
+    honorRow1.appendChild(key);
+  });
+  kb.appendChild(honorRow1);
+  const honorRow2 = document.createElement('div');
+  honorRow2.className = 'tile-row';
+  ['5z','6z','7z'].forEach(id => {
+    const def = TILE_DEFS.find(t => t.id === id);
+    const key = document.createElement('div');
+    key.className = 'tile-key';
+    key.id = 'key-' + def.id;
+    key.innerHTML = `<img src="${tileImgSrc(def.id)}" alt="${def.display}">`;
+    key.onclick = () => addTile(def.id);
+    honorRow2.appendChild(key);
+  });
+  kb.appendChild(honorRow2);
+}
+
+// 结算弹窗中的立直状态是最终依据；初始值从主牌局读取
+function hasAnalysisRiichi() {
+  return winState.riichiState === 'riichi' || winState.riichiState === 'double';
+}
+
+function initRiichiStateSelector() {
+  const group = document.getElementById('riichiStateSelect');
+  const playerRiichi = !!(game.players[winState.winnerIdx] && game.players[winState.winnerIdx].riichi);
+  winState.riichiState = playerRiichi ? 'riichi' : 'none';
+
+  group.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      group.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      winState.riichiState = btn.dataset.riichi;
+      if (!hasAnalysisRiichi() && winState.conditions) winState.conditions.isIppatsu = false;
+      syncRiichiStateButtons();
+      updateDoraDisplay();
+      if (winState.conditions && Object.keys(winState.conditions).length) syncConditionButtons();
+      if (winState.analysisStage) document.getElementById('conditionHint').textContent = '立直状态已修改，请重新分析';
+      previewWin();
+    };
+  });
+  syncRiichiStateButtons();
+}
+
+function syncRiichiStateButtons() {
+  document.querySelectorAll('#riichiStateSelect .seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.riichi === winState.riichiState);
+  });
+  const hint = document.getElementById('riichiStateHint');
+  if (hint) hint.textContent = hasAnalysisRiichi() ? '裏宝牌有效' : '裏宝牌无效';
+}
+
+// 宝牌指示牌下一张（循环规则）
+function nextDoraTile(id) {
+  if (id.endsWith('z')) {
+    const n = parseInt(id);
+    if (n <= 4) return ((n) % 4 + 1) + 'z'; // 风牌循环 东→南→西→北→东
+    return ((n - 5) % 3 + 5) + 'z';          // 三元牌循环 白→发→中→白
+  }
+  const n = parseInt(id);
+  const s = id.slice(-1);
+  return ((n) % 9 + 1) + s; // 数牌循环 1-9
+}
+
+// 计算手牌中有几张宝牌（表+裏合计）
+function countDora() {
+  let count = 0;
+  // 表宝牌
+  if (winState.doraIndicators) {
+    for (const ind of winState.doraIndicators) {
+      const doraTile = nextDoraTile(ind);
+      count += handTiles.filter(t => t === doraTile).length;
+    }
+  }
+  // 裏宝牌（仅立直时有效）
+  if (hasAnalysisRiichi() && winState.uraDoraIndicators) {
+    for (const ind of winState.uraDoraIndicators) {
+      const doraTile = nextDoraTile(ind);
+      count += handTiles.filter(t => t === doraTile).length;
+    }
+  }
+  return count;
+}
+
+// 构建宝牌指示牌选择器（支持多选）
+function buildDoraPicker() {
+  buildMultiDoraPicker('doraIndicatorPicker', 'doraIndicators');
+  buildMultiDoraPicker('uraDoraIndicatorPicker', 'uraDoraIndicators');
+}
+
+function buildMultiDoraPicker(elementId, stateKey) {
+  const picker = document.getElementById(elementId);
+  picker.innerHTML = '';
+  if (!winState[stateKey]) winState[stateKey] = [];
+  TILE_DEFS.forEach(def => {
+    const key = document.createElement('div');
+    key.className = 'tile-key';
+    key.style.maxWidth = '28px';
+    key.style.aspectRatio = '3/4';
+    key.id = elementId + '-' + def.id;
+    if (winState[stateKey].includes(def.id)) key.style.outline = '3px solid #c96442';
+    key.innerHTML = `<img src="${tileImgSrc(def.id)}" alt="${def.display}">`;
+    key.onclick = () => {
+      const arr = winState[stateKey];
+      const idx = arr.indexOf(def.id);
+      if (idx >= 0) {
+        arr.splice(idx, 1);
+        key.style.outline = '';
+      } else {
+        arr.push(def.id);
+        key.style.outline = '3px solid #c96442';
+      }
+      updateDoraDisplay();
+      previewWin();
+    };
+    picker.appendChild(key);
+  });
+}
+
+function updateDoraDisplay() {
+  const el = document.getElementById('doraCountDisplay');
+  const omoteCount = winState.doraIndicators ? winState.doraIndicators.length : 0;
+  const uraCount = winState.uraDoraIndicators ? winState.uraDoraIndicators.length : 0;
+  const totalDora = countDora();
+  let text = '';
+  if (omoteCount === 0 && uraCount === 0) {
+    text = '';
+  } else {
+    text = `表${omoteCount} 裏${uraCount} → 手中宝牌 ${totalDora} 张`;
+  }
+  el.textContent = text;
+}
+
+function initConditionSelector() {
+  const group = document.getElementById('conditionSelect');
+  winState.conditions = {
+    isIppatsu: false,
+    isLastTileTsumo: false,
+    isLastTileRon: false,
+    isRobbingKan: false,
+    isWinFromDeadWall: false,
+  };
+  group.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.onclick = () => {
+      if (btn.dataset.disabled === 'true') return;
+      const key = btn.dataset.condition;
+      const next = !winState.conditions[key];
+      if (key === 'isLastTileTsumo' && next) winState.conditions.isLastTileRon = false;
+      if (key === 'isLastTileRon' && next) winState.conditions.isLastTileTsumo = false;
+      if (key === 'isRobbingKan' && next) {
+        winState.conditions.isWinFromDeadWall = false;
+        winState.conditions.isLastTileTsumo = false;
+      }
+      if (key === 'isWinFromDeadWall' && next) {
+        winState.conditions.isRobbingKan = false;
+        winState.conditions.isLastTileRon = false;
+      }
+      winState.conditions[key] = next;
+      syncConditionButtons();
+      document.getElementById('conditionHint').textContent = '条件已修改，请再次点击“重新分析”更新结果';
+    };
+  });
+  syncConditionButtons();
+}
+
+function syncConditionButtons() {
+  document.querySelectorAll('#conditionSelect .seg-btn').forEach(btn => {
+    const key = btn.dataset.condition;
+    const needsTsumo = key === 'isLastTileTsumo' || key === 'isWinFromDeadWall';
+    const needsRon = key === 'isLastTileRon' || key === 'isRobbingKan';
+    const needsRiichi = key === 'isIppatsu';
+    const disabled = (needsTsumo && !winState.isTsumo) ||
+      (needsRon && winState.isTsumo) ||
+      (needsRiichi && !hasAnalysisRiichi());
+    btn.dataset.disabled = disabled ? 'true' : 'false';
+    btn.style.opacity = disabled ? '0.35' : '1';
+    btn.style.pointerEvents = disabled ? 'none' : 'auto';
+    if (disabled) winState.conditions[key] = false;
+    btn.classList.toggle('active', !disabled && !!winState.conditions[key]);
+  });
+}
+
+function getAnalysisParams() {
+  const openMentsus = getOpenMentsusForEval();
+  const c = winState.conditions || {};
+  return {
+    tiles: [...handTiles],
+    isOpened: openMentsus.length > 0,
+    openMentsus,
+    closedKantsus: getClosedKantsusForEval(),
+    isTsumo: winState.isTsumo,
+    isRiichi: winState.riichiState === 'riichi',
+    isDoubleRiichi: winState.riichiState === 'double',
+    isIppatsu: !!c.isIppatsu,
+    isRobbingKan: !!c.isRobbingKan,
+    isWinFromDeadWall: !!c.isWinFromDeadWall,
+    isLastTile: winState.isTsumo ? !!c.isLastTileTsumo : !!c.isLastTileRon,
+    winTile: winState.winTile,
+    roundWind: ['1z','2z','3z','4z'][Math.floor(game.roundIndex / 4) % 4],
+    seatWind: ['1z','2z','3z','4z'][winState.winnerIdx],
+    doraCount: countDora(),
+    akadoraCount: 0,
+  };
+}
+
+function analyzeHandFlow() {
+  const display = document.getElementById('fuBreakdownDisplay');
+  const button = document.getElementById('analyzeHandBtn');
+  if (handTiles.length < 14 || handTiles.length > 18) {
+    display.style.display = 'block';
+    display.innerHTML = '请先选好 14-18 张牌；每有一个杠，就比 14 张多一张。';
+    return;
+  }
+  if (!winState.winTile) {
+    display.style.display = 'block';
+    display.innerHTML = '请先选择“最终和牌张”，否则无法判断单骑、边张、嵌张和四暗刻单骑。';
+    return;
+  }
+
+  winState.analysisStage = 1;
+  document.getElementById('winConditions').style.display = 'block';
+  buildMentsuEditor();
+  button.textContent = '重新分析并更新结果';
+
+  const result = MahjongLogic.evaluateHand(getAnalysisParams());
+  if (!result.valid) {
+    display.style.display = 'block';
+    display.innerHTML = `<b>暂时无法成立和牌</b><br>${result.error || '没有合法和牌形或没有役'}<br><br>请检查面子分组、明暗/杠子、最终和牌张和和牌条件后再次分析。`;
+    return;
+  }
+
+  const han = result.isYakuman ? 13 : result.han;
+  const fu = result.fu || 30;
+  document.getElementById('hanSelect').value = String(Math.min(han, 13));
+  if (result.fu > 0) document.getElementById('fuSelect').value = String(result.fu);
+  const payments = calcWinPayments(winState.winnerIdx, han, fu, winState.isTsumo, winState.loserIdx, result.basePoint);
+  const dora = countDora();
+  const yakuText = result.yaku.map(y => y.yakuman ? `${y.name}（${y.yakuman > 1 ? y.yakuman + '倍役满' : '役满'}）` : `${y.name} ${y.han || ''}番`).join('、');
+  const waitNames = { ryanmen: '两面', kanchan: '嵌张', penchan: '边张', tanki: '单骑', shanpon: '双碰' };
+  const conditionNames = [];
+  const c = winState.conditions || {};
+  if (c.isIppatsu) conditionNames.push('一发');
+  if (c.isLastTileTsumo) conditionNames.push('海底摸月');
+  if (c.isLastTileRon) conditionNames.push('河底捞鱼');
+  if (c.isRobbingKan) conditionNames.push('抢杠');
+  if (c.isWinFromDeadWall) conditionNames.push('岭上开花');
+  if (winState.riichiState === 'riichi') conditionNames.push('立直');
+  if (winState.riichiState === 'double') conditionNames.push('两立直');
+
+  display.style.display = 'block';
+  display.innerHTML = [
+    '<b>牌型分析结果</b>',
+    `和牌形：${result.type === 'chiitoi' ? '七对子' : result.type === 'kokushi' ? '国士无双' : '四面子一雀头'}`,
+    result.waitType ? `等待：${waitNames[result.waitType] || result.waitType}` : '',
+    `门清状态：${getOpenMentsusForEval().length === 0 ? '门前' : '副露'}`,
+    conditionNames.length ? `特殊条件：${conditionNames.join('、')}` : '特殊条件：无',
+    `役：${yakuText || '无'}`,
+    `宝牌：${dora}番（表/裏合计）`,
+    result.isYakuman ? `<b>${result.yakumanCount || 1}倍役满</b>` : `<b>${result.han}番 ${result.fu}符</b>`,
+    `<b>和牌收入：${payments.total}点</b>`,
+    payments.payments.map(p => `${SEATS[p.from]} → ${SEATS[p.to]}：${p.amount}`).join('<br>'),
+    '<br><span style="color:#a39b82">修改面子明暗、杠子或特殊条件后，再次点击“重新分析并更新结果”。</span>',
+  ].filter(Boolean).join('<br>');
+
+  document.getElementById('autoJudgeHint').textContent = '分析完成；修改条件后可重新分析';
+  document.getElementById('autoJudgeHint').style.color = '#5a7a4a';
+  previewWin();
+}
+
+// ============ 符数解析 ============
+function showFuBreakdown() {
+  const display = document.getElementById('fuBreakdownDisplay');
+  if (display.style.display === 'block') {
+    display.style.display = 'none';
+    return;
+  }
+
+  if (handTiles.length < 14 || handTiles.length > 18) {
+    display.style.display = 'block';
+    display.innerHTML = '请先选 14-18 张牌';
+    return;
+  }
+
+  const counts = countTilesLocal(handTiles);
+  const decomps = decomposeLocal(counts);
+  if (decomps.length === 0) {
+    display.style.display = 'block';
+    display.innerHTML = '无法分解和牌形';
+    return;
+  }
+
+  const decomp = decomps[winState.decompIndex || 0];
+  const isClosed = getOpenMentsusForEval().length === 0;
+  const isTsumo = winState.isTsumo;
+  const winTile = winState.winTile;
+  if (!winTile) {
+    display.style.display = 'block';
+    display.innerHTML = '请先在“最终和牌张”区域选择胡牌的最后一张';
+    return;
+  }
+
+  let lines = [];
+  lines.push(`<b>符数解析</b>（${isClosed ? '门前' : '副露'} · ${isTsumo ? '自摸' : '荣和'}）`);
+  lines.push('');
+
+  let totalFu = 20;
+  lines.push('副底: 20');
+
+  // 雀头
+  const pairId = decomp.pair.tiles[0];
+  const roundWind = ['1z','2z','3z','4z'][Math.floor(game.roundIndex / 4) % 4];
+  const seatWind = ['1z','2z','3z','4z'][winState.winnerIdx];
+  let pairFu = 0;
+  let pairLabel = TILE_DEFS.find(t=>t.id===pairId)?.display || pairId;
+  if (pairId === roundWind && pairId === seatWind) { pairFu = 4; pairLabel += '(连风)'; }
+  else if (pairId === roundWind || pairId === seatWind) { pairFu = 2; pairLabel += '(场/自风)'; }
+  else if (['5z','6z','7z'].includes(pairId)) { pairFu = 2; pairLabel += '(三元)'; }
+  if (pairFu > 0) {
+    totalFu += pairFu;
+    lines.push(`雀头 ${pairLabel}: +${pairFu}`);
+  }
+
+  // 听牌类型会影响荣和刻子的明暗判断
+  const wait = detectWaitTypeLocal(decomp, winTile);
+
+  // 面子
+  decomp.mentsus.forEach(m => {
+    if (m.type === 'shuntsu') return;
+    const id = m.tiles[0];
+    const yao = isYaochuuLocal(id);
+    const yaoLabel = yao ? '幺九' : '中张';
+    const openLabel = m.open ? '明' : '暗';
+    let mFu = 0;
+    let typeLabel = m.type === 'kantsu' ? '杠' : '刻';
+    if (m.type === 'kantsu') {
+      mFu = (m.open ? 16 : 32) * (yao ? 2 : 1) / 2;
+    } else {
+      const ronCompletedTriplet = !isTsumo && wait === 'shanpon' && id === winTile;
+      const effectiveOpen = m.open || ronCompletedTriplet;
+      mFu = (effectiveOpen ? 2 : 4) * (yao ? 2 : 1);
+    }
+    totalFu += mFu;
+    const tileLabel = TILE_DEFS.find(t=>t.id===id)?.display || id;
+    lines.push(`${openLabel}${typeLabel} ${tileLabel}(${yaoLabel}): +${mFu}`);
+  });
+
+  // 听牌
+  if (wait === 'kanchan') { totalFu += 2; lines.push('嵌张听: +2'); }
+  else if (wait === 'penchan') { totalFu += 2; lines.push('边张听: +2'); }
+  else if (wait === 'tanki') { totalFu += 2; lines.push('单骑听: +2'); }
+  else lines.push('两面听: +0');
+
+  // 和牌方式
+  if (isTsumo) {
+    totalFu += 2;
+    lines.push('自摸: +2');
+  } else if (isClosed) {
+    totalFu += 10;
+    lines.push('门前荣和: +10');
+  } else {
+    lines.push('副露荣和: +0');
+  }
+
+  const rounded = Math.ceil(totalFu / 10) * 10;
+  lines.push('');
+  lines.push(`合计: ${totalFu}符 → 切整 ${rounded}符`);
+
+  // 番数提示
+  const openMentsus = getOpenMentsusForEval();
+  const evalResult = MahjongLogic.evaluateHand({
+    tiles: [...handTiles], isOpened: openMentsus.length > 0, openMentsus,
+    closedKantsus: getClosedKantsusForEval(),
+    isTsumo, isRiichi: hasAnalysisRiichi(),
+    winTile, roundWind, seatWind, doraCount: countDora(),
+  });
+  if (evalResult.valid) {
+    lines.push('');
+    lines.push(`<b>番数: ${evalResult.han}番 ${rounded}符</b>`);
+    lines.push(`役: ${evalResult.yaku.map(y=>y.name).join(', ')}`);
+    lines.push(`基本点: ${evalResult.basePoint}`);
+  }
+
+  display.style.display = 'block';
+  display.innerHTML = lines.join('<br>');
+}
+
+function isYaochuuLocal(id) {
+  if (id.endsWith('z')) return true;
+  const n = parseInt(id);
+  return n === 1 || n === 9;
+}
+
+function detectWaitTypeLocal(decomp, winTile) {
+  if (typeof detectWaitType !== 'undefined') return detectWaitType(decomp, winTile);
+  return 'ryanmen';
+}
+
+// ============ 副露精细标记 ============
+// mentsuOverride: [{ tiles, type, open }] 用户手动标记的面子类型
+// type: 'auto'(自动) / 'ankan'(暗刻) / 'minkan'(明杠) / 'ankan-kan'(暗杠) / 'minkou'(明刻) / 'ankou'(暗刻) / 'shuntsu-open' / 'shuntsu-closed'
+// 简化：每组面子可以切换 暗/明 + 刻/杠
+
+function buildMentsuEditor() {
+  const editor = document.getElementById('mentsuEditor');
+  const container = document.getElementById('mentsuGroups');
+
+  if (handTiles.length < 14 || handTiles.length > 18) {
+    editor.style.display = 'none';
+    winState.mentsuOverride = null;
+    return;
+  }
+
+  // 用 mahjong-logic 分解
+  const counts = countTilesLocal(handTiles);
+  const decomps = decomposeLocal(counts);
+  if (decomps.length === 0) {
+    editor.style.display = 'none';
+    return;
+  }
+
+  // 取第一个分解（或保留之前选的分解索引）
+  if (!winState.decompIndex || winState.decompIndex >= decomps.length) winState.decompIndex = 0;
+  const decomp = decomps[winState.decompIndex];
+
+  // 如果没有 override，初始化为全暗
+  if (!winState.mentsuOverride) {
+    winState.mentsuOverride = decomp.mentsus.map(m => ({
+      tiles: m.type === 'kantsu' ? m.tiles.slice(0, 3) : [...m.tiles],
+      baseType: m.type === 'kantsu' ? 'koutsu' : m.type,
+      isOpen: !!m.open,
+      isKan: m.type === 'kantsu',
+    }));
+    // 雀头
+    winState.pairOverride = { tiles: [...decomp.pair.tiles] };
+  }
+
+  editor.style.display = 'block';
+  container.innerHTML = '';
+
+  // 分解切换（如果多种分解）
+  if (decomps.length > 1) {
+    const switchRow = document.createElement('div');
+    switchRow.style.cssText = 'font-size:11px;color:#8a8470;margin-bottom:6px';
+    switchRow.innerHTML = `分解方案 ${winState.decompIndex + 1}/${decomps.length} `;
+    const prevBtn = document.createElement('span');
+    prevBtn.textContent = '◀';
+    prevBtn.style.cssText = 'cursor:pointer;color:#c96442;margin-left:8px';
+    prevBtn.onclick = () => {
+      winState.decompIndex = (winState.decompIndex - 1 + decomps.length) % decomps.length;
+      winState.mentsuOverride = null;
+      buildMentsuEditor();
+      previewWin();
+    };
+    const nextBtn = document.createElement('span');
+    nextBtn.textContent = '▶';
+    nextBtn.style.cssText = 'cursor:pointer;color:#c96442;margin-left:8px';
+    nextBtn.onclick = () => {
+      winState.decompIndex = (winState.decompIndex + 1) % decomps.length;
+      winState.mentsuOverride = null;
+      buildMentsuEditor();
+      previewWin();
+    };
+    switchRow.appendChild(prevBtn);
+    switchRow.appendChild(nextBtn);
+    container.appendChild(switchRow);
+  }
+
+  // 渲染每组面子
+  winState.mentsuOverride.forEach((mo, idx) => {
+    const group = document.createElement('div');
+    group.className = 'mentsu-group';
+
+    // 牌图片
+    const tilesDiv = document.createElement('div');
+    tilesDiv.className = 'mentsu-tiles';
+    // 杠子显示4张
+    const displayTiles = mo.isKan ? [...mo.tiles, mo.tiles[0]] : mo.tiles;
+    displayTiles.forEach(tid => {
+      const img = document.createElement('img');
+      img.src = tileImgSrc(tid);
+      tilesDiv.appendChild(img);
+    });
+    group.appendChild(tilesDiv);
+
+    // 类型切换按钮
+    const typeDiv = document.createElement('div');
+    typeDiv.className = 'mentsu-type';
+
+    if (mo.baseType === 'koutsu') {
+      // 刻子可以切：暗刻/明刻/暗杠/明杠
+      const types = [
+        { key: 'ankou', label: '暗刻', open: false, kan: false },
+        { key: 'minkou', label: '明刻', open: true, kan: false },
+        { key: 'ankan', label: '暗杠', open: false, kan: true },
+        { key: 'minkan', label: '明杠', open: true, kan: true },
+      ];
+      types.forEach(t => {
+        const btn = document.createElement('div');
+        btn.className = 'type-btn' + (!mo.isOpen === !t.open && !!mo.isKan === !!t.kan ? ' active' : '');
+        btn.textContent = t.label;
+        btn.onclick = () => {
+          mo.isOpen = t.open;
+          mo.isKan = t.kan;
+          buildMentsuEditor();
+          previewWin();
+        };
+        typeDiv.appendChild(btn);
+      });
+    } else {
+      // 顺子可以切：门前/副露
+      const types = [
+        { key: 'closed', label: '门前', open: false },
+        { key: 'open', label: '副露', open: true },
+      ];
+      types.forEach(t => {
+        const btn = document.createElement('div');
+        btn.className = 'type-btn' + (mo.isOpen === t.open ? ' active' : '');
+        btn.textContent = t.label;
+        btn.onclick = () => {
+          mo.isOpen = t.open;
+          buildMentsuEditor();
+          previewWin();
+        };
+        typeDiv.appendChild(btn);
+      });
+    }
+    group.appendChild(typeDiv);
+    container.appendChild(group);
+  });
+
+  // 雀头
+  const pairGroup = document.createElement('div');
+  pairGroup.className = 'mentsu-group';
+  const pairTiles = document.createElement('div');
+  pairTiles.className = 'mentsu-tiles';
+  winState.pairOverride.tiles.forEach(tid => {
+    const img = document.createElement('img');
+    img.src = tileImgSrc(tid);
+    pairTiles.appendChild(img);
+  });
+  pairGroup.appendChild(pairTiles);
+  const pairLabel = document.createElement('div');
+  pairLabel.className = 'pair-label';
+  pairLabel.textContent = '雀头';
+  pairGroup.appendChild(pairLabel);
+  container.appendChild(pairGroup);
+}
+
+// 本地计数和分解（调用 mahjong-logic 的函数）
+function countTilesLocal(tiles) {
+  const c = {};
+  for (const t of tiles) c[t] = (c[t] || 0) + 1;
+  return c;
+}
+
+function decomposeLocal(counts) {
+  if (typeof decompose === 'undefined') return [];
+  // 14张以上时，四张相同牌可能是杠；同时保留普通分解的可能性
+  const kanCandidates = new Set(Object.keys(counts).filter(id => counts[id] === 4));
+  return decompose(counts, new Set(), kanCandidates);
+}
+
+// 把 mentsuOverride 转成 evaluateHand 需要的 openMentsus 格式
+function getOpenMentsusForEval() {
+  if (!winState.mentsuOverride) return [];
+  const result = [];
+  winState.mentsuOverride.forEach(mo => {
+    if (mo.isKan && mo.isOpen) {
+      // 明杠
+      result.push({ type: 'kantsu', tiles: [mo.tiles[0],mo.tiles[0],mo.tiles[0],mo.tiles[0]], open: true });
+    } else if (mo.isKan && !mo.isOpen) {
+      // 暗杠不放进 openMentsus，通过 closedKantsus 传
+    } else if (mo.isOpen) {
+      result.push({ type: mo.baseType, tiles: mo.tiles, open: true });
+    }
+  });
+  return result;
+}
+
+function getClosedKantsusForEval() {
+  if (!winState.mentsuOverride) return [];
+  return winState.mentsuOverride
+    .filter(mo => mo.isKan && !mo.isOpen)
+    .map(mo => mo.tiles[0]);
+}
+
+function openWinModal() {
+  winState = { winnerIdx: game.dealerIndex, isTsumo: false, loserIdx: -1, isRiichi: false, openMentsus: [], winTile: null, doraIndicators: [], uraDoraIndicators: [], mentsuOverride: null, pairOverride: null, decompIndex: 0, analysisStage: 0, conditions: {} };
+  buildPlayerSeg('winnerSelect');
+  // 和牌者默认选第一个
+  const firstBtn = document.querySelector('#winnerSelect .seg-btn');
+  if (firstBtn) { firstBtn.classList.add('active'); winState.winnerIdx = parseInt(firstBtn.dataset.val); }
+
+  // 方式
+  document.querySelectorAll('#winTypeSelect .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === 'ron');
+    b.onclick = () => {
+      document.querySelectorAll('#winTypeSelect .seg-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      winState.isTsumo = b.dataset.val === 'tsumo';
+      document.getElementById('loserRow').style.display = winState.isTsumo ? 'none' : 'block';
+      if (!winState.isTsumo) {
+        buildPlayerSeg('loserSelect', winState.winnerIdx);
+        const lb = document.querySelector('#loserSelect .seg-btn');
+        if (lb) { lb.classList.add('active'); winState.loserIdx = parseInt(lb.dataset.val); }
+      }
+      if (winState.conditions && Object.keys(winState.conditions).length) syncConditionButtons();
+      if (winState.analysisStage) document.getElementById('conditionHint').textContent = '和牌方式已修改，请重新分析';
+      previewWin();
+    };
+  });
+
+  // 默认荣和，构建放铳者
+  document.getElementById('loserRow').style.display = 'block';
+  buildPlayerSeg('loserSelect', winState.winnerIdx);
+  const lb = document.querySelector('#loserSelect .seg-btn');
+  if (lb) { lb.classList.add('active'); winState.loserIdx = parseInt(lb.dataset.val); }
+
+  document.getElementById('hanSelect').value = '3';
+  document.getElementById('fuSelect').value = '30';
+  document.getElementById('hanSelect').onchange = previewWin;
+  document.getElementById('fuSelect').onchange = previewWin;
+
+  // 初始化选牌器
+  handTiles = [];
+  tileHistory = [];
+  buildTileKeyboard();
+  renderHand();
+  buildDoraPicker();
+  initRiichiStateSelector();
+  initConditionSelector();
+  document.getElementById('winConditions').style.display = 'none';
+  document.getElementById('mentsuEditor').style.display = 'none';
+  document.getElementById('fuBreakdownDisplay').style.display = 'none';
+  document.getElementById('analyzeHandBtn').textContent = '分析牌型';
+  document.getElementById('doraCountDisplay').textContent = '';
+
+  previewWin();
+  document.getElementById('winOverlay').classList.add('active');
+}
+
+function previewWin() {
+  // 读当前选择；这里只更新支付预览，不主动分析牌型
+  const wBtn = document.querySelector('#winnerSelect .seg-btn.active');
+  if (wBtn) winState.winnerIdx = parseInt(wBtn.dataset.val);
+  const lBtn = document.querySelector('#loserSelect .seg-btn.active');
+  if (lBtn) winState.loserIdx = parseInt(lBtn.dataset.val);
+
+  const hanSelect = document.getElementById('hanSelect');
+  const fuSelect = document.getElementById('fuSelect');
+  const box = document.getElementById('resultPreview');
+  const autoHint = document.getElementById('autoJudgeHint');
+
+  if (!winState.analysisStage) {
+    if (handTiles.length < 14) autoHint.textContent = `已选 ${handTiles.length} 张；选好牌后指定最终和牌张`;
+    else if (!winState.winTile) autoHint.textContent = '请选择最终和牌张，然后点击“分析牌型”';
+    else autoHint.textContent = '点击“分析牌型”开始拆分面子并计算役、番、符和点数';
+    autoHint.style.color = '#888';
+  }
+
+  const han = parseInt(hanSelect.value);
+  const fu = parseInt(fuSelect.value);
+  const result = calcWinPayments(winState.winnerIdx, han, fu, winState.isTsumo, winState.loserIdx);
+
+  box.style.display = 'block';
+  document.getElementById('previewPoints').textContent = '+' + result.total;
+  const winnerName = SEATS[winState.winnerIdx];
+  const hanLabel = han >= 13 ? '役满' : han >= 11 ? '三倍满' : han >= 8 ? '倍满' : han >= 6 ? '跳满' : han >= 5 ? '满贯' : `${han}翻${fu}符`;
+  document.getElementById('previewDetail').textContent = `${winnerName} ${winState.isTsumo ? '自摸' : '荣和'} · ${hanLabel}`;
+
+  let breakdown = '';
+  result.payments.forEach(p => {
+    breakdown += `${SEATS[p.from]} → ${SEATS[p.to]}: ${p.amount}\n`;
+  });
+  if (result.stickBonus > 0) breakdown += `供托 +${result.stickBonus}`;
+  document.getElementById('previewBreakdown').textContent = breakdown.trim() || '（本场无额外）';
+}
+
+function confirmWin() {
+  const han = parseInt(document.getElementById('hanSelect').value);
+  const fu = parseInt(document.getElementById('fuSelect').value);
+  const result = calcWinPayments(winState.winnerIdx, han, fu, winState.isTsumo, winState.loserIdx);
+
+  const changes = {};
+  result.payments.forEach(p => {
+    game.players[p.from].points -= p.amount;
+    game.players[p.to].points += p.amount;
+    changes[p.from] = (changes[p.from] || 0) - p.amount;
+    changes[p.to] = (changes[p.to] || 0) + p.amount;
+  });
+  // 供托
+  game.riichiSticks = 0;
+
+  // 记录
+  const winner = game.players[winState.winnerIdx];
+  game.history.push({
+    type: 'win',
+    round: ROUND_NAMES[game.roundIndex],
+    winner: winState.winnerIdx,
+    han, fu,
+    isTsumo: winState.isTsumo,
+    loser: winState.loserIdx,
+    total: result.total,
+    hand: [...handTiles], // 记录手牌快照
+  });
+
+  closeModal('winOverlay');
+
+  // 判断连庄/亲流
+  if (winState.winnerIdx === game.dealerIndex) {
+    game.honba++;
+  } else {
+    advanceRound();
+  }
+
+  render();
+  flashDelta(changes);
+  checkGameEnd();
+}
+
+function advanceRound() {
+  game.roundIndex++;
+  game.dealerIndex = game.roundIndex % 4;
+  game.honba = 0;
+}
+
+// 流局
+function openDrawModal() {
+  const c = document.getElementById('tenpaiSelect');
+  c.innerHTML = '';
+  game.players.forEach((p, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'seg-btn';
+    btn.textContent = `${SEATS[i]} (${p.points})`;
+    btn.dataset.val = i;
+    btn.onclick = () => btn.classList.toggle('active');
+    c.appendChild(btn);
+  });
+  document.getElementById('drawOverlay').classList.add('active');
+}
+
+function confirmDraw() {
+  const tenpai = new Set();
+  document.querySelectorAll('#tenpaiSelect .seg-btn.active').forEach(b => tenpai.add(parseInt(b.dataset.val)));
+
+  // 听牌分配
+  const tCount = tenpai.size;
+  const changes = {};
+  if (tCount > 0 && tCount < 4) {
+    const ntPay = [0, 3000, 1500, 1000][tCount];
+    game.players.forEach((p, i) => {
+      if (!tenpai.has(i)) {
+        game.players[i].points -= ntPay;
+        changes[i] = (changes[i] || 0) - ntPay;
+      }
+    });
+    const tReceive = [0, 1000, 1500, 3000][tCount];
+    game.players.forEach((p, i) => {
+      if (tenpai.has(i)) {
+        game.players[i].points += tReceive;
+        changes[i] = (changes[i] || 0) + tReceive;
+      }
+    });
+  }
+
+  // 亲听牌连庄，否则亲流
+  const dealerTenpai = tenpai.has(game.dealerIndex);
+  if (dealerTenpai) {
+    game.honba++;
+  } else {
+    advanceRound();
+  }
+
+  game.history.push({
+    type: 'draw',
+    round: ROUND_NAMES[game.roundIndex],
+    tenpai: [...tenpai],
+  });
+
+  closeModal('drawOverlay');
+  render();
+  flashDelta(changes);
+  checkGameEnd();
+}
+
+// 立直
+function toggleRiichi() {
+  const c = document.createElement('div');
+  c.className = 'overlay active';
+  c.id = 'riichiOverlay';
+  c.innerHTML = `
+    <div class="modal">
+      <h3>谁立直？</h3>
+      <div class="seg-group" id="riichiSelect"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="this.closest('.overlay').remove()">取消</button>
+        <button class="btn" onclick="confirmRiichi()">确认</button>
+      </div>
+    </div>`;
+  document.body.appendChild(c);
+  const sel = c.querySelector('#riichiSelect');
+  game.players.forEach((p, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'seg-btn' + (p.riichi ? ' active' : '');
+    btn.textContent = `${SEATS[i]}${p.riichi ? ' ●' : ''}`;
+    btn.dataset.val = i;
+    btn.onclick = () => btn.classList.toggle('active');
+    sel.appendChild(btn);
+  });
+}
+
+function confirmRiichi() {
+  const overlay = document.getElementById('riichiOverlay');
+  const changes = {};
+  overlay.querySelectorAll('#riichiSelect .seg-btn').forEach(btn => {
+    const i = parseInt(btn.dataset.val);
+    const shouldBeRiichi = btn.classList.contains('active');
+    if (shouldBeRiichi && !game.players[i].riichi) {
+      game.players[i].riichi = true;
+      game.players[i].points -= 1000;
+      game.riichiSticks++;
+      changes[i] = -1000;
+    }
+  });
+  overlay.remove();
+  render();
+  flashDelta(changes);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// 撤销
+let undoStack = [];
+function saveSnapshot() {
+  undoStack.push(JSON.stringify(game));
+  if (undoStack.length > 20) undoStack.shift();
+}
+
+// 在操作前保存快照
+const origConfirmWin = confirmWin;
+const origConfirmDraw = confirmDraw;
+const origConfirmRiichi = confirmRiichi;
+
+// 包裹保存
+function wrapWithSnapshot(fn) {
+  return function(...args) {
+    saveSnapshot();
+    return fn.apply(this, args);
+  };
+}
+// 不覆盖，直接在调用前保存
+
+// 重写调用入口
+function undoLast() {
+  if (undoStack.length === 0) { alert('没有可撤销的操作'); return; }
+  game = JSON.parse(undoStack.pop());
+  saveGame();
+  render();
+}
+
+function showHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  if (game.history.length === 0) {
+    list.innerHTML = '<div class="history-item">暂无记录</div>';
+  }
+  game.history.forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    if (h.type === 'win') {
+      const hanLabel = h.han >= 13 ? '役满' : h.han >= 5 ? `${h.han}翻` : `${h.han}翻${h.fu}符`;
+      const handStr = (h.hand && h.hand.length > 0)
+        ? h.hand.map(id => { const d = TILE_DEFS.find(t=>t.id===id); return d ? d.display : ''; }).join('')
+        : '';
+      const handImgs = (h.hand && h.hand.length > 0)
+        ? h.hand.map(id => `<img src="${tileImgSrc(id)}" style="width:18px;height:24px;vertical-align:middle;margin:1px">`).join('')
+        : '';
+      item.innerHTML = `${h.round} · <span class="who">${SEATS[h.winner]}</span> ${h.isTsumo ? '自摸' : '荣和'} ${hanLabel} +${h.total}` + (handImgs ? `<br><span style="color:#666;font-size:11px">${handImgs}</span>` : '');
+    } else {
+      const t = h.tenpai.map(i => SEATS[i]).join('') || '无人';
+      item.innerHTML = `${h.round} · 流局（听：${t}）`;
+    }
+    list.appendChild(item);
+  });
+  document.getElementById('historyOverlay').classList.add('active');
+}
+
+function resetGame() {
+  if (!confirm('确定重置新对局？')) return;
+  game = newGame();
+  undoStack = [];
+  saveGame();
+  render();
+}
+
+function checkGameEnd() {
+  // 南四局（roundIndex=7）且亲流（非连庄）→ 结束
+  // 或西四局结束
+  if (game.roundIndex >= 8) {
+    showGameEnd();
+    return;
+  }
+  // 南四局亲=北（dealerIndex=3）时如果非连庄则结束
+  if (game.roundIndex === 7 && game.dealerIndex === 3) {
+    // 如果有人>=返点才结束
+    const topPlayer = Math.max(...game.players.map(p => p.points));
+    if (topPlayer >= RETURN_POINTS) {
+      showGameEnd();
+    }
+    // 否则继续（西入或连庄）
+  }
+}
+
+function showGameEnd() {
+  game.ended = true;
+  const sorted = game.players.map((p, i) => ({...p, idx: i})).sort((a, b) => b.points - a.points);
+  const c = document.getElementById('finalResult');
+  c.innerHTML = sorted.map((p, rank) => `
+    <div class="result-box">
+      <div style="font-size:16px;color:#e94560;font-weight:bold">第${rank+1}名 ${SEATS[p.idx]}家</div>
+      <div class="points">${p.points}</div>
+    </div>
+  `).join('');
+  document.getElementById('endOverlay').classList.add('active');
+}
+
+// 初次渲染
+render();
+
+// 包裹保存快照
+const _confirmWin = confirmWin;
+const _confirmDraw = confirmDraw;
+const _confirmRiichi = confirmRiichi;
+confirmWin = function() { saveSnapshot(); _confirmWin(); };
+confirmDraw = function() { saveSnapshot(); _confirmDraw(); };
+confirmRiichi = function() { saveSnapshot(); _confirmRiichi(); };
+</script>
+</body>
+</html>
