@@ -1,0 +1,14 @@
+{
+  "appid": "touristappid",
+  "projectname": "mahjong-scorer",
+  "description": "日麻整场计分与牌型分析微信小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false
+  }
+}

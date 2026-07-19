@@ -13,7 +13,7 @@
 - 多张表宝牌与裏宝牌指示牌
 - 自动计算役、番、符与最终支付
 
-## 使用
+## H5 使用
 
 这是纯静态项目，直接用浏览器打开 `index.html`，或通过任意静态 HTTP 服务器部署。
 
@@ -23,10 +23,21 @@ python3 -m http.server 8080
 
 访问 `http://localhost:8080`。
 
+## 微信小程序
+
+小程序源码位于 `miniprogram/`，项目配置为根目录下的 `project.config.json`。
+
+1. 使用微信开发者工具导入仓库根目录。
+2. 将 `project.config.json` 中的测试 AppID 替换为自己的小程序 AppID。
+3. 点击编译即可运行。
+
+小程序与 H5 共用同一套 `mahjong-logic.js` 计分核心，牌图保存在 `miniprogram/assets/tiles/`。
+
 ## 测试
 
 ```bash
 node test-logic.js
+node test-miniprogram.js
 ```
 
 ## 线上地址

@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "日麻计分",
+    "navigationBarBackgroundColor": "#f5f1e6",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f1e6",
+    "backgroundTextStyle": "dark"
+  },
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,7 @@
+page {
+  background: #f5f1e6;
+  color: #3d3929;
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 28rpx;
+}
+button { font-family: inherit; }

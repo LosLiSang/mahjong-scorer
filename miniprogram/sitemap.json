@@ -1,0 +1,4 @@
+{
+  "desc": "日麻计分器页面索引",
+  "rules": [{ "action": "allow", "page": "*" }]
+}
