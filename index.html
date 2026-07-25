@@ -166,6 +166,48 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 .yaku-back-btn { margin-top: 10px; background: none; border: 0; color: #c96442; font-size: 15px; font-weight: 600; padding: 8px 0; cursor: pointer; display: flex; align-items: center; gap: 4px; }
 .yaku-back-btn::before { content: '←'; font-size: 16px; }
 .yaku-list-view[hidden] { display: none; }
+
+/* 算分详解 */
+.scoring-entry { margin-top: 12px; display: grid; gap: 8px; }
+.scoring-entry h3 { font-size: 17px; color: #3d3929; }
+.scoring-entry-intro { color: #746e5c; font-size: 12px; line-height: 1.65; }
+.scoring-guide-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.scoring-guide-btn { border: 1px solid #e0d8c7; border-radius: 11px; background: #fff; color: #3d3929; padding: 11px 6px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.scoring-guide-btn span { display: block; color: #c96442; font-size: 18px; margin-bottom: 3px; }
+.guide-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 13px; }
+.guide-tab { border: 1px solid #d8d1c0; border-radius: 9px; padding: 8px 4px; background: #fff; color: #746e5c; font: inherit; font-size: 12px; font-weight: 700; }
+.guide-tab.active { color: #fff; background: #c96442; border-color: #c96442; }
+.guide-intro { margin-bottom: 12px; color: #746e5c; font-size: 13px; line-height: 1.7; }
+.guide-step-list { display: grid; gap: 7px; }
+.guide-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 11px; border: 1px solid #e8e5d8; border-radius: 10px; background: #fff; }
+.guide-step strong { font-size: 13px; }
+.guide-step small { display: block; margin-top: 4px; color: #8a8470; line-height: 1.55; }
+.guide-step-value { color: #c96442; font-weight: 700; white-space: nowrap; }
+.fu-example-box, .formula-box, .limit-card { margin-top: 11px; padding: 12px; border-radius: 11px; background: #eeeadd; }
+.fu-equation { margin: 8px 0; font-size: 15px; font-weight: 700; color: #3d3929; }
+.fu-total { color: #c96442; font-size: 20px; font-weight: 700; }
+.formula-flow { display: grid; gap: 7px; margin: 10px 0; }
+.formula-flow div { padding: 9px; border-radius: 8px; background: #fff; font-size: 13px; line-height: 1.55; }
+.scoring-calculator { margin-top: 12px; padding: 12px; border: 1px solid #e0d8c7; border-radius: 12px; background: #fff; }
+.scoring-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scoring-fields label { margin-top: 0; }
+.score-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+.score-toggle button { border: 1px solid #ddd7c8; border-radius: 8px; background: #f7f4eb; color: #746e5c; padding: 8px; font: inherit; font-size: 12px; }
+.score-toggle button.active { background: #5a7a4a; color: #fff; border-color: #5a7a4a; }
+.calculator-result { margin-top: 11px; padding: 12px; border-radius: 10px; background: #f1f5ee; color: #536349; line-height: 1.7; font-size: 13px; }
+.calculator-result strong { color: #3d3929; font-size: 20px; }
+.limit-grid { display: grid; gap: 8px; }
+.limit-card { margin-top: 0; }
+.limit-card-header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.limit-card h4 { color: #c96442; font-size: 16px; }
+.limit-card .range { color: #746e5c; font-size: 11px; line-height: 1.5; margin-top: 5px; }
+.limit-points { margin-top: 7px; font-size: 12px; color: #3d3929; }
+.modal-bottom-exit { width: 100%; margin-top: 16px; }
+@media (max-width: 360px) {
+  .scoring-guide-buttons { grid-template-columns: 1fr; }
+  .scoring-guide-btn { display: grid; grid-template-columns: 32px 1fr; align-items: center; text-align: left; }
+  .scoring-guide-btn span { margin: 0; }
+}
 </style>
 </head>
 <body>
@@ -204,7 +246,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <h1>从认牌到看懂点数</h1>
     <p>每节只讲一个关键问题。先把能上桌的骨架学会，再慢慢补役种，不许一上来背整张役表。</p>
     <div class="progress-track"><div class="progress-fill" id="tutorialProgressFill"></div></div>
-    <div class="progress-label" id="tutorialProgressLabel">0 / 6 节完成</div>
+    <div class="progress-label" id="tutorialProgressLabel">0 / 8 节完成</div>
   </section>
   <section class="tutorial-list" id="tutorialList"></section>
   <section class="quiz-entry">
@@ -217,6 +259,16 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <h3>役种图鉴</h3>
     <p>翻卡查看每个役的成立条件、牌例、易错点和鸣牌限制。</p>
     <button class="btn" onclick="openYakuCatalog()">查看图鉴</button>
+  </section>
+
+  <section class="catalog-entry scoring-entry">
+    <h3>算分详解</h3>
+    <p class="scoring-entry-intro">不只告诉你答案。把符怎么加、基本点怎么算、满贯为什么封顶拆开看。</p>
+    <div class="scoring-guide-buttons">
+      <button class="scoring-guide-btn" onclick="openScoringGuide('fu')"><span>符</span>符数详解</button>
+      <button class="scoring-guide-btn" onclick="openScoringGuide('points')"><span>点</span>算分方法</button>
+      <button class="scoring-guide-btn" onclick="openScoringGuide('limits')"><span>満</span>满贯档位</button>
+    </div>
   </section>
 </main>
 
@@ -354,7 +406,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 </div>
 
 <!-- 役种图鉴弹窗 -->
-<div class="overlay" id="yakuCatalogOverlay">
+<div class="overlay" id="yakuCatalogOverlay" onclick="handleOverlayClick(event, 'yakuCatalogOverlay')">
   <div class="modal tutorial-modal">
     <button class="modal-close" aria-label="关闭役种图鉴" onclick="closeModal('yakuCatalogOverlay')">×</button>
     <div class="yaku-list-view" id="yakuListView">
@@ -366,6 +418,22 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
       <button class="yaku-back-btn" onclick="showYakuList()">役种图鉴</button>
       <div class="yaku-detail" id="yakuDetailContent"></div>
     </div>
+    <button class="btn btn-secondary modal-bottom-exit" id="yakuCatalogCloseBottom" onclick="closeModal('yakuCatalogOverlay')">退出役种图鉴</button>
+  </div>
+</div>
+
+<!-- 算分详解弹窗 -->
+<div class="overlay" id="scoringGuideOverlay" onclick="handleOverlayClick(event, 'scoringGuideOverlay')">
+  <div class="modal tutorial-modal">
+    <button class="modal-close" aria-label="关闭算分详解" onclick="closeModal('scoringGuideOverlay')">×</button>
+    <h3>算分详解</h3>
+    <div class="guide-tabs">
+      <button class="guide-tab" data-guide-tab="fu" onclick="showScoringGuideTab('fu')">符数</button>
+      <button class="guide-tab" data-guide-tab="points" onclick="showScoringGuideTab('points')">点数</button>
+      <button class="guide-tab" data-guide-tab="limits" onclick="showScoringGuideTab('limits')">满贯</button>
+    </div>
+    <div id="scoringGuideBody"></div>
+    <button class="btn btn-secondary modal-bottom-exit" onclick="closeModal('scoringGuideOverlay')">返回教学馆</button>
   </div>
 </div>
 
@@ -406,6 +474,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 <script src="mahjong-logic.js"></script>
 <script src="tutorial-data.js"></script>
 <script src="yaku-data.js"></script>
+<script src="scoring-guide-data.js"></script>
 <script>
 // 把 mahjong-logic.js 导出的函数挂到 window（浏览器环境没有 module.exports）
 // 实际上浏览器里这些函数已经是全局的，不需要 require
@@ -656,7 +725,130 @@ function showYakuList() {
 function showYakuDetail() {
   document.getElementById('yakuListView').hidden = true;
   document.getElementById('yakuDetailView').hidden = false;
-  document.getElementById('yakuCatalogOverlay').scrollTo({ top: 0 });
+  const modal = document.querySelector('#yakuCatalogOverlay .modal');
+  if (modal) modal.scrollTop = 0;
+}
+
+// ============ 算分详解 ============
+let scoringGuideTab = 'fu';
+let scoringCalculatorState = { isDealer: false, isTsumo: false };
+
+function openScoringGuide(tab = 'fu') {
+  scoringGuideTab = tab;
+  renderScoringGuide();
+  openModal('scoringGuideOverlay');
+}
+
+function showScoringGuideTab(tab) {
+  scoringGuideTab = tab;
+  renderScoringGuide();
+  const modal = document.querySelector('#scoringGuideOverlay .modal');
+  if (modal) modal.scrollTop = 0;
+}
+
+function renderScoringGuide() {
+  document.querySelectorAll('[data-guide-tab]').forEach(button => {
+    button.classList.toggle('active', button.dataset.guideTab === scoringGuideTab);
+  });
+  const body = document.getElementById('scoringGuideBody');
+  if (scoringGuideTab === 'fu') body.innerHTML = renderFuGuide();
+  else if (scoringGuideTab === 'points') body.innerHTML = renderPointGuide();
+  else body.innerHTML = renderLimitGuide();
+  if (scoringGuideTab === 'points') updateScoringCalculator();
+}
+
+function renderFuGuide() {
+  const example = calculateFuExample({ closedRon: true, pairFu: 2, waitFu: 2, mentsuFu: 8 });
+  return `
+    <p class="guide-intro">符不是“牌越好越多”，而是描述这副牌有多难组成。按顺序从副底开始，把和牌方式、雀头、等待和面子加起来。</p>
+    <div class="guide-step-list">${FU_REFERENCE.map(item => `
+      <div class="guide-step"><div><strong>${item.title}</strong><small>${item.detail}</small></div><span class="guide-step-value">${item.value}</span></div>`).join('')}</div>
+    <div class="fu-example-box">
+      <strong>完整例子：门前荣和的 50 符牌</strong>
+      <div class="fu-equation">${example.steps.map(step => `${step.label} ${step.fu}`).join(' + ')} = ${example.rawFu} 符</div>
+      <div>不是整十，向上进位：</div>
+      <div class="fu-total">${example.rawFu} → ${example.roundedFu} 符</div>
+      <small>这里假设：役牌雀头 +2、嵌张/边张/单骑 +2、幺九暗刻 +8。实际计符要以你的具体牌形为准。</small>
+    </div>`;
+}
+
+function renderPointGuide() {
+  const hanOptions = Array.from({ length: 13 }, (_, index) => `<option value="${index + 1}" ${index === 2 ? 'selected' : ''}>${index + 1} 番</option>`).join('');
+  const fuOptions = [20,25,30,40,50,60,70,80,90,100,110].map(fu => `<option value="${fu}" ${fu === 40 ? 'selected' : ''}>${fu} 符</option>`).join('');
+  return `
+    <p class="guide-intro">算点数只走四步。别直接背整张表，先理解公式，再用下面的小计算器验证。</p>
+    <div class="formula-box">
+      <div class="formula-flow">
+        <div><strong>1. 数番、算符</strong><br>例如 3 番 40 符。</div>
+        <div><strong>2. 算基本点</strong><br>符 × 2<sup>番+2</sup>，例：40 × 2<sup>5</sup> = 1280。</div>
+        <div><strong>3. 乘亲子与和牌系数</strong><br>子荣和 ×4；亲荣和 ×6；自摸则拆给三家。</div>
+        <div><strong>4. 每份向上取整到百位</strong><br>子家荣和：1280 × 4 = 5120 → 5200 点。</div>
+      </div>
+      <small>本场棒、供托属于牌局结算附加项，不在基础点数公式里。</small>
+    </div>
+    <div class="scoring-calculator">
+      <strong>跟着算一次</strong>
+      <div class="scoring-fields">
+        <label>番数<select id="guideHanSelect" onchange="updateScoringCalculator()">${hanOptions}</select></label>
+        <label>符数<select id="guideFuSelect" onchange="updateScoringCalculator()">${fuOptions}</select></label>
+      </div>
+      <div class="score-toggle">
+        <button id="guideChildBtn" class="active" onclick="setScoringRole(false)">子家</button>
+        <button id="guideDealerBtn" onclick="setScoringRole(true)">亲家</button>
+      </div>
+      <div class="score-toggle">
+        <button id="guideRonBtn" class="active" onclick="setScoringWinType(false)">荣和</button>
+        <button id="guideTsumoBtn" onclick="setScoringWinType(true)">自摸</button>
+      </div>
+      <div class="calculator-result" id="guideCalculatorResult"></div>
+    </div>`;
+}
+
+function renderLimitGuide() {
+  return `
+    <p class="guide-intro">当番数或基本点达到上限后，不再继续套普通公式，而是直接进入固定档位。所谓“满贯、跳满”不是役种，是点数等级。</p>
+    <div class="limit-grid">${LIMIT_REFERENCE.map(item => `
+      <div class="limit-card">
+        <div class="limit-card-header"><h4>${item.name}</h4><strong>基本点 ${item.base}</strong></div>
+        <div class="range">${item.range}</div>
+        <div class="limit-points">子家荣和 ${item.childRon.toLocaleString()} · 亲家荣和 ${item.dealerRon.toLocaleString()}</div>
+      </div>`).join('')}</div>
+    <div class="lesson-tip"><strong>容易混淆：</strong>4 番并不一定是满贯。4 番 30 符是子家荣和 7700；4 番 40 符才因基本点超过 2000 而按满贯 8000 计算。</div>`;
+}
+
+function setScoringRole(isDealer) {
+  scoringCalculatorState.isDealer = isDealer;
+  updateScoringCalculator();
+}
+
+function setScoringWinType(isTsumo) {
+  scoringCalculatorState.isTsumo = isTsumo;
+  updateScoringCalculator();
+}
+
+function updateScoringCalculator() {
+  const hanSelect = document.getElementById('guideHanSelect');
+  const fuSelect = document.getElementById('guideFuSelect');
+  const output = document.getElementById('guideCalculatorResult');
+  if (!hanSelect || !fuSelect || !output) return;
+
+  const han = Number(hanSelect.value);
+  const fu = Number(fuSelect.value);
+  const result = calcPointPayments(han, fu, scoringCalculatorState);
+  document.getElementById('guideChildBtn').classList.toggle('active', !scoringCalculatorState.isDealer);
+  document.getElementById('guideDealerBtn').classList.toggle('active', scoringCalculatorState.isDealer);
+  document.getElementById('guideRonBtn').classList.toggle('active', !scoringCalculatorState.isTsumo);
+  document.getElementById('guideTsumoBtn').classList.toggle('active', scoringCalculatorState.isTsumo);
+
+  const paymentText = result.payments.map(payment => `${payment.label} ${payment.amount.toLocaleString()}${payment.count ? ` × ${payment.count}` : ''}`).join('<br>');
+  const formula = result.limitName
+    ? `${result.limitName}固定基本点 ${result.basePoint.toLocaleString()}`
+    : `${fu} × 2<sup>${han + 2}</sup> = ${result.basePoint.toLocaleString()} 基本点`;
+  output.innerHTML = `<strong>${result.total.toLocaleString()} 点</strong>${result.limitName ? ` · ${result.limitName}` : ''}<br>${formula}<br>${paymentText}`;
+}
+
+function handleOverlayClick(event, id) {
+  if (event.target && event.target.id === id) closeModal(id);
 }
 
 function newGame() {
@@ -1898,6 +2090,12 @@ function closeModal(id) {
   overlay.classList.remove('active');
   unlockPageScroll();
 }
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  const activeOverlay = document.querySelector('.overlay.active');
+  if (activeOverlay) closeModal(activeOverlay.id);
+});
 
 // 撤销
 let undoStack = [];

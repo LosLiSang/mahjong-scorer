@@ -2,9 +2,11 @@ const assert = require('assert');
 const fs = require('fs');
 const { MAHJONG_TUTORIAL, getTutorialLesson, gradeTutorialQuiz } = require('./tutorial-data');
 
-assert.equal(MAHJONG_TUTORIAL.lessons.length, 6, '应包含 6 节入门课');
+assert.equal(MAHJONG_TUTORIAL.lessons.length, 8, '应包含 8 节入门课');
 assert.equal(MAHJONG_TUTORIAL.quiz.length, 6, '应包含 6 道入门测验');
 assert.equal(getTutorialLesson('yaku').title, '有结构，还要有役');
+assert.equal(getTutorialLesson('fu-detail').title, '符要一项一项加');
+assert.equal(getTutorialLesson('limits').title, '满贯不是役，是点数档位');
 assert.equal(getTutorialLesson('missing'), null);
 
 const perfect = gradeTutorialQuiz(MAHJONG_TUTORIAL.quiz.map(q => q.answer));

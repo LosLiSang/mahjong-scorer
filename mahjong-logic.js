@@ -858,19 +858,60 @@ function compareResults(a, b) {
 
 // ============ 点数计算 ============
 function calcBasePoint(han, fu) {
+  han = Number(han);
+  fu = Number(fu);
   if (han >= 13) return 8000;   // 役满
   if (han >= 11) return 6000;   // 三倍满
   if (han >= 8) return 4000;    // 倍满
   if (han >= 6) return 3000;    // 跳满
   if (han >= 5) return 2000;    // 满贯
-  let base = fu * Math.pow(2, han + 2);
+  const base = fu * Math.pow(2, han + 2);
   return Math.min(base, 2000);
+}
+
+function getLimitName(han, fu) {
+  han = Number(han);
+  fu = Number(fu);
+  if (han >= 13) return '役满';
+  if (han >= 11) return '三倍满';
+  if (han >= 8) return '倍满';
+  if (han >= 6) return '跳满';
+  if (han >= 5 || calcBasePoint(han, fu) >= 2000) return '满贯';
+  return '';
+}
+
+function roundUp100(value) {
+  return Math.ceil(value / 100) * 100;
+}
+
+function calcPointPayments(han, fu, options = {}) {
+  const isDealer = !!options.isDealer;
+  const isTsumo = !!options.isTsumo;
+  const basePoint = calcBasePoint(han, fu);
+  const limitName = getLimitName(han, fu);
+  let payments;
+
+  if (!isTsumo) {
+    const amount = roundUp100(basePoint * (isDealer ? 6 : 4));
+    payments = [{ label: '放铳者支付', amount }];
+  } else if (isDealer) {
+    payments = [{ label: '三家各付', amount: roundUp100(basePoint * 2), count: 3 }];
+  } else {
+    payments = [
+      { label: '亲家支付', amount: roundUp100(basePoint * 2) },
+      { label: '其余两家各付', amount: roundUp100(basePoint), count: 2 },
+    ];
+  }
+
+  const total = payments.reduce((sum, payment) => sum + payment.amount * (payment.count || 1), 0);
+  return { basePoint, limitName, total, payments };
 }
 
 // 导出（Node 测试用）
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     countTiles, decompose, calcFu, detectWaitType, evaluateHand,
-    calcBasePoint, analyzeStructure, isYaochuu, isHonor,
+    calcBasePoint, getLimitName, roundUp100, calcPointPayments,
+    analyzeStructure, isYaochuu, isHonor,
   };
 }
