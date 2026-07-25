@@ -33,5 +33,17 @@ assert(
   /\.lesson-card-summary\s*\{[^}]*display\s*:\s*block[^}]*max-width\s*:\s*100%/s.test(pageHtml),
   '课程摘要必须限制在卡片内部'
 );
+assert(
+  /\.modal\s*\{[^}]*overscroll-behavior\s*:\s*contain[^}]*-webkit-overflow-scrolling\s*:\s*touch/s.test(pageHtml),
+  '课程弹窗必须阻止滚动穿透并启用触摸惯性滚动'
+);
+assert(
+  /function\s+lockPageScroll\s*\([^)]*\)[\s\S]*document\.body\.style\.position\s*=\s*'fixed'/s.test(pageHtml),
+  '打开课程弹窗时必须锁定底层页面滚动'
+);
+assert(
+  /function\s+unlockPageScroll\s*\([^)]*\)[\s\S]*window\.scrollTo\(0,\s*modalScrollY\)/s.test(pageHtml),
+  '关闭课程弹窗后必须恢复原页面位置'
+);
 
-console.log('tutorial tests: 28 assertions passed');
+console.log('tutorial tests: 31 assertions passed');

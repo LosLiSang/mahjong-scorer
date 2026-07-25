@@ -38,7 +38,7 @@ body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong
 /* 弹窗 */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(60, 55, 40, 0.4); z-index: 100; justify-content: center; align-items: flex-end; }
 .overlay.active { display: flex; }
-.modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+.modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .modal h3 { text-align: center; margin-bottom: 16px; color: #3d3929; font-weight: 600; }
 .modal label { display: block; font-size: 13px; color: #8a8470; margin: 12px 0 6px; font-weight: 500; }
 .modal select, .modal input { width: 100%; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; font-size: 16px; }
@@ -423,6 +423,37 @@ let game = null;
 const TUTORIAL_PROGRESS_KEY = 'mj_tutorial_progress_v1';
 let currentLessonId = null;
 let tutorialQuizState = { index: 0, answers: [], checked: false };
+let modalScrollY = 0;
+let openModalCount = 0;
+
+function lockPageScroll() {
+  if (openModalCount++ > 0) return;
+  modalScrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${modalScrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+}
+
+function unlockPageScroll() {
+  if (openModalCount === 0 || --openModalCount > 0) return;
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, modalScrollY);
+}
+
+function openModal(id) {
+  const overlay = document.getElementById(id);
+  if (!overlay || overlay.classList.contains('active')) return;
+  const modal = overlay.querySelector('.modal');
+  if (modal) modal.scrollTop = 0;
+  overlay.classList.add('active');
+  lockPageScroll();
+}
 
 function loadTutorialProgress() {
   try {
@@ -490,7 +521,7 @@ function openTutorialLesson(id) {
   document.getElementById('lessonTip').textContent = lesson.tip;
   const done = loadTutorialProgress().has(id);
   document.getElementById('completeLessonBtn').textContent = done ? '已完成 · 再看一遍' : '学完这节';
-  document.getElementById('lessonOverlay').classList.add('active');
+  openModal('lessonOverlay');
 }
 
 function completeCurrentLesson() {
@@ -505,7 +536,7 @@ function completeCurrentLesson() {
 function openTutorialQuiz() {
   tutorialQuizState = { index: 0, answers: [], checked: false };
   renderTutorialQuiz();
-  document.getElementById('tutorialQuizOverlay').classList.add('active');
+  openModal('tutorialQuizOverlay');
 }
 
 function renderTutorialQuiz() {
@@ -564,7 +595,7 @@ function openYakuCatalog() {
   yakuFilterCategory = null;
   renderYakuList();
   showYakuList();
-  document.getElementById('yakuCatalogOverlay').classList.add('active');
+  openModal('yakuCatalogOverlay');
 }
 
 function renderYakuFilters() {
@@ -1666,7 +1697,7 @@ function openWinModal() {
   document.getElementById('doraCountDisplay').textContent = '';
 
   previewWin();
-  document.getElementById('winOverlay').classList.add('active');
+  openModal('winOverlay');
 }
 
 function previewWin() {
@@ -1766,7 +1797,7 @@ function openDrawModal() {
     btn.onclick = () => btn.classList.toggle('active');
     c.appendChild(btn);
   });
-  document.getElementById('drawOverlay').classList.add('active');
+  openModal('drawOverlay');
 }
 
 function confirmDraw() {
@@ -1823,11 +1854,12 @@ function toggleRiichi() {
       <h3>谁立直？</h3>
       <div class="seg-group" id="riichiSelect"></div>
       <div class="btn-row" style="margin-top:14px">
-        <button class="btn btn-secondary" onclick="this.closest('.overlay').remove()">取消</button>
+        <button class="btn btn-secondary" onclick="this.closest('.overlay').remove();unlockPageScroll()">取消</button>
         <button class="btn" onclick="confirmRiichi()">确认</button>
       </div>
     </div>`;
   document.body.appendChild(c);
+  lockPageScroll();
   const sel = c.querySelector('#riichiSelect');
   game.players.forEach((p, i) => {
     const btn = document.createElement('div');
@@ -1853,12 +1885,16 @@ function confirmRiichi() {
     }
   });
   overlay.remove();
+  unlockPageScroll();
   render();
   flashDelta(changes);
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+  const overlay = document.getElementById(id);
+  if (!overlay || !overlay.classList.contains('active')) return;
+  overlay.classList.remove('active');
+  unlockPageScroll();
 }
 
 // 撤销
@@ -1914,7 +1950,7 @@ function showHistory() {
     }
     list.appendChild(item);
   });
-  document.getElementById('historyOverlay').classList.add('active');
+  openModal('historyOverlay');
 }
 
 function resetGame() {
@@ -1953,7 +1989,7 @@ function showGameEnd() {
       <div class="points">${p.points}</div>
     </div>
   `).join('');
-  document.getElementById('endOverlay').classList.add('active');
+  openModal('endOverlay');
 }
 
 // 初次渲染
