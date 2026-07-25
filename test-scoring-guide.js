@@ -64,11 +64,9 @@ assert.deepEqual(
 const fs = require('fs');
 const html = fs.readFileSync('./index.html', 'utf8');
 assert(/id="scoringGuideOverlay"/.test(html), '应提供独立的算分教学页面');
-assert(/id="scoringGuideButtons"/.test(html), '算分入口应有稳定的事件委托容器');
-assert(/data-guide="fu"/.test(html), '教学首页应有符数详解入口');
-assert(/data-guide="points"/.test(html), '教学首页应有点数计算入口');
-assert(/data-guide="limits"/.test(html), '教学首页应有满贯档位入口');
-assert(/function\s+initScoringGuideButtons[\s\S]*addEventListener\('click'/s.test(html), '算分入口必须使用明确的点击事件绑定');
+assert(/<button[^>]*class="scoring-guide-btn"[^>]*data-guide="fu"[^>]*onclick="openScoringGuide\('fu'\)"/.test(html), '符数入口必须直接绑定打开动作');
+assert(/<button[^>]*class="scoring-guide-btn"[^>]*data-guide="points"[^>]*onclick="openScoringGuide\('points'\)"/.test(html), '算分方法入口必须直接绑定打开动作');
+assert(/<button[^>]*class="scoring-guide-btn"[^>]*data-guide="limits"[^>]*onclick="openScoringGuide\('limits'\)"/.test(html), '满贯入口必须直接绑定打开动作');
 assert(/\.scoring-guide-btn\s*>\s*\*\s*\{[^}]*pointer-events\s*:\s*none/s.test(html), '点击“点”等内部文字时事件必须落到按钮本体');
 assert(/id="yakuCatalogCloseBottom"/.test(html), '役种图鉴底部必须提供可见退出按钮');
 assert(/onclick="handleOverlayClick\(event, 'yakuCatalogOverlay'\)"/.test(html), '点击图鉴遮罩应能退出');

@@ -266,9 +266,9 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <h3>算分详解</h3>
     <p class="scoring-entry-intro">不只告诉你答案。把符怎么加、基本点怎么算、满贯为什么封顶拆开看。</p>
     <div class="scoring-guide-buttons" id="scoringGuideButtons">
-      <button type="button" class="scoring-guide-btn" data-guide="fu"><span>符</span>符数详解</button>
-      <button type="button" class="scoring-guide-btn" data-guide="points"><span>点</span>算分方法</button>
-      <button type="button" class="scoring-guide-btn" data-guide="limits"><span>満</span>满贯档位</button>
+      <button type="button" class="scoring-guide-btn" data-guide="fu" onclick="openScoringGuide('fu')"><span>符</span>符数详解</button>
+      <button type="button" class="scoring-guide-btn" data-guide="points" onclick="openScoringGuide('points')"><span>点</span>算分方法</button>
+      <button type="button" class="scoring-guide-btn" data-guide="limits" onclick="openScoringGuide('limits')"><span>満</span>满贯档位</button>
     </div>
   </section>
 </main>
@@ -738,18 +738,6 @@ function openScoringGuide(tab = 'fu') {
   scoringGuideTab = tab;
   renderScoringGuide();
   openModal('scoringGuideOverlay');
-}
-
-function initScoringGuideButtons() {
-  const container = document.getElementById('scoringGuideButtons');
-  if (!container || container.dataset.bound === 'true') return;
-  container.dataset.bound = 'true';
-  container.addEventListener('click', event => {
-    const button = event.target.closest('.scoring-guide-btn');
-    if (!button || !container.contains(button)) return;
-    event.preventDefault();
-    openScoringGuide(button.dataset.guide);
-  });
 }
 
 function showScoringGuideTab(tab) {
@@ -2206,7 +2194,6 @@ function showGameEnd() {
 }
 
 // 初次渲染
-initScoringGuideButtons();
 render();
 
 // 包裹保存快照
