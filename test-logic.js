@@ -182,5 +182,25 @@ console.log('\n=== 立直状态 ===');
   test('未立直不能单独取得一发', !noRiichiIppatsu.valid || !noRiichiIppatsu.yaku.some(y => y.name === '一发'), true);
 }
 
+console.log('\n=== 二翻役回归 ===');
+{
+  const shousangenTiles = ['5z','5z','5z','6z','6z','6z','7z','7z','1m','2m','3m','7p','8p','9p'];
+  const shousangen = evaluateHand({
+    tiles: shousangenTiles, isOpened: false, isTsumo: false, isRiichi: false,
+    winTile: '7z', roundWind: '1z', seatWind: '2z', doraCount: 0,
+  });
+  test('小三元不是役满', shousangen.valid && !shousangen.isYakuman, true);
+  test('小三元按2翻役识别', shousangen.valid && shousangen.yaku.some(y => y.name === '小三元' && y.han === 2), true);
+
+  const honroutouTiles = ['1m','1m','1m','9m','9m','9m','1p','1p','1p','9s','9s','9s','1z','1z'];
+  const honroutou = evaluateHand({
+    tiles: honroutouTiles, isOpened: true,
+    openMentsus: [{type:'koutsu', tiles:['1m','1m','1m'], open:true}],
+    isTsumo: false, isRiichi: false,
+    winTile: '1z', roundWind: '2z', seatWind: '3z', doraCount: 0,
+  });
+  test('混老头被识别', honroutou.valid && honroutou.yaku.some(y => y.name === '混老头' && y.han === 2), true);
+}
+
 console.log(`\n=== 结果: ${pass} passed, ${fail} failed ===`);
 process.exit(fail > 0 ? 1 : 0);

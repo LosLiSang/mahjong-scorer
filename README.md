@@ -12,6 +12,7 @@
 - 立直、两立直、一发、海底、河底、抢杠、岭上条件
 - 多张表宝牌与裏宝牌指示牌
 - 自动计算役、番、符与最终支付
+- H5 日麻入门教学馆：6 节短课、真实牌图示例、学习进度与 6 题测验
 
 ## 使用
 
@@ -27,6 +28,13 @@ python3 -m http.server 8080
 
 ```bash
 node test-logic.js
+node test-tutorial.js
+```
+
+小程序分支另运行：
+
+```bash
+node test-miniprogram.js
 ```
 
 ## 线上地址

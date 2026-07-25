@@ -89,9 +89,91 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 .mentsu-group .type-btn { font-size: 10px; padding: 4px 6px; background: #f5f4ee; border: 1px solid #e8e5d8; border-radius: 4px; color: #8a8470; cursor: pointer; white-space: nowrap; }
 .mentsu-group .type-btn.active { background: #c96442; color: #fff; border-color: #c96442; }
 .mentsu-group .pair-label { font-size: 11px; color: #c96442; font-weight: 600; padding: 2px 6px; }
+
+/* 教学馆 */
+.app-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #ebe7da; border-radius: 12px; padding: 4px; margin-bottom: 12px; position: sticky; top: 8px; z-index: 20; box-shadow: 0 5px 16px rgba(61,57,41,.08); }
+.nav-btn { border: 0; border-radius: 9px; padding: 10px 8px; background: transparent; color: #77705c; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.nav-btn.active { background: #fff; color: #c96442; box-shadow: 0 2px 8px rgba(61,57,41,.08); }
+.app-view[hidden] { display: none; }
+.tutorial-hero { background: linear-gradient(145deg, #fffaf0, #efe8d8); border: 1px solid #e0d8c7; border-radius: 18px; padding: 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
+.tutorial-hero::after { content: '一飜'; position: absolute; right: -12px; bottom: -28px; font-size: 82px; font-weight: 700; color: rgba(201,100,66,.08); transform: rotate(-9deg); }
+.tutorial-kicker { color: #c96442; font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+.tutorial-hero h1 { font-size: 26px; line-height: 1.35; margin: 7px 0; }
+.tutorial-hero p { font-size: 14px; line-height: 1.75; color: #746e5c; max-width: 350px; }
+.progress-track { height: 7px; background: rgba(255,255,255,.75); border-radius: 99px; margin-top: 15px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: #5a7a4a; border-radius: inherit; transition: width .25s ease; }
+.progress-label { font-size: 11px; color: #746e5c; margin-top: 6px; }
+.tutorial-list { display: grid; gap: 8px; }
+.lesson-card { width: 100%; display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 11px; background: #fff; color: #3d3929; border: 1px solid #e8e5d8; border-radius: 13px; padding: 12px; text-align: left; font: inherit; cursor: pointer; }
+.lesson-card:active { transform: scale(.99); }
+.lesson-number { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #f5eee7; color: #c96442; font-weight: 700; }
+.lesson-card.done .lesson-number { background: #e7efe2; color: #5a7a4a; }
+.lesson-card-title { font-size: 15px; font-weight: 700; }
+.lesson-card-summary { font-size: 11px; color: #918a76; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lesson-arrow { color: #b8b299; font-size: 20px; }
+.quiz-entry { margin-top: 12px; padding: 16px; border-radius: 14px; background: #5a7a4a; color: #fff; }
+.quiz-entry h3 { font-size: 17px; }
+.quiz-entry p { opacity: .8; font-size: 12px; line-height: 1.6; margin: 5px 0 12px; }
+.quiz-entry .btn { width: 100%; background: #fff; color: #4e6b41; padding: 11px; }
+.tutorial-modal { max-height: 94vh; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.lesson-eyebrow { color: #c96442; font-size: 12px; font-weight: 700; text-align: center; }
+.lesson-summary { color: #746e5c; font-size: 14px; line-height: 1.75; margin: 12px 0; }
+.lesson-points { list-style: none; display: grid; gap: 8px; }
+.lesson-points li { background: #fff; border: 1px solid #e8e5d8; border-radius: 9px; padding: 10px 10px 10px 30px; font-size: 13px; line-height: 1.6; position: relative; }
+.lesson-points li::before { content: '◆'; position: absolute; left: 11px; top: 12px; color: #c96442; font-size: 9px; }
+.lesson-example { margin-top: 14px; padding: 12px; background: #eeeadd; border-radius: 12px; }
+.lesson-example-title { font-size: 11px; color: #746e5c; margin-bottom: 7px; }
+.tutorial-tiles { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-end; }
+.tutorial-tiles img { width: 28px; height: 38px; }
+.tile-example-row + .tile-example-row { margin-top: 9px; }
+.lesson-tip { margin-top: 13px; border-left: 3px solid #5a7a4a; padding: 9px 11px; background: #f1f5ee; color: #536349; border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.65; }
+.quiz-progress { font-size: 12px; color: #8a8470; text-align: center; margin-bottom: 9px; }
+.quiz-question { font-size: 18px; line-height: 1.55; margin-bottom: 13px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { border: 1px solid #ded8c8; background: #fff; color: #3d3929; border-radius: 10px; padding: 12px; font: inherit; font-size: 14px; text-align: left; }
+.quiz-option.selected { border-color: #c96442; background: #fdf1eb; color: #a84e31; }
+.quiz-explanation { display: none; margin-top: 12px; padding: 11px; border-radius: 9px; font-size: 13px; line-height: 1.65; }
+.quiz-explanation.correct { display: block; background: #edf4e9; color: #4f6743; }
+.quiz-explanation.wrong { display: block; background: #fbece7; color: #9e4f38; }
+.quiz-result { text-align: center; padding: 12px 0; }
+.quiz-score { font-size: 44px; color: #c96442; font-weight: 700; }
+.quiz-result p { color: #746e5c; margin: 8px 0 16px; line-height: 1.7; }
+
+/* 图鉴 */
+.catalog-entry { background: linear-gradient(145deg, #faf8f2, #f0ead6); border: 1px solid #e0d8c7; border-radius: 14px; padding: 16px; margin-top: 12px; }
+.catalog-entry h3 { font-size: 17px; color: #c96442; }
+.catalog-entry p { opacity: .8; font-size: 12px; line-height: 1.6; margin: 5px 0 12px; }
+.catalog-entry .btn { width: 100%; background: #c96442; color: #fff; padding: 11px; }
+.catalog-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.filter-chip { padding: 6px 13px; border-radius: 99px; border: 1px solid #d8d1c0; background: #fff; color: #746e5c; font-size: 12px; font-weight: 600; cursor: pointer; }
+.filter-chip.active { background: #c96442; color: #fff; border-color: #c96442; }
+.yaku-grid { display: grid; gap: 6px; }
+.yaku-card { width: 100%; background: #fff; border: 1px solid #e8e5d8; border-radius: 11px; padding: 12px; text-align: left; font: inherit; cursor: pointer; }
+.yaku-card:active { transform: scale(.99); }
+.yaku-card .yaku-han { display: inline-block; padding: 2px 8px; border-radius: 99px; background: #edf4e9; color: #5a7a4a; font-size: 11px; font-weight: 700; margin-bottom: 5px; }
+.yaku-card .yaku-han.yakuman { background: #fbece7; color: #c96442; }
+.yaku-card .yaku-name { font-size: 15px; font-weight: 700; }
+.yaku-card .yaku-cond { font-size: 11px; color: #918a76; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.yaku-detail .yaku-han-badge { display: inline-block; padding: 3px 13px; border-radius: 99px; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.yaku-detail .yaku-han-badge.yakuman { background: #fbece7; color: #c96442; }
+.yaku-detail .yaku-han-badge:not(.yakuman) { background: #edf4e9; color: #5a7a4a; }
+.yaku-detail .yaku-condition { font-size: 14px; line-height: 1.75; margin: 10px 0; }
+.yaku-detail .yaku-example { margin: 12px 0; padding: 12px; background: #eeeadd; border-radius: 12px; }
+.yaku-detail .yaku-pitfall { margin-top: 12px; border-left: 3px solid #c96442; padding: 9px 11px; background: #fdf5f2; border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.65; color: #9e4f38; }
+.yaku-detail .yaku-tip { margin-top: 8px; border-left: 3px solid #5a7a4a; padding: 9px 11px; background: #f1f5ee; color: #536349; border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.65; }
+.yaku-back-btn { margin-top: 10px; background: none; border: 0; color: #c96442; font-size: 15px; font-weight: 600; padding: 8px 0; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.yaku-back-btn::before { content: '←'; font-size: 16px; }
+.yaku-list-view[hidden] { display: none; }
 </style>
 </head>
 <body>
+
+<nav class="app-nav" aria-label="主要功能">
+  <button class="nav-btn active" id="scoreNavBtn" onclick="showAppView('score')">计分</button>
+  <button class="nav-btn" id="tutorialNavBtn" onclick="showAppView('tutorial')">学日麻</button>
+</nav>
+
+<main class="app-view" id="scoreView">
 
 <div class="status-bar">
   <div class="round-info" id="roundDisplay">东一局</div>
@@ -112,6 +194,29 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <button class="btn btn-danger btn-small" onclick="resetGame()">重置</button>
   </div>
 </div>
+</main>
+
+<main class="app-view" id="tutorialView" hidden>
+  <section class="tutorial-hero">
+    <div class="tutorial-kicker">RIICHI MAHJONG · 入门</div>
+    <h1>从认牌到看懂点数</h1>
+    <p>每节只讲一个关键问题。先把能上桌的骨架学会，再慢慢补役种，不许一上来背整张役表。</p>
+    <div class="progress-track"><div class="progress-fill" id="tutorialProgressFill"></div></div>
+    <div class="progress-label" id="tutorialProgressLabel">0 / 6 节完成</div>
+  </section>
+  <section class="tutorial-list" id="tutorialList"></section>
+  <section class="quiz-entry">
+    <h3>入门测验</h3>
+    <p>6 道题，检查你有没有把“有形无役”这种新手坑记住。</p>
+    <button class="btn" onclick="openTutorialQuiz()">开始测验</button>
+  </section>
+
+  <section id="catalogSection" class="catalog-entry">
+    <h3>役种图鉴</h3>
+    <p>翻卡查看每个役的成立条件、牌例、易错点和鸣牌限制。</p>
+    <button class="btn" onclick="openYakuCatalog()">查看图鉴</button>
+  </section>
+</main>
 
 <!-- 和牌弹窗 -->
 <div class="overlay" id="winOverlay">
@@ -222,6 +327,45 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
   </div>
 </div>
 
+<!-- 教学课文弹窗 -->
+<div class="overlay" id="lessonOverlay">
+  <div class="modal tutorial-modal">
+    <div class="lesson-eyebrow" id="lessonEyebrow"></div>
+    <h3 id="lessonTitle"></h3>
+    <div class="lesson-summary" id="lessonSummary"></div>
+    <ul class="lesson-points" id="lessonPoints"></ul>
+    <div class="lesson-example" id="lessonExamples"></div>
+    <div class="lesson-tip" id="lessonTip"></div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('lessonOverlay')">稍后再看</button>
+      <button class="btn" id="completeLessonBtn" onclick="completeCurrentLesson()">学完这节</button>
+    </div>
+  </div>
+</div>
+
+<!-- 教学测验弹窗 -->
+<div class="overlay" id="tutorialQuizOverlay">
+  <div class="modal tutorial-modal">
+    <h3>日麻入门测验</h3>
+    <div id="quizBody"></div>
+  </div>
+</div>
+
+<!-- 役种图鉴弹窗 -->
+<div class="overlay" id="yakuCatalogOverlay">
+  <div class="modal tutorial-modal">
+    <div class="yaku-list-view" id="yakuListView">
+      <h3>役种图鉴</h3>
+      <div class="catalog-filters" id="yakuFilters"></div>
+      <div class="yaku-grid" id="yakuGrid"></div>
+    </div>
+    <div class="yaku-list-view" id="yakuDetailView" hidden>
+      <button class="yaku-back-btn" onclick="showYakuList()">役种图鉴</button>
+      <div class="yaku-detail" id="yakuDetailContent"></div>
+    </div>
+  </div>
+</div>
+
 <!-- 流局弹窗 -->
 <div class="overlay" id="drawOverlay">
   <div class="modal">
@@ -257,6 +401,8 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 </div>
 
 <script src="mahjong-logic.js"></script>
+<script src="tutorial-data.js"></script>
+<script src="yaku-data.js"></script>
 <script>
 // 把 mahjong-logic.js 导出的函数挂到 window（浏览器环境没有 module.exports）
 // 实际上浏览器里这些函数已经是全局的，不需要 require
@@ -271,6 +417,213 @@ const START_POINTS = 25000;
 const RETURN_POINTS = 30000;
 
 let game = null;
+
+// ============ 教学馆 ============
+const TUTORIAL_PROGRESS_KEY = 'mj_tutorial_progress_v1';
+let currentLessonId = null;
+let tutorialQuizState = { index: 0, answers: [], checked: false };
+
+function loadTutorialProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TUTORIAL_PROGRESS_KEY) || '[]');
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function saveTutorialProgress(progress) {
+  localStorage.setItem(TUTORIAL_PROGRESS_KEY, JSON.stringify([...progress]));
+}
+
+function showAppView(view) {
+  const tutorial = view === 'tutorial';
+  document.getElementById('scoreView').hidden = tutorial;
+  document.getElementById('tutorialView').hidden = !tutorial;
+  document.getElementById('scoreNavBtn').classList.toggle('active', !tutorial);
+  document.getElementById('tutorialNavBtn').classList.toggle('active', tutorial);
+  if (tutorial) renderTutorialHome();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderTutorialHome() {
+  const progress = loadTutorialProgress();
+  const list = document.getElementById('tutorialList');
+  list.innerHTML = '';
+  MAHJONG_TUTORIAL.lessons.forEach((lesson, index) => {
+    const done = progress.has(lesson.id);
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'lesson-card' + (done ? ' done' : '');
+    card.onclick = () => openTutorialLesson(lesson.id);
+    card.innerHTML = `
+      <span class="lesson-number">${done ? '✓' : index + 1}</span>
+      <span><span class="lesson-card-title">${lesson.title}</span><span class="lesson-card-summary">${lesson.summary}</span></span>
+      <span class="lesson-arrow">›</span>`;
+    list.appendChild(card);
+  });
+  const completed = MAHJONG_TUTORIAL.lessons.filter(lesson => progress.has(lesson.id)).length;
+  const percent = Math.round(completed / MAHJONG_TUTORIAL.lessons.length * 100);
+  document.getElementById('tutorialProgressFill').style.width = `${percent}%`;
+  document.getElementById('tutorialProgressLabel').textContent = `${completed} / ${MAHJONG_TUTORIAL.lessons.length} 节完成`;
+}
+
+function tutorialTileHtml(tileId) {
+  const def = TILE_DEFS.find(tile => tile.id === tileId);
+  return `<img src="${tileImgSrc(tileId)}" alt="${def ? def.display : tileId}">`;
+}
+
+function openTutorialLesson(id) {
+  const lesson = getTutorialLesson(id);
+  if (!lesson) return;
+  currentLessonId = id;
+  document.getElementById('lessonEyebrow').textContent = lesson.eyebrow;
+  document.getElementById('lessonTitle').textContent = lesson.title;
+  document.getElementById('lessonSummary').textContent = lesson.summary;
+  document.getElementById('lessonPoints').innerHTML = lesson.points.map(point => `<li>${point}</li>`).join('');
+  document.getElementById('lessonExamples').innerHTML = lesson.tileGroups.map(group => `
+    <div class="tile-example-row">
+      <div class="lesson-example-title">${group.label}</div>
+      <div class="tutorial-tiles">${group.tiles.map(tutorialTileHtml).join('')}</div>
+    </div>`).join('');
+  document.getElementById('lessonTip').textContent = lesson.tip;
+  const done = loadTutorialProgress().has(id);
+  document.getElementById('completeLessonBtn').textContent = done ? '已完成 · 再看一遍' : '学完这节';
+  document.getElementById('lessonOverlay').classList.add('active');
+}
+
+function completeCurrentLesson() {
+  if (!currentLessonId) return;
+  const progress = loadTutorialProgress();
+  progress.add(currentLessonId);
+  saveTutorialProgress(progress);
+  closeModal('lessonOverlay');
+  renderTutorialHome();
+}
+
+function openTutorialQuiz() {
+  tutorialQuizState = { index: 0, answers: [], checked: false };
+  renderTutorialQuiz();
+  document.getElementById('tutorialQuizOverlay').classList.add('active');
+}
+
+function renderTutorialQuiz() {
+  const body = document.getElementById('quizBody');
+  const state = tutorialQuizState;
+  if (state.index >= MAHJONG_TUTORIAL.quiz.length) {
+    const result = gradeTutorialQuiz(state.answers);
+    const message = result.score === result.total
+      ? '基础过关。至少你不会把宝牌当成役了。'
+      : result.score >= 4
+        ? '骨架已经有了，错题再看一遍就行。'
+        : '别急着背役表，先把六节短课重新走一遍。';
+    body.innerHTML = `<div class="quiz-result"><div class="quiz-score">${result.score}/${result.total}</div><p>${message}</p><div class="btn-row"><button class="btn btn-secondary" onclick="closeModal('tutorialQuizOverlay')">返回教学</button><button class="btn" onclick="openTutorialQuiz()">再测一次</button></div></div>`;
+    return;
+  }
+
+  const question = MAHJONG_TUTORIAL.quiz[state.index];
+  const selected = state.answers[state.index];
+  const detail = state.checked ? gradeTutorialQuiz(state.answers).details[state.index] : null;
+  body.innerHTML = `
+    <div class="quiz-progress">第 ${state.index + 1} / ${MAHJONG_TUTORIAL.quiz.length} 题</div>
+    <div class="quiz-question">${question.question}</div>
+    <div class="quiz-options">${question.options.map((option, index) => `<button class="quiz-option ${selected === index ? 'selected' : ''}" onclick="selectTutorialAnswer(${index})" ${state.checked ? 'disabled' : ''}>${String.fromCharCode(65 + index)}. ${option}</button>`).join('')}</div>
+    <div class="quiz-explanation ${detail ? (detail.correct ? 'correct' : 'wrong') : ''}">${detail ? `${detail.correct ? '答对了。' : `答错了，正确答案是 ${String.fromCharCode(65 + question.answer)}。`} ${question.explanation}` : ''}</div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal('tutorialQuizOverlay')">退出</button>
+      <button class="btn" onclick="advanceTutorialQuiz()">${state.checked ? (state.index === MAHJONG_TUTORIAL.quiz.length - 1 ? '查看成绩' : '下一题') : '确认答案'}</button>
+    </div>`;
+}
+
+function selectTutorialAnswer(index) {
+  if (tutorialQuizState.checked) return;
+  tutorialQuizState.answers[tutorialQuizState.index] = index;
+  renderTutorialQuiz();
+}
+
+function advanceTutorialQuiz() {
+  const state = tutorialQuizState;
+  if (!state.checked) {
+    if (state.answers[state.index] === undefined) {
+      alert('先选一个答案。');
+      return;
+    }
+    state.checked = true;
+  } else {
+    state.index++;
+    state.checked = false;
+  }
+  renderTutorialQuiz();
+}
+
+// ============ 役种图鉴 ============
+let yakuFilterCategory = null;
+
+function openYakuCatalog() {
+  yakuFilterCategory = null;
+  renderYakuList();
+  showYakuList();
+  document.getElementById('yakuCatalogOverlay').classList.add('active');
+}
+
+function renderYakuFilters() {
+  const filters = document.getElementById('yakuFilters');
+  const categories = ['1han','2han','3han','6han','yakuman'];
+  filters.innerHTML = categories.map(cat =>
+    `<span class="filter-chip ${yakuFilterCategory === cat ? 'active' : ''}" onclick="setYakuFilter('${cat}')">${CATEGORY_LABELS[cat]}</span>`
+  ).join('');
+}
+
+function setYakuFilter(cat) {
+  yakuFilterCategory = yakuFilterCategory === cat ? null : cat;
+  renderYakuList();
+}
+
+function renderYakuList() {
+  renderYakuFilters();
+  const grid = document.getElementById('yakuGrid');
+  const list = filterYakuCatalog({ category: yakuFilterCategory });
+  grid.innerHTML = list.map(yaku => {
+    const isYakuman = yaku.category === 'yakuman';
+    const hanLabel = isYakuman ? '役满' : (yaku.hanClosed === yaku.hanOpen ? `${yaku.hanClosed}翻` : `门${yaku.hanClosed}翻／鸣${yaku.hanOpen}翻`);
+    const badgeClass = isYakuman ? 'yakuman' : '';
+    return `<button class="yaku-card" onclick="openYakuDetail('${yaku.id}')">
+      <span class="yaku-han ${badgeClass}">${hanLabel}</span>
+      <span class="yaku-name">${yaku.name}</span>
+      <span class="yaku-cond">${yaku.condition.length > 40 ? yaku.condition.slice(0,37) + '…' : yaku.condition}</span>
+    </button>`;
+  }).join('');
+}
+
+function openYakuDetail(id) {
+  const yaku = getYakuById(id);
+  if (!yaku) return;
+  const isYakuman = yaku.category === 'yakuman';
+  const hanLabel = isYakuman ? '役满' : (yaku.hanClosed === yaku.hanOpen ? `${yaku.hanClosed}翻` : `门${yaku.hanClosed}翻／鸣${yaku.hanOpen}翻`);
+  const exampleHtml = yaku.example.length > 0
+    ? yaku.example.map(tiles => `<div class="tutorial-tiles">${tiles.map(tutorialTileHtml).join('')}</div>`).join('')
+    : '<span style="font-size:12px;color:#918a76">（纯运气役，无特定牌例）</span>';
+  document.getElementById('yakuDetailContent').innerHTML = `
+    <span class="yaku-han-badge ${isYakuman ? 'yakuman' : ''}">${yaku.name} · ${hanLabel}</span>
+    <div class="yaku-condition">${yaku.condition}</div>
+    <div class="yaku-example"><div class="lesson-example-title">牌例</div>${exampleHtml}</div>
+    <div class="yaku-pitfall"><strong>易错点：</strong>${yaku.pitfall}</div>
+    <div class="yaku-tip"><strong>打牌时：</strong>${yaku.tip}</div>
+    <div style="margin-top:8px;font-size:11px;color:#918a76">鸣牌：${yaku.openPenalty || '—'}</div>
+  `;
+  showYakuDetail();
+}
+
+function showYakuList() {
+  document.getElementById('yakuListView').hidden = false;
+  document.getElementById('yakuDetailView').hidden = true;
+}
+
+function showYakuDetail() {
+  document.getElementById('yakuListView').hidden = true;
+  document.getElementById('yakuDetailView').hidden = false;
+  document.getElementById('yakuCatalogOverlay').scrollTo({ top: 0 });
+}
 
 function newGame() {
   return {

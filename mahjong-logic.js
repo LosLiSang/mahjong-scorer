@@ -313,6 +313,8 @@ const YAKU_RULES = [
   { name: '三暗刻', han: 2, check: (p, r) => r.sanAnkou >= 3 },
   { name: '三杠子', han: 2, check: (p, r) => r.kanCount >= 3 },
   { name: '对对和', han: 2, check: (p, r) => r.allTriplets },
+  { name: '小三元', han: 2, check: (p, r) => r.shouSanGen },
+  { name: '混老头', han: 2, check: (p, r) => r.honroutou },
   {
     name: '混一色',
     han: 3, closed: true, hanOpen: 2,
@@ -344,7 +346,6 @@ const YAKU_RULES = [
   { name: '绿一色', han: 0, yakuman: 1, check: (p, r) => r.ryuuiisou },
   { name: '清老头', han: 0, yakuman: 1, check: (p, r) => r.chinroutou },
   { name: '四杠子', han: 0, yakuman: 1, check: (p, r) => r.kanCount >= 4 },
-  { name: '小三元', han: 0, yakuman: 1, check: (p, r) => r.shouSanGen },
   { name: '四暗刻', han: 0, yakuman: 1, check: (p, r) => r.suAnkou >= 4 && !r.suAnkouSingle },
   { name: '四暗刻单骑', han: 0, yakuman: 2, check: (p, r) => r.suAnkouSingle },
   {
@@ -396,6 +397,7 @@ function analyzeStructure(tiles, decomp, params) {
     ryuuiisou: false,
     chinroutou: false,
     shouSanGen: false,
+    honroutou: false,
     kokushi: false,
     kokushi13: false,
     chuurenPoutou: false,
@@ -515,6 +517,9 @@ function analyzeStructure(tiles, decomp, params) {
 
   // 清老头：全是老头牌(1,9 数牌)
   if (tiles.every(t => !isHonor(t) && isTerminal(t))) r.chinroutou = true;
+
+  // 混老头：全部由老头牌和字牌组成（全字牌/全老头会优先按役满处理）
+  if (tiles.every(isYaochuu)) r.honroutou = true;
 
   // 绿一色：全是绿色牌 (2,3,4,6,8 索 + 发)
   const greenTiles = new Set(['2s','3s','4s','6s','8s','6z']);
