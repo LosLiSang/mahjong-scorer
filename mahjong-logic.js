@@ -907,11 +907,22 @@ function calcPointPayments(han, fu, options = {}) {
   return { basePoint, limitName, total, payments };
 }
 
+function calcDrawDeltas(tenpaiSet) {
+  const tCount = tenpaiSet.size;
+  if (tCount === 0 || tCount === 4) return [0, 0, 0, 0];
+
+  const payByNoten = 3000 / (4 - tCount);
+  const receiveByTenpai = 3000 / tCount;
+  return Array.from({ length: 4 }, (_, index) =>
+    tenpaiSet.has(index) ? receiveByTenpai : -payByNoten
+  );
+}
+
 // 导出（Node 测试用）
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     countTiles, decompose, calcFu, detectWaitType, evaluateHand,
-    calcBasePoint, getLimitName, roundUp100, calcPointPayments,
+    calcBasePoint, getLimitName, roundUp100, calcPointPayments, calcDrawDeltas,
     analyzeStructure, isYaochuu, isHonor,
   };
 }

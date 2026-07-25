@@ -3,6 +3,7 @@ const {
   calcBasePoint,
   getLimitName,
   calcPointPayments,
+  calcDrawDeltas,
 } = require('./mahjong-logic');
 const {
   FU_REFERENCE,
@@ -61,8 +62,40 @@ assert.deepEqual(
   '子家满贯自摸应为 4000/2000'
 );
 
+assert.deepEqual(
+  calcDrawDeltas(new Set([0])),
+  [3000, -1000, -1000, -1000],
+  '一人听牌时听牌者收 3000，其余三家各付 1000'
+);
+assert.deepEqual(
+  calcDrawDeltas(new Set([0, 2])),
+  [1500, -1500, 1500, -1500],
+  '两人听牌时听牌者各收 1500，不听者各付 1500'
+);
+assert.deepEqual(
+  calcDrawDeltas(new Set([0, 1, 2])),
+  [1000, 1000, 1000, -3000],
+  '三人听牌时听牌者各收 1000，不听者付 3000'
+);
+assert.deepEqual(calcDrawDeltas(new Set()), [0, 0, 0, 0], '无人听牌不交换点数');
+assert.deepEqual(calcDrawDeltas(new Set([0, 1, 2, 3])), [0, 0, 0, 0], '四人听牌不交换点数');
+
 const fs = require('fs');
 const html = fs.readFileSync('./index.html', 'utf8');
+assert(/function\s+seatOf\(playerIndex/.test(html), '玩家方位必须随庄家轮转动态计算');
+assert(/const\s+seat\s*=\s*seatOf\(i\)/.test(html), '玩家卡片必须使用动态座风');
+assert(/winnerName: winner\.name/.test(html), '和牌历史必须保存当时的玩家姓名');
+assert(/const\s+tenpaiPlayers\s*=\s*\[\.\.\.tenpai\]\.map/.test(html), '流局历史必须在轮庄前冻结当时的座风与姓名');
+assert(/function\s+previewDraw/.test(html), '流局弹窗必须实时预览听牌罚符');
+assert(/btn\.onclick\s*=\s*\(\)\s*=>\s*\{[\s\S]*previewDraw\(\)/s.test(html), '切换听牌玩家后必须立即刷新流局点数预览');
+assert(/calcDrawDeltas\(tenpai\)/.test(html), '流局预览和结算必须共用统一算法');
+assert(/id="playerSetupOverlay"/.test(html), '新对局必须提供玩家姓名设置弹窗');
+assert(/id="playerName0"/.test(html) && /id="playerName3"/.test(html), '姓名设置必须包含四位玩家');
+assert(/function\s+confirmPlayerSetup/.test(html), '必须提供确认玩家姓名的流程');
+assert(/game\.honba\+\+;[\s\S]*if\s*\(dealerTenpai\)/s.test(html), '荒牌流局必须先增加一本场，再判断庄家是否连庄');
+assert(/const\s+drawRound\s*=\s*ROUND_NAMES\[game\.roundIndex\]/.test(html), '流局历史必须记录结算前的局数');
+assert(/function\s+playerLabel\(playerIndex\)[\s\S]*seatOf\(playerIndex\)[\s\S]*game\.players\[playerIndex\]\.name/s.test(html), '玩家选择项必须同时显示动态方位和姓名');
+
 assert(/id="scoringGuideOverlay"/.test(html), '应提供独立的算分教学页面');
 assert(/<button[^>]*class="scoring-guide-btn"[^>]*data-guide="fu"[^>]*onclick="openScoringGuide\('fu'\)"/.test(html), '符数入口必须直接绑定打开动作');
 assert(/<button[^>]*class="scoring-guide-btn"[^>]*data-guide="points"[^>]*onclick="openScoringGuide\('points'\)"/.test(html), '算分方法入口必须直接绑定打开动作');

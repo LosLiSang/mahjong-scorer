@@ -49,7 +49,12 @@ body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong
 .result-box { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 14px; margin: 14px 0; text-align: center; }
 .result-box .points { font-size: 28px; font-weight: 600; color: #5a7a4a; }
 .result-box .detail { font-size: 13px; color: #8a8470; margin-top: 6px; }
-.result-box .breakdown { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.6; }
+.result-box .breakdown { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.6; white-space: pre-line; }
+.player-setup-grid { display: grid; gap: 10px; }
+.player-setup-field { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 9px; }
+.player-setup-field label { margin: 0; text-align: center; color: #c96442; font-size: 15px; font-weight: 700; }
+.player-setup-field input { min-width: 0; }
+.setup-error { min-height: 20px; margin-top: 8px; color: #c96442; font-size: 12px; text-align: center; }
 
 /* 历史 */
 .history-list { margin-top: 12px; }
@@ -451,6 +456,22 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
       <button class="btn btn-secondary" onclick="closeModal('drawOverlay')">取消</button>
       <button class="btn" onclick="confirmDraw()">确认流局</button>
     </div>
+  </div>
+</div>
+
+<!-- 新对局玩家设置 -->
+<div class="overlay" id="playerSetupOverlay">
+  <div class="modal">
+    <h3>新对局 · 玩家姓名</h3>
+    <p style="font-size:13px;color:#8a8470;margin-bottom:14px;text-align:center">按当前座次填写四位玩家，之后结算会同时显示方位和姓名。</p>
+    <div class="player-setup-grid">
+      <div class="player-setup-field"><label for="playerName0">东</label><input id="playerName0" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
+      <div class="player-setup-field"><label for="playerName1">南</label><input id="playerName1" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
+      <div class="player-setup-field"><label for="playerName2">西</label><input id="playerName2" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
+      <div class="player-setup-field"><label for="playerName3">北</label><input id="playerName3" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
+    </div>
+    <div class="setup-error" id="playerSetupError"></div>
+    <button class="btn" style="width:100%;margin-top:4px" onclick="confirmPlayerSetup()">开始对局</button>
   </div>
 </div>
 
@@ -880,6 +901,45 @@ function saveGame() {
   localStorage.setItem('mj_game', JSON.stringify(game));
 }
 
+function seatOf(playerIndex, dealerIndex = game.dealerIndex) {
+  return SEATS[(playerIndex - dealerIndex + 4) % 4];
+}
+
+function playerLabel(playerIndex) {
+  return `${seatOf(playerIndex)} · ${game.players[playerIndex].name}`;
+}
+
+function hasPlayerNames(players = game.players) {
+  return players.every(player => {
+    const name = String(player.name || '').trim();
+    return name && !SEATS.some(seat => name === `${seat}家`);
+  });
+}
+
+function openPlayerSetup({ keepCurrentNames = true } = {}) {
+  for (let i = 0; i < 4; i++) {
+    const currentName = keepCurrentNames ? String(game.players[i]?.name || '').trim() : '';
+    document.getElementById(`playerName${i}`).value = SEATS.some(seat => currentName === `${seat}家`) ? '' : currentName;
+  }
+  document.getElementById('playerSetupError').textContent = '';
+  openModal('playerSetupOverlay');
+  setTimeout(() => document.getElementById('playerName0').focus(), 0);
+}
+
+function confirmPlayerSetup() {
+  const names = Array.from({ length: 4 }, (_, index) =>
+    document.getElementById(`playerName${index}`).value.trim()
+  );
+  if (names.some(name => !name)) {
+    document.getElementById('playerSetupError').textContent = '四位玩家都要填写姓名';
+    return;
+  }
+  game.players.forEach((player, index) => { player.name = names[index]; });
+  closeModal('playerSetupOverlay');
+  saveGame();
+  render();
+}
+
 // ============ 点数计算 ============
 function calcBasePoint(han, fu) {
   han = parseInt(han); fu = parseInt(fu);
@@ -965,10 +1025,11 @@ function render() {
   container.innerHTML = '';
   game.players.forEach((p, i) => {
     const isDealer = i === game.dealerIndex;
+    const seat = seatOf(i);
     const card = document.createElement('div');
     card.className = 'player-card' + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
     card.innerHTML = `
-      <div class="seat">${SEATS[i]}${isDealer ? ' · 亲' : ''}</div>
+      <div class="seat">${seat}${isDealer ? ' · 亲' : ''}</div>
       <div class="name">${p.name}</div>
       <div class="points" id="pts-${i}">${p.points}</div>
       <div class="delta" id="delta-${i}"></div>
@@ -1007,7 +1068,7 @@ function buildPlayerSeg(containerId, exclude = -1) {
     if (i === exclude) return;
     const btn = document.createElement('div');
     btn.className = 'seg-btn';
-    btn.textContent = `${SEATS[i]} (${p.points})`;
+    btn.textContent = `${playerLabel(i)} (${p.points})`;
     btn.dataset.val = i;
     btn.onclick = () => {
       c.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
@@ -1514,7 +1575,7 @@ function analyzeHandFlow() {
     `宝牌：${dora}番（表/裏合计）`,
     result.isYakuman ? `<b>${result.yakumanCount || 1}倍役满</b>` : `<b>${result.han}番 ${result.fu}符</b>`,
     `<b>和牌收入：${payments.total}点</b>`,
-    payments.payments.map(p => `${SEATS[p.from]} → ${SEATS[p.to]}：${p.amount}`).join('<br>'),
+    payments.payments.map(p => `${playerLabel(p.from)} → ${playerLabel(p.to)}：${p.amount}`).join('<br>'),
     '<br><span style="color:#a39b82">修改面子明暗、杠子或特殊条件后，再次点击“重新分析并更新结果”。</span>',
   ].filter(Boolean).join('<br>');
 
@@ -1920,13 +1981,13 @@ function previewWin() {
 
   box.style.display = 'block';
   document.getElementById('previewPoints').textContent = '+' + result.total;
-  const winnerName = SEATS[winState.winnerIdx];
+  const winnerName = playerLabel(winState.winnerIdx);
   const hanLabel = han >= 13 ? '役满' : han >= 11 ? '三倍满' : han >= 8 ? '倍满' : han >= 6 ? '跳满' : han >= 5 ? '满贯' : `${han}翻${fu}符`;
   document.getElementById('previewDetail').textContent = `${winnerName} ${winState.isTsumo ? '自摸' : '荣和'} · ${hanLabel}`;
 
   let breakdown = '';
   result.payments.forEach(p => {
-    breakdown += `${SEATS[p.from]} → ${SEATS[p.to]}: ${p.amount}\n`;
+    breakdown += `${playerLabel(p.from)} → ${playerLabel(p.to)}: ${p.amount}\n`;
   });
   if (result.stickBonus > 0) breakdown += `供托 +${result.stickBonus}`;
   document.getElementById('previewBreakdown').textContent = breakdown.trim() || '（本场无额外）';
@@ -1953,6 +2014,8 @@ function confirmWin() {
     type: 'win',
     round: ROUND_NAMES[game.roundIndex],
     winner: winState.winnerIdx,
+    winnerName: winner.name,
+    winnerSeat: seatOf(winState.winnerIdx),
     han, fu,
     isTsumo: winState.isTsumo,
     loser: winState.loserIdx,
@@ -1987,50 +2050,70 @@ function openDrawModal() {
   game.players.forEach((p, i) => {
     const btn = document.createElement('div');
     btn.className = 'seg-btn';
-    btn.textContent = `${SEATS[i]} (${p.points})`;
+    btn.textContent = `${playerLabel(i)} (${p.points})`;
     btn.dataset.val = i;
-    btn.onclick = () => btn.classList.toggle('active');
+    btn.onclick = () => {
+      btn.classList.toggle('active');
+      previewDraw();
+    };
     c.appendChild(btn);
   });
+  previewDraw();
   openModal('drawOverlay');
 }
 
-function confirmDraw() {
+function getSelectedTenpai() {
   const tenpai = new Set();
-  document.querySelectorAll('#tenpaiSelect .seg-btn.active').forEach(b => tenpai.add(parseInt(b.dataset.val)));
+  document.querySelectorAll('#tenpaiSelect .seg-btn.active').forEach(button =>
+    tenpai.add(Number(button.dataset.val))
+  );
+  return tenpai;
+}
 
-  // 听牌分配
-  const tCount = tenpai.size;
+function previewDraw() {
+  const tenpai = getSelectedTenpai();
+  const deltas = calcDrawDeltas(tenpai);
+  const lines = game.players.map((player, index) => {
+    const delta = deltas[index];
+    return `${playerLabel(index)}：${delta > 0 ? '+' : ''}${delta}`;
+  });
+  const dealerText = tenpai.has(game.dealerIndex)
+    ? `亲家听牌，连庄；本场 ${game.honba} → ${game.honba + 1}`
+    : `亲家未听，轮庄；本场 ${game.honba} → ${game.honba + 1}`;
+  document.getElementById('drawBreakdown').textContent = `${lines.join('\n')}\n${dealerText}`;
+}
+
+function confirmDraw() {
+  const tenpai = getSelectedTenpai();
+  const drawRound = ROUND_NAMES[game.roundIndex];
+  const tenpaiPlayers = [...tenpai].map(index => ({
+    index,
+    seat: seatOf(index),
+    name: game.players[index].name,
+  }));
+  const deltas = calcDrawDeltas(tenpai);
   const changes = {};
-  if (tCount > 0 && tCount < 4) {
-    const ntPay = [0, 3000, 1500, 1000][tCount];
-    game.players.forEach((p, i) => {
-      if (!tenpai.has(i)) {
-        game.players[i].points -= ntPay;
-        changes[i] = (changes[i] || 0) - ntPay;
-      }
-    });
-    const tReceive = [0, 1000, 1500, 3000][tCount];
-    game.players.forEach((p, i) => {
-      if (tenpai.has(i)) {
-        game.players[i].points += tReceive;
-        changes[i] = (changes[i] || 0) + tReceive;
-      }
-    });
-  }
+  deltas.forEach((delta, index) => {
+    game.players[index].points += delta;
+    changes[index] = delta;
+  });
 
-  // 亲听牌连庄，否则亲流
+  // 荒牌流局一定增加一本场；亲听牌连庄，否则轮庄。
   const dealerTenpai = tenpai.has(game.dealerIndex);
+  game.honba++;
   if (dealerTenpai) {
-    game.honba++;
+    // 连庄：局数和庄家不变。
   } else {
-    advanceRound();
+    game.roundIndex++;
+    game.dealerIndex = game.roundIndex % 4;
   }
 
   game.history.push({
     type: 'draw',
-    round: ROUND_NAMES[game.roundIndex],
+    round: drawRound,
     tenpai: [...tenpai],
+    tenpaiPlayers,
+    deltas,
   });
 
   closeModal('drawOverlay');
@@ -2059,7 +2142,7 @@ function toggleRiichi() {
   game.players.forEach((p, i) => {
     const btn = document.createElement('div');
     btn.className = 'seg-btn' + (p.riichi ? ' active' : '');
-    btn.textContent = `${SEATS[i]}${p.riichi ? ' ●' : ''}`;
+    btn.textContent = `${playerLabel(i)}${p.riichi ? ' ●' : ''}`;
     btn.dataset.val = i;
     btn.onclick = () => btn.classList.toggle('active');
     sel.appendChild(btn);
@@ -2144,9 +2227,11 @@ function showHistory() {
       const handImgs = (h.hand && h.hand.length > 0)
         ? h.hand.map(id => `<img src="${tileImgSrc(id)}" style="width:18px;height:24px;vertical-align:middle;margin:1px">`).join('')
         : '';
-      item.innerHTML = `${h.round} · <span class="who">${SEATS[h.winner]}</span> ${h.isTsumo ? '自摸' : '荣和'} ${hanLabel} +${h.total}` + (handImgs ? `<br><span style="color:#666;font-size:11px">${handImgs}</span>` : '');
+      item.innerHTML = `${h.round} · <span class="who">${h.winnerSeat || seatOf(h.winner)} · ${h.winnerName || game.players[h.winner]?.name || ''}</span> ${h.isTsumo ? '自摸' : '荣和'} ${hanLabel} +${h.total}` + (handImgs ? `<br><span style="color:#666;font-size:11px">${handImgs}</span>` : '');
     } else {
-      const t = h.tenpai.map(i => SEATS[i]).join('') || '无人';
+      const t = h.tenpaiPlayers?.length
+        ? h.tenpaiPlayers.map(player => `${player.seat}·${player.name}`).join('、')
+        : h.tenpai.map(i => `${seatOf(i)}·${game.players[i]?.name || ''}`).join('、') || '无人';
       item.innerHTML = `${h.round} · 流局（听：${t}）`;
     }
     list.appendChild(item);
@@ -2155,11 +2240,12 @@ function showHistory() {
 }
 
 function resetGame() {
-  if (!confirm('确定重置新对局？')) return;
+  if (!confirm('确定重置并开始新对局？')) return;
   game = newGame();
   undoStack = [];
   saveGame();
   render();
+  openPlayerSetup({ keepCurrentNames: false });
 }
 
 function checkGameEnd() {
@@ -2186,7 +2272,7 @@ function showGameEnd() {
   const c = document.getElementById('finalResult');
   c.innerHTML = sorted.map((p, rank) => `
     <div class="result-box">
-      <div style="font-size:16px;color:#e94560;font-weight:bold">第${rank+1}名 ${SEATS[p.idx]}家</div>
+      <div style="font-size:16px;color:#e94560;font-weight:bold">第${rank+1}名 ${seatOf(p.idx)} · ${p.name}</div>
       <div class="points">${p.points}</div>
     </div>
   `).join('');
@@ -2195,6 +2281,7 @@ function showGameEnd() {
 
 // 初次渲染
 render();
+if (!hasPlayerNames()) openPlayerSetup({ keepCurrentNames: false });
 
 // 包裹保存快照
 const _confirmWin = confirmWin;
