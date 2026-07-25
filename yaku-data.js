@@ -259,6 +259,14 @@ function getYakuById(id) {
   return YAKU_CATALOG.find(yaku => yaku.id === id) || null;
 }
 
+function formatYakuHan(yaku) {
+  if (!yaku) return '';
+  if (yaku.category === 'yakuman') return '役满';
+  if (yaku.hanOpen === null) return `门前${yaku.hanClosed}翻 · 副露不可`;
+  if (yaku.hanClosed === yaku.hanOpen) return `${yaku.hanClosed}翻`;
+  return `门前${yaku.hanClosed}翻 · 副露${yaku.hanOpen}翻`;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { YAKU_CATALOG, CATEGORY_LABELS, filterYakuCatalog, getYakuById };
+  module.exports = { YAKU_CATALOG, CATEGORY_LABELS, filterYakuCatalog, getYakuById, formatYakuHan };
 }

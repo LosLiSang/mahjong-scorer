@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { YAKU_CATALOG, filterYakuCatalog, getYakuById } = require('./yaku-data');
+const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan } = require('./yaku-data');
 
 assert(YAKU_CATALOG.length >= 35, '图鉴应覆盖至少 35 个常见役种');
 
@@ -28,5 +28,9 @@ assert(filterYakuCatalog({ category: 'yakuman' }).every(yaku => yaku.category ==
 assert(filterYakuCatalog({ query: '三元' }).some(yaku => yaku.name === '小三元'));
 assert.equal(getYakuById('riichi').name, '立直');
 assert.equal(getYakuById('missing'), null);
+assert.equal(formatYakuHan(getYakuById('riichi')), '门前1翻 · 副露不可');
+assert.equal(formatYakuHan(getYakuById('tanyao')), '1翻');
+assert.equal(formatYakuHan(getYakuById('sanshoku')), '门前2翻 · 副露1翻');
+assert.equal(formatYakuHan(getYakuById('daisangen')), '役满');
 
 console.log('yaku catalog tests: passed');

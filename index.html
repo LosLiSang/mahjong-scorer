@@ -585,7 +585,7 @@ function renderYakuList() {
   const list = filterYakuCatalog({ category: yakuFilterCategory });
   grid.innerHTML = list.map(yaku => {
     const isYakuman = yaku.category === 'yakuman';
-    const hanLabel = isYakuman ? '役满' : (yaku.hanClosed === yaku.hanOpen ? `${yaku.hanClosed}翻` : `门${yaku.hanClosed}翻／鸣${yaku.hanOpen}翻`);
+    const hanLabel = formatYakuHan(yaku);
     const badgeClass = isYakuman ? 'yakuman' : '';
     return `<button class="yaku-card" onclick="openYakuDetail('${yaku.id}')">
       <span class="yaku-han ${badgeClass}">${hanLabel}</span>
@@ -599,7 +599,7 @@ function openYakuDetail(id) {
   const yaku = getYakuById(id);
   if (!yaku) return;
   const isYakuman = yaku.category === 'yakuman';
-  const hanLabel = isYakuman ? '役满' : (yaku.hanClosed === yaku.hanOpen ? `${yaku.hanClosed}翻` : `门${yaku.hanClosed}翻／鸣${yaku.hanOpen}翻`);
+  const hanLabel = formatYakuHan(yaku);
   const exampleHtml = yaku.example.length > 0
     ? yaku.example.map(tiles => `<div class="tutorial-tiles">${tiles.map(tutorialTileHtml).join('')}</div>`).join('')
     : '<span style="font-size:12px;color:#918a76">（纯运气役，无特定牌例）</span>';
