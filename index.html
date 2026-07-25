@@ -103,13 +103,14 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 .progress-track { height: 7px; background: rgba(255,255,255,.75); border-radius: 99px; margin-top: 15px; overflow: hidden; }
 .progress-fill { height: 100%; width: 0; background: #5a7a4a; border-radius: inherit; transition: width .25s ease; }
 .progress-label { font-size: 11px; color: #746e5c; margin-top: 6px; }
-.tutorial-list { display: grid; gap: 8px; }
-.lesson-card { width: 100%; display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 11px; background: #fff; color: #3d3929; border: 1px solid #e8e5d8; border-radius: 13px; padding: 12px; text-align: left; font: inherit; cursor: pointer; }
+.tutorial-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; width: 100%; min-width: 0; }
+.lesson-card { width: 100%; max-width: 100%; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 11px; background: #fff; color: #3d3929; border: 1px solid #e8e5d8; border-radius: 13px; padding: 12px; text-align: left; font: inherit; cursor: pointer; overflow: hidden; }
 .lesson-card:active { transform: scale(.99); }
+.lesson-card > span:nth-child(2) { display: block; min-width: 0; max-width: 100%; overflow: hidden; }
 .lesson-number { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #f5eee7; color: #c96442; font-weight: 700; }
 .lesson-card.done .lesson-number { background: #e7efe2; color: #5a7a4a; }
-.lesson-card-title { font-size: 15px; font-weight: 700; }
-.lesson-card-summary { font-size: 11px; color: #918a76; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lesson-card-title { display: block; max-width: 100%; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lesson-card-summary { display: block; max-width: 100%; font-size: 11px; color: #918a76; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lesson-arrow { color: #b8b299; font-size: 20px; }
 .quiz-entry { margin-top: 12px; padding: 16px; border-radius: 14px; background: #5a7a4a; color: #fff; }
 .quiz-entry h3 { font-size: 17px; }
