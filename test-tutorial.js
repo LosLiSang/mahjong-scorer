@@ -45,5 +45,17 @@ assert(
   /function\s+unlockPageScroll\s*\([^)]*\)[\s\S]*window\.scrollTo\(0,\s*modalScrollY\)/s.test(pageHtml),
   '关闭课程弹窗后必须恢复原页面位置'
 );
+assert(
+  /overlay\.classList\.add\('active'\);\s*(?:if\s*\(modal\)\s*)?modal\.scrollTop\s*=\s*0/s.test(pageHtml),
+  '弹窗必须先显示再重置滚动位置，避免下一课程标题被旧滚动位置遮住'
+);
+assert(
+  /id="yakuCatalogOverlay"[\s\S]*class="modal-close"[^>]*onclick="closeModal\('yakuCatalogOverlay'\)"/s.test(pageHtml),
+  '役种图鉴必须提供明确的关闭按钮'
+);
+assert(
+  /\.modal-close\s*\{[^}]*position\s*:\s*sticky/s.test(pageHtml),
+  '关闭按钮必须固定在弹窗顶部，滚动后仍可退出'
+);
 
-console.log('tutorial tests: 31 assertions passed');
+console.log('tutorial tests: 34 assertions passed');

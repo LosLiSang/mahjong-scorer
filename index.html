@@ -39,6 +39,7 @@ body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong
 .overlay { display: none; position: fixed; inset: 0; background: rgba(60, 55, 40, 0.4); z-index: 100; justify-content: center; align-items: flex-end; }
 .overlay.active { display: flex; }
 .modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.modal-close { position: sticky; top: -10px; z-index: 3; float: right; width: 36px; height: 36px; margin: -10px -8px 4px 8px; border: 1px solid #ddd7c8; border-radius: 50%; background: rgba(250,249,243,.96); color: #746e5c; font-size: 22px; line-height: 32px; text-align: center; cursor: pointer; box-shadow: 0 2px 8px rgba(61,57,41,.08); }
 .modal h3 { text-align: center; margin-bottom: 16px; color: #3d3929; font-weight: 600; }
 .modal label { display: block; font-size: 13px; color: #8a8470; margin: 12px 0 6px; font-weight: 500; }
 .modal select, .modal input { width: 100%; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; font-size: 16px; }
@@ -355,6 +356,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 <!-- 役种图鉴弹窗 -->
 <div class="overlay" id="yakuCatalogOverlay">
   <div class="modal tutorial-modal">
+    <button class="modal-close" aria-label="关闭役种图鉴" onclick="closeModal('yakuCatalogOverlay')">×</button>
     <div class="yaku-list-view" id="yakuListView">
       <h3>役种图鉴</h3>
       <div class="catalog-filters" id="yakuFilters"></div>
@@ -450,8 +452,8 @@ function openModal(id) {
   const overlay = document.getElementById(id);
   if (!overlay || overlay.classList.contains('active')) return;
   const modal = overlay.querySelector('.modal');
-  if (modal) modal.scrollTop = 0;
   overlay.classList.add('active');
+  if (modal) modal.scrollTop = 0;
   lockPageScroll();
 }
 
