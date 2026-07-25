@@ -1,4 +1,5 @@
 const assert = require('assert');
+const fs = require('fs');
 const Logic = require('./miniprogram/utils/mahjong-logic');
 const Game = require('./miniprogram/utils/game-engine');
 
@@ -52,6 +53,13 @@ assert(page.data.analysisResult, page.data.analysisMessage);
 assert(page.data.analysisResult.yakuText.includes('立直'));
 assert(page.data.analysisResult.scoreText.includes('6000点'));
 
+// 和牌弹窗必须给底部操作区预留系统安全区，避免真机底部按钮被遮挡
+const pageStyle = fs.readFileSync('./miniprogram/pages/index/index.wxss', 'utf8');
+assert(
+  /\.modal-actions\s*\{[^}]*padding-bottom\s*:\s*calc\([^)]*env\(safe-area-inset-bottom\)/s.test(pageStyle),
+  '和牌弹窗底部操作区应包含 safe-area-inset-bottom'
+);
+
 page.confirmWin();
 assert.equal(page.data.game.players[0].points, 31000);
 assert.equal(page.data.game.players[1].points, 23000);
@@ -67,4 +75,4 @@ page.analyzeHand();
 assert(page.data.analysisResult, page.data.analysisMessage);
 assert.equal(page.data.analysisResult.typeName, '七对子');
 
-console.log('mini-program tests: 18 assertions passed');
+console.log('mini-program tests: 19 assertions passed');
