@@ -93,6 +93,14 @@ assert(/btn\.onclick\s*=\s*\(\)\s*=>\s*\{[\s\S]*previewDraw\(\)/s.test(html), '�
 assert(/calcDrawDeltas\(tenpai\)/.test(html), '流局预览和结算必须共用统一算法');
 assert(/id="playerSetupOverlay"/.test(html), '新对局必须提供玩家姓名设置弹窗');
 assert(/id="playerName0"/.test(html) && /id="playerName3"/.test(html), '姓名设置必须包含四位玩家');
+assert(/players:\s*\[\s*\{ name: '玩家一'/.test(html), '新对局默认姓名必须使用固定玩家编号，不能与动态座风混淆');
+assert(/class="table-board"[^>]*id="playersContainer"/.test(html), '主界面必须使用十字牌桌容器');
+assert(/class="table-center status-bar"/.test(html), '局数、本场和供托必须显示在牌桌中央');
+assert(/card\.className\s*=\s*['"]player-card[\s\S]*` seat-\$\{seat\}`/s.test(html), '玩家卡片必须按当前动态座风取得十字位置类名');
+assert(/\.player-card\.seat-东\s*\{[^}]*grid-area:\s*bottom/s.test(html), '东家必须显示在牌桌下方');
+assert(/\.player-card\.seat-南\s*\{[^}]*grid-area:\s*right/s.test(html), '南家必须显示在牌桌右侧');
+assert(/\.player-card\.seat-西\s*\{[^}]*grid-area:\s*top/s.test(html), '西家必须显示在牌桌上方');
+assert(/\.player-card\.seat-北\s*\{[^}]*grid-area:\s*left/s.test(html), '北家必须显示在牌桌左侧');
 assert(/function\s+confirmPlayerSetup/.test(html), '必须提供确认玩家姓名的流程');
 assert(!/if\s*\(!hasPlayerNames\(\)\)\s*openPlayerSetup/.test(html), '首次进入必须使用默认姓名，不能强制弹出姓名设置');
 assert(/class="name name-edit"/.test(html) && /onclick="openPlayerSetup/.test(html), '玩家姓名必须可以从玩家卡片点击修改');
