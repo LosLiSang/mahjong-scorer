@@ -396,8 +396,11 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
       <label>番型（可组合）</label>
       <div class="sichuan-fan-types" id="sichuanFanTypeSelect"></div>
       <div class="btn-row">
-        <div style="flex:1"><label>合计番数</label><input id="sichuanFan" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
+        <div style="flex:1"><label>根的数量</label><input id="sichuanRootCount" type="number" min="0" max="4" value="0" inputmode="numeric"></div>
         <div style="flex:1"><label>底分</label><input id="sichuanBaseScore" type="number" min="1" value="1" inputmode="numeric"></div>
+      </div>
+      <div class="btn-row">
+        <div style="flex:1"><label>合计番数</label><input id="sichuanFan" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
       </div>
       <div style="font-size:12px;color:#8a8470;margin-top:7px">腾讯 / 欢乐四川口径：平胡 1番×1倍、2番×2倍、3番×4倍，最高显示到 6 番。杠分使用外面的“杠分”按钮单独记录。</div>
     </div>
@@ -689,7 +692,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 </div>
 
 <script src="mahjong-logic.js?v=20260726-sanma1"></script>
-<script src="sichuan-score.js?v=20260726-4"></script>
+<script src="sichuan-score.js?v=20260726-5"></script>
 <script src="tutorial-data.js?v=20260726-3"></script>
 <script src="yaku-data.js?v=20260726-3"></script>
 <script src="scoring-guide-data.js?v=20260726-3"></script>
@@ -2730,7 +2733,7 @@ function renderSichuanFanTypes() {
     title.className = 'sichuan-fan-group-title';
     title.textContent = group === 'base' ? '基础番型（通常选一个）' : '附加番型（可多选）';
     container.appendChild(title);
-    SICHUAN_FAN_TYPES.filter(type => type.group === group).forEach(type => {
+    SICHUAN_FAN_TYPES.filter(type => type.group === group && type.id !== 'gen').forEach(type => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'sichuan-fan-type' + (sichuanEntryState.fanTypes.has(type.id) ? ' active' : '');
@@ -2744,7 +2747,7 @@ function renderSichuanFanTypes() {
         } else {
           sichuanEntryState.fanTypes.add(type.id);
         }
-        const calculated = calculateSichuanFan([...sichuanEntryState.fanTypes], 6);
+        const calculated = calculateSichuanFan([...sichuanEntryState.fanTypes], 6, sichuanEntryState.rootCount);
         document.getElementById('sichuanFan').value = calculated.fan;
         renderSichuanFanTypes();
         previewSichuanEntry();
@@ -2756,11 +2759,12 @@ function renderSichuanFanTypes() {
 
 function openSichuanEntry(type) {
   const titles = { win: '胡牌积分', kong: '杠分', penalty: '罚分 / 手动调整' };
-  sichuanEntryState = { type, receiver: 0, payers: new Set(type === 'win' ? [1] : [1, 2, 3]), fanTypes: new Set(['pinghu']) };
+  sichuanEntryState = { type, receiver: 0, payers: new Set(type === 'win' ? [1] : [1, 2, 3]), fanTypes: new Set(['pinghu']), rootCount: 0 };
   document.getElementById('sichuanEntryTitle').textContent = titles[type];
   document.getElementById('sichuanFanFields').hidden = type !== 'win';
   document.getElementById('sichuanManualFields').hidden = type === 'win';
   document.getElementById('sichuanFan').value = '1';
+  document.getElementById('sichuanRootCount').value = '0';
   document.getElementById('sichuanBaseScore').value = '1';
   document.getElementById('sichuanManualAmount').value = type === 'kong' ? '1' : '16';
   document.getElementById('sichuanEntryLabel').value = '';
@@ -2769,6 +2773,14 @@ function openSichuanEntry(type) {
   ['sichuanFan', 'sichuanBaseScore', 'sichuanManualAmount'].forEach(id => {
     document.getElementById(id).oninput = previewSichuanEntry;
   });
+  document.getElementById('sichuanRootCount').oninput = () => {
+    const input = document.getElementById('sichuanRootCount');
+    sichuanEntryState.rootCount = Math.max(0, Math.min(4, Math.trunc(Number(input.value) || 0)));
+    input.value = sichuanEntryState.rootCount;
+    const calculated = calculateSichuanFan([...sichuanEntryState.fanTypes], 6, sichuanEntryState.rootCount);
+    document.getElementById('sichuanFan').value = calculated.fan;
+    previewSichuanEntry();
+  };
   previewSichuanEntry();
   openModal('sichuanEntryOverlay');
 }
@@ -2804,7 +2816,7 @@ function confirmSichuanEntry() {
   const receiverName = sichuanGame.players[sichuanEntryState.receiver].name;
   const customLabel = document.getElementById('sichuanEntryLabel').value.trim();
   const fanResult = sichuanEntryState.type === 'win'
-    ? calculateSichuanFan([...sichuanEntryState.fanTypes], 6)
+    ? calculateSichuanFan([...sichuanEntryState.fanTypes], 6, sichuanEntryState.rootCount)
     : null;
   const entry = createTransferEntry({
     type: sichuanEntryState.type,
@@ -2813,7 +2825,11 @@ function confirmSichuanEntry() {
     amountPerPayer: amount,
     label: customLabel || (fanResult ? `${receiverName} ${fanResult.label} ${fanResult.fan}番` : `${receiverName} ${typeNames[sichuanEntryState.type]}`),
   });
-  if (fanResult) entry.fanTypes = [...sichuanEntryState.fanTypes];
+  if (fanResult) {
+    entry.fanTypes = [...sichuanEntryState.fanTypes];
+    entry.rootCount = fanResult.rootCount;
+    entry.rootLabel = fanResult.rootCount ? `根×${fanResult.rootCount}` : '';
+  }
   applySichuanEntry(sichuanGame, entry);
   closeModal('sichuanEntryOverlay');
   renderSichuanScore();

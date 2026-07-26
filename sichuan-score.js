@@ -24,10 +24,17 @@
     { id: 'gen', name: '根', fan: 1, group: 'extra' },
   ];
 
-  function calculateSichuanFan(selectedIds = [], fanCap = 6) {
-    const selected = selectedIds.map(id => SICHUAN_FAN_TYPES.find(type => type.id === id)).filter(Boolean);
-    const fan = Math.min(Number(fanCap) || 6, selected.reduce((sum, type) => sum + type.fan, 0));
-    return { fan: Math.max(1, fan), label: selected.map(type => type.name).join(' + ') || '平胡' };
+  function calculateSichuanFan(selectedIds = [], fanCap = 6, rootCount = 0) {
+    const normalizedRootCount = Math.max(0, Math.min(4, Math.trunc(Number(rootCount) || 0)));
+    const selected = selectedIds
+      .filter(id => id !== 'gen')
+      .map(id => SICHUAN_FAN_TYPES.find(type => type.id === id))
+      .filter(Boolean);
+    const rawFan = selected.reduce((sum, type) => sum + type.fan, 0) + normalizedRootCount;
+    const fan = Math.min(Number(fanCap) || 6, rawFan);
+    const labels = selected.map(type => type.name);
+    if (normalizedRootCount) labels.push(`根×${normalizedRootCount}`);
+    return { fan: Math.max(1, fan), label: labels.join(' + ') || '平胡', rootCount: normalizedRootCount };
   }
 
   function setSichuanMissingSuit(game, playerIndex, suit) {

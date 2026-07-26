@@ -27,12 +27,14 @@ assert(SICHUAN_FAN_TYPES.some(type => type.id === 'pinghu' && type.fan === 1), '
 assert(SICHUAN_FAN_TYPES.some(type => type.id === 'qingyise' && type.fan === 3), '腾讯欢乐口径必须显示清一色3番4倍');
 assert(!SICHUAN_FAN_TYPES.some(type => type.id === 'gang'), '杠只能走刮风下雨独立结算，不得作为胡牌附加番');
 assert.equal(calculateSichuanFan(['pinghu', 'gang'], 6).fan, 1, '即使旧记录携带 gang 标签，也不能增加胡牌番数');
+assert.equal(calculateSichuanFan(['pinghu', 'gen'], 6).rootCount, 0, '旧版布尔根标签不得偷偷按一个根计算，必须由数量字段决定');
 assert.deepEqual(
-  calculateSichuanFan(['qingyise', 'gangshanghua', 'gen'], 6),
-  { fan: 5, label: '清一色 + 杠上花 + 根' },
-  '基础番型与附加番型应合计并生成可读标签'
+  calculateSichuanFan(['qingyise', 'gangshanghua'], 6, 2),
+  { fan: 6, label: '清一色 + 杠上花 + 根×2', rootCount: 2 },
+  '根必须按数量逐根加番并生成可读标签'
 );
-assert.equal(calculateSichuanFan(['tianhu', 'gen'], 6).fan, 6, '番数必须受封顶限制');
+assert.equal(calculateSichuanFan(['pinghu'], 6, 4).fan, 5, '四个根必须累计四番');
+assert.equal(calculateSichuanFan(['tianhu'], 6, 3).fan, 6, '多个根累计后仍必须受封顶限制');
 
 const ron = createTransferEntry({
   type: 'ron',
@@ -78,7 +80,9 @@ assert(/id="sichuanMissingSuitOverlay"/.test(html) && /data-missing-suit="m"/.te
 assert(/class="missing-suit\$\{player\.missingSuit/.test(html), '玩家卡片必须展示当前缺门');
 assert(/腾讯\s*\/\s*欢乐四川口径/.test(html), '川麻页面必须明确标注当前规则口径，不得冒充统一川麻规则');
 assert(/平胡\s*1\s*番\s*=\s*1\s*倍/.test(html), '页面必须解释腾讯欢乐番数与倍数的对应关系');
-assert(/杠分单独结算/.test(html), '页面必须说明杠分与胡牌番数分开，避免重复计算');
+assert(/id="sichuanRootCount"/.test(html) && /max="4"/.test(html), '根必须提供0到4的数量选择');
+assert(/rootCount:\s*0/.test(html), '每次打开胡牌录入时根数必须重置为0');
+assert(/根×\$\{fanResult\.rootCount\}/.test(html), '胡牌记录必须保存并显示根的数量');
 assert(/openSichuanEntry\('win'\)/.test(html), '川麻页面必须提供胡牌积分入口');
 assert(/openSichuanEntry\('kong'\)/.test(html), '川麻页面必须提供杠分入口');
 assert(/openSichuanEntry\('penalty'\)/.test(html), '川麻页面必须提供花猪、查叫或手动罚分入口');
