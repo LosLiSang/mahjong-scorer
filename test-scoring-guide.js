@@ -101,6 +101,8 @@ assert(/\.player-card\.seat-东\s*\{[^}]*grid-area:\s*bottom/s.test(html), '东�
 assert(/\.player-card\.seat-南\s*\{[^}]*grid-area:\s*right/s.test(html), '南家必须显示在牌桌右侧');
 assert(/\.player-card\.seat-西\s*\{[^}]*grid-area:\s*top/s.test(html), '西家必须显示在牌桌上方');
 assert(/\.player-card\.seat-北\s*\{[^}]*grid-area:\s*left/s.test(html), '北家必须显示在牌桌左侧');
+assert(/let\s+deltaClearTimer\s*=\s*null/.test(html) && /clearTimeout\(deltaClearTimer\)/.test(html), '新结算必须取消旧的分数变化消失计时');
+assert(/deltaClearTimer\s*=\s*setTimeout\(\(\)\s*=>\s*\{[\s\S]*element\.textContent\s*=\s*''[\s\S]*\},\s*10000\)/s.test(html), '每次结算后的分数变化必须保留 10 秒');
 assert(/function\s+capturePlayerPositions/.test(html), '换庄前必须记录四位玩家的位置');
 assert(/function\s+animatePlayerSeatChanges/.test(html), '换庄后必须播放玩家换座动画');
 assert(/element\.animate\(/.test(html), '换座动画必须使用浏览器动画 API 平滑移动卡片');

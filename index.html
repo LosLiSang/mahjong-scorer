@@ -1107,23 +1107,30 @@ function animatePlayerSeatChanges(previousPositions) {
   });
 }
 
+let deltaClearTimer = null;
 function flashDelta(changes) {
-  // changes: {idx: delta}
-  setTimeout(() => {
-    Object.entries(changes).forEach(([idx, delta]) => {
-      const el = document.getElementById('delta-' + idx);
-      if (!el) return;
-      if (delta === 0) return;
-      el.textContent = (delta > 0 ? '+' : '') + delta;
-      el.className = 'delta' + (delta < 0 ? ' minus' : '');
-    });
-    setTimeout(() => {
-      for (let i = 0; i < 4; i++) {
-        const el = document.getElementById('delta-' + i);
-        if (el) { el.textContent = ''; el.className = 'delta'; }
-      }
-    }, 2500);
-  }, 50);
+  // changes: {idx: delta}. 新结算覆盖旧提示，并从此刻重新计时 10 秒。
+  if (deltaClearTimer) clearTimeout(deltaClearTimer);
+
+  for (let i = 0; i < 4; i++) {
+    const element = document.getElementById('delta-' + i);
+    if (element) { element.textContent = ''; element.className = 'delta'; }
+  }
+
+  Object.entries(changes).forEach(([idx, delta]) => {
+    const element = document.getElementById('delta-' + idx);
+    if (!element || delta === 0) return;
+    element.textContent = (delta > 0 ? '+' : '') + delta;
+    element.className = 'delta' + (delta < 0 ? ' minus' : '');
+  });
+
+  deltaClearTimer = setTimeout(() => {
+    for (let i = 0; i < 4; i++) {
+      const element = document.getElementById('delta-' + i);
+      if (element) { element.textContent = ''; element.className = 'delta'; }
+    }
+    deltaClearTimer = null;
+  }, 10000);
 }
 
 // ============ 弹窗 ============
