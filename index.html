@@ -321,7 +321,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <button class="btn btn-danger btn-small" onclick="openSichuanSetup()">玩家</button>
     <button class="btn btn-danger btn-small" onclick="resetSichuanGame()">重置</button>
   </div>
-  <p class="sichuan-note">默认底分 1、6 番封顶。输入的是每个付款人应付的分数，适合线下面麻直接记账。</p>
+  <p class="sichuan-note"><strong>腾讯 / 欢乐四川口径</strong>：平胡 1 番 = 1 倍，2 番 = 2 倍，最高显示到 6 番 = 32 倍。不同地区规则可能不同；这里仍可手动修改番数与每家支付积分。</p>
   <section class="sichuan-history" id="sichuanHistory"></section>
 </main>
 
@@ -372,7 +372,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
         <div style="flex:1"><label>合计番数</label><input id="sichuanFan" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
         <div style="flex:1"><label>底分</label><input id="sichuanBaseScore" type="number" min="1" value="1" inputmode="numeric"></div>
       </div>
-      <div style="font-size:12px;color:#8a8470;margin-top:7px">按 1番×1、2番×2、3番×4 计算，默认 6 番封顶。</div>
+      <div style="font-size:12px;color:#8a8470;margin-top:7px">腾讯 / 欢乐四川口径：平胡 1番×1倍、2番×2倍、3番×4倍，最高显示到 6 番。</div>
     </div>
     <div id="sichuanManualFields" hidden>
       <label>每位付款人支付</label>
@@ -662,7 +662,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 </div>
 
 <script src="mahjong-logic.js?v=20260726-sanma1"></script>
-<script src="sichuan-score.js?v=20260726-2"></script>
+<script src="sichuan-score.js?v=20260726-3"></script>
 <script src="tutorial-data.js?v=20260726-3"></script>
 <script src="yaku-data.js?v=20260726-3"></script>
 <script src="scoring-guide-data.js?v=20260726-3"></script>

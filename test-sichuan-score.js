@@ -23,8 +23,9 @@ setSichuanMissingSuit(game, 1, 'p');
 assert.deepEqual(game.players.map(player => player.missingSuit), ['m', 'p', '', ''], '每位玩家必须能独立记录缺万筒索');
 assert.equal(game.history.length, 0);
 
-assert(SICHUAN_FAN_TYPES.some(type => type.id === 'pinghu' && type.fan === 1), '番型列表必须包含平胡');
-assert(SICHUAN_FAN_TYPES.some(type => type.id === 'qingyise' && type.fan === 3), '番型列表必须包含清一色');
+assert(SICHUAN_FAN_TYPES.some(type => type.id === 'pinghu' && type.fan === 1), '腾讯欢乐口径必须显示平胡1番1倍');
+assert(SICHUAN_FAN_TYPES.some(type => type.id === 'qingyise' && type.fan === 3), '腾讯欢乐口径必须显示清一色3番4倍');
+assert(SICHUAN_FAN_TYPES.some(type => type.id === 'gang' && type.fan === 1), '附加番型必须包含杠');
 assert.deepEqual(
   calculateSichuanFan(['qingyise', 'gangshanghua', 'gen'], 6),
   { fan: 5, label: '清一色 + 杠上花 + 根' },
@@ -67,7 +68,8 @@ assert(/<script src="sichuan-score\.js\?v=[^"]+"><\/script>/.test(html), '川麻
 assert(/id="sichuanPlayers"/.test(html), '川麻页面必须显示四位玩家积分');
 assert(/id="sichuanMissingSuitOverlay"/.test(html) && /data-missing-suit="m"/.test(html), '川麻页面必须提供逐人定缺记录');
 assert(/class="missing-suit\$\{player\.missingSuit/.test(html), '玩家卡片必须展示当前缺门');
-assert(/id="sichuanFanTypeSelect"/.test(html), '胡牌积分必须提供川麻番型选择');
+assert(/腾讯\s*\/\s*欢乐四川口径/.test(html), '川麻页面必须明确标注当前规则口径，不得冒充统一川麻规则');
+assert(/平胡\s*1\s*番\s*=\s*1\s*倍/.test(html), '页面必须解释腾讯欢乐番数与倍数的对应关系');
 assert(/calculateSichuanFan\(/.test(html), '番型选择必须驱动番数和积分计算');
 assert(/openSichuanEntry\('win'\)/.test(html), '川麻页面必须提供胡牌积分入口');
 assert(/openSichuanEntry\('kong'\)/.test(html), '川麻页面必须提供杠分入口');
