@@ -80,6 +80,34 @@ assert.deepEqual(
 assert.deepEqual(calcDrawDeltas(new Set()), [0, 0, 0, 0], '无人听牌不交换点数');
 assert.deepEqual(calcDrawDeltas(new Set([0, 1, 2, 3])), [0, 0, 0, 0], '四人听牌不交换点数');
 
+assert.deepEqual(
+  calcPointPayments(5, 30, { isDealer: true, isTsumo: true, playerCount: 3, sanmaTsumoRule: 'loss' }),
+  {
+    basePoint: 2000,
+    limitName: '满贯',
+    total: 8000,
+    payments: [{ label: '两家各付', amount: 4000, count: 2 }],
+  },
+  '三麻亲家满贯自摸采用自摸损时应为 4000 all，共收 8000'
+);
+assert.deepEqual(
+  calcPointPayments(5, 30, { isDealer: false, isTsumo: true, playerCount: 3, sanmaTsumoRule: 'loss' }),
+  {
+    basePoint: 2000,
+    limitName: '满贯',
+    total: 6000,
+    payments: [
+      { label: '亲家支付', amount: 4000 },
+      { label: '另一子家支付', amount: 2000 },
+    ],
+  },
+  '三麻子家满贯自摸采用自摸损时应收 2000/4000，共 6000'
+);
+assert.deepEqual(calcDrawDeltas(new Set([0]), 3), [2000, -1000, -1000], '三麻一人听牌时收取场上 2000 点罚符');
+assert.deepEqual(calcDrawDeltas(new Set([0, 2]), 3), [1000, -2000, 1000], '三麻两人听牌时不听者支付 2000 点');
+assert.deepEqual(calcDrawDeltas(new Set(), 3), [0, 0, 0], '三麻无人听牌不交换点数');
+assert.deepEqual(calcDrawDeltas(new Set([0, 1, 2]), 3), [0, 0, 0], '三麻全员听牌不交换点数');
+
 const fs = require('fs');
 const html = fs.readFileSync('./index.html', 'utf8');
 assert(/<script src="mahjong-logic\.js\?v=[^"]+"><\/script>/.test(html), '核心逻辑脚本必须带发布版本，避免手机缓存新旧代码混用');
@@ -90,10 +118,19 @@ assert(/winnerName: winner\.name/.test(html), '和牌历史必须保存当时的
 assert(/const\s+tenpaiPlayers\s*=\s*\[\.\.\.tenpai\]\.map/.test(html), '流局历史必须在轮庄前冻结当时的座风与姓名');
 assert(/function\s+previewDraw/.test(html), '流局弹窗必须实时预览听牌罚符');
 assert(/btn\.onclick\s*=\s*\(\)\s*=>\s*\{[\s\S]*previewDraw\(\)/s.test(html), '切换听牌玩家后必须立即刷新流局点数预览');
-assert(/calcDrawDeltas\(tenpai\)/.test(html), '流局预览和结算必须共用统一算法');
+assert(/calcDrawDeltas\(tenpai,\s*playerCount\(\)\)/.test(html), '流局预览和结算必须共用按模式人数计算的统一算法');
 assert(/id="playerSetupOverlay"/.test(html), '新对局必须提供玩家姓名设置弹窗');
-assert(/id="playerName0"/.test(html) && /id="playerName3"/.test(html), '姓名设置必须包含四位玩家');
-assert(/players:\s*\[\s*\{ name: '玩家一'/.test(html), '新对局默认姓名必须使用固定玩家编号，不能与动态座风混淆');
+assert(/id="playerCountSelect"/.test(html), '新对局设置必须允许选择四麻或三麻');
+assert(/data-player-count="3"/.test(html) && /三麻/.test(html), '必须提供明确的三人麻将模式入口');
+assert(/function\s+playerCount\(\)/.test(html), '所有玩家循环必须由当前模式的玩家数驱动');
+assert(/function\s+roundNames\(\)/.test(html), '三麻必须使用东一到东三、南一到南三的局数序列');
+assert(/sanmaTsumoRule:\s*'loss'/.test(html), '三麻默认必须采用雀魂/天凤式自摸损');
+assert(/id="sanmaNorthSelect"/.test(html) && /data-north-count="4"/.test(html), '三麻和牌录入必须支持 0 到 4 张拔北宝牌');
+assert(/playerCount\(\)\s*===\s*3\s*&&\s*s\.prefix\s*===\s*'m'\s*&&\s*n\s*>=\s*2\s*&&\s*n\s*<=\s*8/.test(html), '三麻选牌器必须移除二万到八万');
+assert(/playerCount\(\)\s*===\s*3[\s\S]*n\s*===\s*1[\s\S]*'9m'[\s\S]*'1m'/.test(html), '三麻万子宝牌指示必须在一万和九万之间循环');
+assert(/calcDrawDeltas\(tenpai,\s*playerCount\(\)\)/.test(html), '流局结算必须按三麻或四麻玩家数计算');
+assert(/id="playerName0"/.test(html) && /id="playerName3"/.test(html), '姓名设置必须保留四位输入，并在三麻时隐藏第四位');
+assert(/name:\s*names\[index\]\s*\|\|\s*`玩家\$\{\['一',\s*'二',\s*'三',\s*'四'\]\[index\]\}`/.test(html), '新对局默认姓名必须使用固定玩家编号，不能与动态座风混淆');
 assert(/class="table-board"[^>]*id="playersContainer"/.test(html), '主界面必须使用十字牌桌容器');
 assert(/class="table-center status-bar"/.test(html), '局数、本场和供托必须显示在牌桌中央');
 assert(/card\.className\s*=\s*['"]player-card[\s\S]*` seat-\$\{seat\}`/s.test(html), '玩家卡片必须按当前动态座风取得十字位置类名');
@@ -103,7 +140,7 @@ assert(/\.player-card\.seat-西\s*\{[^}]*grid-area:\s*top/s.test(html), '西家�
 assert(/\.player-card\.seat-北\s*\{[^}]*grid-area:\s*left/s.test(html), '北家必须显示在牌桌左侧');
 assert(/let\s+deltaClearTimer\s*=\s*null/.test(html) && /clearTimeout\(deltaClearTimer\)/.test(html), '新结算必须取消旧的分数变化消失计时');
 assert(/deltaClearTimer\s*=\s*setTimeout\(\(\)\s*=>\s*\{[\s\S]*element\.textContent\s*=\s*''[\s\S]*\},\s*10000\)/s.test(html), '每次结算后的分数变化必须保留 10 秒');
-assert(/function\s+capturePlayerPositions/.test(html), '换庄前必须记录四位玩家的位置');
+assert(/function\s+capturePlayerPositions/.test(html), '换庄前必须记录全部玩家的位置');
 assert(/function\s+animatePlayerSeatChanges/.test(html), '换庄后必须播放玩家换座动画');
 assert(/duration:\s*1000/.test(html), '换座动画必须持续 1 秒，让玩家能看清座位变化');
 assert(/element\.animate\(/.test(html), '换座动画必须使用浏览器动画 API 平滑移动卡片');
@@ -116,7 +153,7 @@ assert(/function\s+clearRoundRiichi/.test(html), '每局结算后必须统一清
 assert(/function\s+confirmWin[\s\S]*clearRoundRiichi\(\)/s.test(html), '和牌结算后必须清除立直状态');
 assert(/function\s+confirmDraw[\s\S]*clearRoundRiichi\(\)/s.test(html), '流局后必须清除立直状态但保留供托');
 assert(/game\.honba\+\+;[\s\S]*if\s*\(dealerTenpai\)/s.test(html), '荒牌流局必须先增加一本场，再判断庄家是否连庄');
-assert(/const\s+drawRound\s*=\s*ROUND_NAMES\[game\.roundIndex\]/.test(html), '流局历史必须记录结算前的局数');
+assert(/const\s+drawRound\s*=\s*currentRoundName\(\)/.test(html), '流局历史必须记录结算前的局数');
 assert(/function\s+playerLabel\(playerIndex\)[\s\S]*seatOf\(playerIndex\)[\s\S]*game\.players\[playerIndex\]\.name/s.test(html), '玩家选择项必须同时显示动态方位和姓名');
 
 assert(/id="scoringGuideOverlay"/.test(html), '应提供独立的算分教学页面');

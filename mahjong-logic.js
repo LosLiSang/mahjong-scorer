@@ -887,6 +887,8 @@ function roundUp100(value) {
 function calcPointPayments(han, fu, options = {}) {
   const isDealer = !!options.isDealer;
   const isTsumo = !!options.isTsumo;
+  const playerCount = Number(options.playerCount) === 3 ? 3 : 4;
+  const sanmaTsumoRule = options.sanmaTsumoRule || 'loss';
   const basePoint = calcBasePoint(han, fu);
   const limitName = getLimitName(han, fu);
   let payments;
@@ -895,11 +897,20 @@ function calcPointPayments(han, fu, options = {}) {
     const amount = roundUp100(basePoint * (isDealer ? 6 : 4));
     payments = [{ label: '放铳者支付', amount }];
   } else if (isDealer) {
-    payments = [{ label: '三家各付', amount: roundUp100(basePoint * 2), count: 3 }];
+    const amount = roundUp100(basePoint * 2);
+    if (playerCount === 3 && sanmaTsumoRule === 'loss') {
+      payments = [{ label: '两家各付', amount, count: 2 }];
+    } else {
+      payments = [{ label: '三家各付', amount, count: 3 }];
+    }
   } else {
     payments = [
       { label: '亲家支付', amount: roundUp100(basePoint * 2) },
-      { label: '其余两家各付', amount: roundUp100(basePoint), count: 2 },
+      {
+        label: playerCount === 3 ? '另一子家支付' : '其余两家各付',
+        amount: roundUp100(basePoint),
+        ...(playerCount === 4 ? { count: 2 } : {}),
+      },
     ];
   }
 
@@ -907,17 +918,27 @@ function calcPointPayments(han, fu, options = {}) {
   return { basePoint, limitName, total, payments };
 }
 
-function calcDrawDeltas(tenpaiSet) {
-  const tenpai = [...tenpaiSet].sort((a, b) => a - b);
+function calcDrawDeltas(tenpaiSet, playerCount = 4) {
+  playerCount = Number(playerCount) === 3 ? 3 : 4;
+  const tenpai = [...tenpaiSet].filter(index => index >= 0 && index < playerCount).sort((a, b) => a - b);
   const tCount = tenpai.length;
-  if (tCount === 0 || tCount === 4) return [0, 0, 0, 0];
+  if (tCount === 0 || tCount === playerCount) return Array(playerCount).fill(0);
 
-  const notenCount = 4 - tCount;
-  const pool = notenCount * 1000;
+  const notenCount = playerCount - tCount;
+  const pool = playerCount === 3 ? 2000 : notenCount * 1000;
+  const perNoten = Math.floor(pool / notenCount / 100) * 100;
+  const deltas = Array(playerCount).fill(0);
+  let paid = 0;
+
+  for (let index = 0; index < playerCount; index++) {
+    if (tenpaiSet.has(index)) continue;
+    const amount = index === playerCount - 1 ? pool - paid : Math.min(perNoten, pool - paid);
+    deltas[index] = -amount;
+    paid += amount;
+  }
+
   const baseShare = Math.floor(pool / tCount / 100) * 100;
   let remainder = pool - baseShare * tCount;
-  const deltas = Array(4).fill(-1000);
-
   tenpai.forEach(index => {
     const extra = remainder >= 100 ? 100 : 0;
     deltas[index] = baseShare + extra;
