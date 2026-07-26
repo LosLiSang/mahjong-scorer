@@ -82,6 +82,8 @@ assert.deepEqual(calcDrawDeltas(new Set([0, 1, 2, 3])), [0, 0, 0, 0], '四人听
 
 const fs = require('fs');
 const html = fs.readFileSync('./index.html', 'utf8');
+assert(/<script src="mahjong-logic\.js\?v=[^"]+"><\/script>/.test(html), '核心逻辑脚本必须带发布版本，避免手机缓存新旧代码混用');
+assert(/<script src="scoring-guide-data\.js\?v=[^"]+"><\/script>/.test(html), '算分教学数据必须带发布版本');
 assert(/function\s+seatOf\(playerIndex/.test(html), '玩家方位必须随庄家轮转动态计算');
 assert(/const\s+seat\s*=\s*seatOf\(i\)/.test(html), '玩家卡片必须使用动态座风');
 assert(/winnerName: winner\.name/.test(html), '和牌历史必须保存当时的玩家姓名');
