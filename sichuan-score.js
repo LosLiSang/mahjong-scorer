@@ -3,6 +3,39 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   Object.assign(root, api);
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
+  const SICHUAN_FAN_TYPES = [
+    { id: 'pinghu', name: '平胡', fan: 1, group: 'base' },
+    { id: 'duiduihu', name: '对对胡', fan: 2, group: 'base' },
+    { id: 'qingyise', name: '清一色', fan: 3, group: 'base' },
+    { id: 'daiyaojiu', name: '带幺九', fan: 3, group: 'base' },
+    { id: 'qidui', name: '七对', fan: 3, group: 'base' },
+    { id: 'qingdui', name: '清对', fan: 4, group: 'base' },
+    { id: 'jiangdui', name: '将对', fan: 4, group: 'base' },
+    { id: 'longqidui', name: '龙七对', fan: 5, group: 'base' },
+    { id: 'qingqidui', name: '清七对', fan: 5, group: 'base' },
+    { id: 'qingyaojiu', name: '清幺九', fan: 5, group: 'base' },
+    { id: 'tianhu', name: '天胡', fan: 6, group: 'base' },
+    { id: 'dihu', name: '地胡', fan: 6, group: 'base' },
+    { id: 'qinglongqidui', name: '清龙七对', fan: 6, group: 'base' },
+    { id: 'zimo', name: '自摸', fan: 1, group: 'extra' },
+    { id: 'gangshanghua', name: '杠上花', fan: 1, group: 'extra' },
+    { id: 'gangshangpao', name: '杠上炮', fan: 1, group: 'extra' },
+    { id: 'qianggang', name: '抢杠', fan: 1, group: 'extra' },
+    { id: 'gen', name: '根', fan: 1, group: 'extra' },
+  ];
+
+  function calculateSichuanFan(selectedIds = [], fanCap = 6) {
+    const selected = selectedIds.map(id => SICHUAN_FAN_TYPES.find(type => type.id === id)).filter(Boolean);
+    const fan = Math.min(Number(fanCap) || 6, selected.reduce((sum, type) => sum + type.fan, 0));
+    return { fan: Math.max(1, fan), label: selected.map(type => type.name).join(' + ') || '平胡' };
+  }
+
+  function setSichuanMissingSuit(game, playerIndex, suit) {
+    if (!game.players[playerIndex]) return false;
+    game.players[playerIndex].missingSuit = ['m', 'p', 's'].includes(suit) ? suit : '';
+    return true;
+  }
+
   function scoreFromFan(fan, baseMultiplier = 1, unitScore = 1, fanCap = 6) {
     const totalFan = Math.max(1, Math.min(Number(fanCap) || 6, Number(fan) || 1));
     return (Number(unitScore) || 1) * (Number(baseMultiplier) || 1) * Math.pow(2, totalFan - 1);
@@ -14,6 +47,7 @@
       players: names.slice(0, 4).map((name, index) => ({
         name: String(name || `玩家${index + 1}`),
         score: Number(initialScore) || 0,
+        missingSuit: '',
       })),
       history: [],
     };
@@ -57,6 +91,9 @@
   }
 
   return {
+    SICHUAN_FAN_TYPES,
+    calculateSichuanFan,
+    setSichuanMissingSuit,
     scoreFromFan,
     createSichuanGame,
     createTransferEntry,

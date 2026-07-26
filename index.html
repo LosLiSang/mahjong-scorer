@@ -247,6 +247,13 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 .sichuan-player .name { font-size: 13px; color: #807762; }
 .sichuan-player .score { margin-top: 5px; font-size: 26px; font-weight: 700; color: #3d3929; }
 .sichuan-player .score.negative { color: #c04f39; }
+.sichuan-player .missing-suit { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: #f5eee2; color: #9a623e; font-size: 11px; }
+.sichuan-player .missing-suit.unset { color: #99917f; background: #f1efe8; }
+.sichuan-player { cursor: pointer; }
+.sichuan-fan-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.sichuan-fan-type { border: 1px solid #ddd5c4; border-radius: 8px; background: #fff; padding: 8px 4px; color: #685f4c; font: inherit; font-size: 11px; }
+.sichuan-fan-type.active { background: #c96442; border-color: #c96442; color: #fff; }
+.sichuan-fan-group-title { grid-column: 1 / -1; color: #8a8470; font-size: 11px; margin-top: 4px; }
 .sichuan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .sichuan-actions .btn:first-child { grid-column: 1 / -1; }
 .sichuan-note { margin-top: 10px; color: #8a8470; font-size: 11px; line-height: 1.65; text-align: center; }
@@ -359,8 +366,10 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <label>付款玩家（可多选）</label>
     <div class="seg-group" id="sichuanPayerSelect"></div>
     <div id="sichuanFanFields">
+      <label>番型（可组合）</label>
+      <div class="sichuan-fan-types" id="sichuanFanTypeSelect"></div>
       <div class="btn-row">
-        <div style="flex:1"><label>番数</label><input id="sichuanFan" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
+        <div style="flex:1"><label>合计番数</label><input id="sichuanFan" type="number" min="1" max="20" value="1" inputmode="numeric"></div>
         <div style="flex:1"><label>底分</label><input id="sichuanBaseScore" type="number" min="1" value="1" inputmode="numeric"></div>
       </div>
       <div style="font-size:12px;color:#8a8470;margin-top:7px">按 1番×1、2番×2、3番×4 计算，默认 6 番封顶。</div>
@@ -397,6 +406,21 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
       <button class="btn btn-secondary" onclick="closeModal('sichuanSetupOverlay')">取消</button>
       <button class="btn" onclick="confirmSichuanSetup()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- 川麻定缺记录 -->
+<div class="overlay" id="sichuanMissingSuitOverlay">
+  <div class="modal">
+    <h3 id="sichuanMissingSuitTitle">记录定缺</h3>
+    <p style="font-size:13px;color:#8a8470;text-align:center;margin-bottom:12px">选择该玩家本局要缺的花色。</p>
+    <div class="seg-group" id="sichuanMissingSuitSelect">
+      <button type="button" class="seg-btn" data-missing-suit="m">缺万</button>
+      <button type="button" class="seg-btn" data-missing-suit="p">缺筒</button>
+      <button type="button" class="seg-btn" data-missing-suit="s">缺索</button>
+      <button type="button" class="seg-btn" data-missing-suit="">未定</button>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:14px" onclick="closeModal('sichuanMissingSuitOverlay')">取消</button>
   </div>
 </div>
 
@@ -638,7 +662,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 </div>
 
 <script src="mahjong-logic.js?v=20260726-sanma1"></script>
-<script src="sichuan-score.js?v=20260726-1"></script>
+<script src="sichuan-score.js?v=20260726-2"></script>
 <script src="tutorial-data.js?v=20260726-3"></script>
 <script src="yaku-data.js?v=20260726-3"></script>
 <script src="scoring-guide-data.js?v=20260726-3"></script>
@@ -2580,6 +2604,7 @@ try {
   sichuanGame = createSichuanGame();
 }
 if (!sichuanGame?.players || sichuanGame.players.length !== 4) sichuanGame = createSichuanGame();
+sichuanGame.players.forEach(player => { if (typeof player.missingSuit !== 'string') player.missingSuit = ''; });
 
 function saveSichuanGame() {
   localStorage.setItem(SICHUAN_STORAGE_KEY, JSON.stringify(sichuanGame));
@@ -2589,12 +2614,16 @@ function renderSichuanScore() {
   const players = document.getElementById('sichuanPlayers');
   const history = document.getElementById('sichuanHistory');
   if (!players || !history) return;
-  players.innerHTML = sichuanGame.players.map((player, index) => `
-    <div class="sichuan-player" data-sichuan-player="${index}">
+  players.innerHTML = sichuanGame.players.map((player, index) => {
+    const missingLabels = { m: '缺万', p: '缺筒', s: '缺索' };
+    const missing = missingLabels[player.missingSuit] || '点此定缺';
+    return `
+    <div class="sichuan-player" data-sichuan-player="${index}" onclick="openSichuanMissingSuit(${index})">
       <div class="name">${player.name}</div>
       <div class="score${player.score < 0 ? ' negative' : ''}">${player.score > 0 ? '+' : ''}${player.score}</div>
-    </div>
-  `).join('');
+      <div class="missing-suit${player.missingSuit ? '' : ' unset'}">${missing}</div>
+    </div>`;
+  }).join('');
   if (!sichuanGame.history.length) {
     history.innerHTML = '<div class="sichuan-empty">还没有积分记录</div>';
   } else {
@@ -2640,9 +2669,41 @@ function renderSichuanEntrySelectors() {
   });
 }
 
+function renderSichuanFanTypes() {
+  const container = document.getElementById('sichuanFanTypeSelect');
+  container.innerHTML = '';
+  ['base', 'extra'].forEach(group => {
+    const title = document.createElement('div');
+    title.className = 'sichuan-fan-group-title';
+    title.textContent = group === 'base' ? '基础番型（通常选一个）' : '附加番型（可多选）';
+    container.appendChild(title);
+    SICHUAN_FAN_TYPES.filter(type => type.group === group).forEach(type => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'sichuan-fan-type' + (sichuanEntryState.fanTypes.has(type.id) ? ' active' : '');
+      button.textContent = `${type.name} ${type.fan}番`;
+      button.onclick = () => {
+        if (group === 'base') {
+          SICHUAN_FAN_TYPES.filter(item => item.group === 'base').forEach(item => sichuanEntryState.fanTypes.delete(item.id));
+          sichuanEntryState.fanTypes.add(type.id);
+        } else if (sichuanEntryState.fanTypes.has(type.id)) {
+          sichuanEntryState.fanTypes.delete(type.id);
+        } else {
+          sichuanEntryState.fanTypes.add(type.id);
+        }
+        const calculated = calculateSichuanFan([...sichuanEntryState.fanTypes], 6);
+        document.getElementById('sichuanFan').value = calculated.fan;
+        renderSichuanFanTypes();
+        previewSichuanEntry();
+      };
+      container.appendChild(button);
+    });
+  });
+}
+
 function openSichuanEntry(type) {
   const titles = { win: '胡牌积分', kong: '杠分', penalty: '罚分 / 手动调整' };
-  sichuanEntryState = { type, receiver: 0, payers: new Set(type === 'win' ? [1] : [1, 2, 3]) };
+  sichuanEntryState = { type, receiver: 0, payers: new Set(type === 'win' ? [1] : [1, 2, 3]), fanTypes: new Set(['pinghu']) };
   document.getElementById('sichuanEntryTitle').textContent = titles[type];
   document.getElementById('sichuanFanFields').hidden = type !== 'win';
   document.getElementById('sichuanManualFields').hidden = type === 'win';
@@ -2651,6 +2712,7 @@ function openSichuanEntry(type) {
   document.getElementById('sichuanManualAmount').value = type === 'kong' ? '1' : '16';
   document.getElementById('sichuanEntryLabel').value = '';
   renderSichuanEntrySelectors();
+  renderSichuanFanTypes();
   ['sichuanFan', 'sichuanBaseScore', 'sichuanManualAmount'].forEach(id => {
     document.getElementById(id).oninput = previewSichuanEntry;
   });
@@ -2688,13 +2750,17 @@ function confirmSichuanEntry() {
   const typeNames = { win: '胡牌', kong: '杠分', penalty: '调整' };
   const receiverName = sichuanGame.players[sichuanEntryState.receiver].name;
   const customLabel = document.getElementById('sichuanEntryLabel').value.trim();
+  const fanResult = sichuanEntryState.type === 'win'
+    ? calculateSichuanFan([...sichuanEntryState.fanTypes], 6)
+    : null;
   const entry = createTransferEntry({
     type: sichuanEntryState.type,
     receiver: sichuanEntryState.receiver,
     payers,
     amountPerPayer: amount,
-    label: customLabel || `${receiverName} ${typeNames[sichuanEntryState.type]}`,
+    label: customLabel || (fanResult ? `${receiverName} ${fanResult.label} ${fanResult.fan}番` : `${receiverName} ${typeNames[sichuanEntryState.type]}`),
   });
+  if (fanResult) entry.fanTypes = [...sichuanEntryState.fanTypes];
   applySichuanEntry(sichuanGame, entry);
   closeModal('sichuanEntryOverlay');
   renderSichuanScore();
@@ -2703,6 +2769,22 @@ function confirmSichuanEntry() {
 function undoSichuanLast() {
   if (!undoSichuanEntry(sichuanGame)) { alert('没有可撤销的川麻积分'); return; }
   renderSichuanScore();
+}
+
+let sichuanMissingSuitPlayer = 0;
+function openSichuanMissingSuit(playerIndex) {
+  sichuanMissingSuitPlayer = playerIndex;
+  const player = sichuanGame.players[playerIndex];
+  document.getElementById('sichuanMissingSuitTitle').textContent = `${player.name} · 记录定缺`;
+  document.querySelectorAll('#sichuanMissingSuitSelect [data-missing-suit]').forEach(button => {
+    button.classList.toggle('active', button.dataset.missingSuit === player.missingSuit);
+    button.onclick = () => {
+      setSichuanMissingSuit(sichuanGame, sichuanMissingSuitPlayer, button.dataset.missingSuit);
+      closeModal('sichuanMissingSuitOverlay');
+      renderSichuanScore();
+    };
+  });
+  openModal('sichuanMissingSuitOverlay');
 }
 
 function openSichuanSetup() {

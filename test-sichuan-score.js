@@ -5,6 +5,9 @@ const {
   createTransferEntry,
   applySichuanEntry,
   undoSichuanEntry,
+  SICHUAN_FAN_TYPES,
+  calculateSichuanFan,
+  setSichuanMissingSuit,
 } = require('./sichuan-score');
 
 assert.equal(scoreFromFan(1, 1, 6), 6, '一番应为 1 倍底分');
@@ -14,7 +17,20 @@ assert.equal(scoreFromFan(3, 2, 6), 48, '根、杠上花等附加番应计入总
 
 const game = createSichuanGame(['甲', '乙', '丙', '丁'], 0);
 assert.deepEqual(game.players.map(player => player.score), [0, 0, 0, 0]);
+assert.deepEqual(game.players.map(player => player.missingSuit), ['', '', '', ''], '新局默认未记录定缺');
+setSichuanMissingSuit(game, 0, 'm');
+setSichuanMissingSuit(game, 1, 'p');
+assert.deepEqual(game.players.map(player => player.missingSuit), ['m', 'p', '', ''], '每位玩家必须能独立记录缺万筒索');
 assert.equal(game.history.length, 0);
+
+assert(SICHUAN_FAN_TYPES.some(type => type.id === 'pinghu' && type.fan === 1), '番型列表必须包含平胡');
+assert(SICHUAN_FAN_TYPES.some(type => type.id === 'qingyise' && type.fan === 3), '番型列表必须包含清一色');
+assert.deepEqual(
+  calculateSichuanFan(['qingyise', 'gangshanghua', 'gen'], 6),
+  { fan: 5, label: '清一色 + 杠上花 + 根' },
+  '基础番型与附加番型应合计并生成可读标签'
+);
+assert.equal(calculateSichuanFan(['tianhu', 'gen'], 6).fan, 6, '番数必须受封顶限制');
 
 const ron = createTransferEntry({
   type: 'ron',
@@ -49,6 +65,10 @@ assert(/id="sichuanNavBtn"/.test(html), '顶部必须有川麻积分入口');
 assert(/id="sichuanView"/.test(html), '川麻必须使用独立页面');
 assert(/<script src="sichuan-score\.js\?v=[^"]+"><\/script>/.test(html), '川麻积分引擎必须是独立版本化脚本');
 assert(/id="sichuanPlayers"/.test(html), '川麻页面必须显示四位玩家积分');
+assert(/id="sichuanMissingSuitOverlay"/.test(html) && /data-missing-suit="m"/.test(html), '川麻页面必须提供逐人定缺记录');
+assert(/class="missing-suit\$\{player\.missingSuit/.test(html), '玩家卡片必须展示当前缺门');
+assert(/id="sichuanFanTypeSelect"/.test(html), '胡牌积分必须提供川麻番型选择');
+assert(/calculateSichuanFan\(/.test(html), '番型选择必须驱动番数和积分计算');
 assert(/openSichuanEntry\('win'\)/.test(html), '川麻页面必须提供胡牌积分入口');
 assert(/openSichuanEntry\('kong'\)/.test(html), '川麻页面必须提供杠分入口');
 assert(/openSichuanEntry\('penalty'\)/.test(html), '川麻页面必须提供花猪、查叫或手动罚分入口');
