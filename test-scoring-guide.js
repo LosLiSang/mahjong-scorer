@@ -105,6 +105,7 @@ assert(/let\s+deltaClearTimer\s*=\s*null/.test(html) && /clearTimeout\(deltaClea
 assert(/deltaClearTimer\s*=\s*setTimeout\(\(\)\s*=>\s*\{[\s\S]*element\.textContent\s*=\s*''[\s\S]*\},\s*10000\)/s.test(html), '每次结算后的分数变化必须保留 10 秒');
 assert(/function\s+capturePlayerPositions/.test(html), '换庄前必须记录四位玩家的位置');
 assert(/function\s+animatePlayerSeatChanges/.test(html), '换庄后必须播放玩家换座动画');
+assert(/duration:\s*1000/.test(html), '换座动画必须持续 1 秒，让玩家能看清座位变化');
 assert(/element\.animate\(/.test(html), '换座动画必须使用浏览器动画 API 平滑移动卡片');
 assert(/prefers-reduced-motion:\s*reduce/.test(html), '换座动画必须尊重系统的减少动态效果设置');
 assert(/function\s+confirmPlayerSetup/.test(html), '必须提供确认玩家姓名的流程');
