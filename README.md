@@ -6,6 +6,7 @@
 
 - 四人 / 三人整场点数、本场与供托管理
 - 三麻模式：35000 点起、东南各三局、自摸损、2000 点流局罚符、拔北计数、二万到八万移除
+- 川麻独立积分账本：胡牌、杠分、花猪/查叫与手动调整，只记零和积分，不录手牌
 - SVG 麻将牌选牌器
 - 指定最终和牌张
 - 普通牌型、七对子、国士无双与役满分析
@@ -30,6 +31,7 @@ python3 -m http.server 8080
 ```bash
 node test-logic.js
 node test-scoring-guide.js
+node test-sichuan-score.js
 node test-tutorial.js
 node test-yaku-catalog.js
 ```
