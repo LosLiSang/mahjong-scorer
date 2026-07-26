@@ -45,6 +45,9 @@ body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong
 .player-card .delta { font-size: 13px; height: 16px; color: #5a7a4a; }
 .player-card .delta.minus { color: #c96442; }
 .player-card .riichi-mark { position: absolute; top: 4px; right: 6px; font-size: 11px; color: #c96442; }
+@media (prefers-reduced-motion: reduce) {
+  .player-card { transition: none; }
+}
 
 /* 按钮 */
 .actions { display: flex; flex-direction: column; gap: 8px; }
@@ -1062,6 +1065,7 @@ function render() {
     const seat = seatOf(i);
     const card = document.createElement('div');
     card.className = 'player-card' + ` seat-${seat}` + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
+    card.dataset.playerIndex = i;
     card.innerHTML = `
       <div class="seat">${seat}${isDealer ? ' · 亲' : ''}</div>
       <div class="name name-edit" role="button" tabindex="0" onclick="openPlayerSetup()" title="点击修改玩家姓名">${p.name}</div>
@@ -1073,6 +1077,34 @@ function render() {
   });
 
   saveGame();
+}
+
+function capturePlayerPositions() {
+  const positions = new Map();
+  document.querySelectorAll('.player-card[data-player-index]').forEach(element => {
+    positions.set(element.dataset.playerIndex, element.getBoundingClientRect());
+  });
+  return positions;
+}
+
+function animatePlayerSeatChanges(previousPositions) {
+  if (!previousPositions || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('.player-card[data-player-index]').forEach(element => {
+    const previous = previousPositions.get(element.dataset.playerIndex);
+    if (!previous) return;
+    const current = element.getBoundingClientRect();
+    const deltaX = previous.left - current.left;
+    const deltaY = previous.top - current.top;
+    if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
+    element.animate([
+      { transform: `translate(${deltaX}px, ${deltaY}px) scale(.96)`, opacity: .78, zIndex: 5 },
+      { transform: 'translate(0, 0) scale(1)', opacity: 1, zIndex: 1 },
+    ], {
+      duration: 520,
+      easing: 'cubic-bezier(.22, .8, .28, 1)',
+      fill: 'both',
+    });
+  });
 }
 
 function flashDelta(changes) {
@@ -1936,7 +1968,7 @@ function getClosedKantsusForEval() {
 }
 
 function openWinModal() {
-  winState = { winnerIdx: game.dealerIndex, isTsumo: false, loserIdx: -1, isRiichi: false, openMentsus: [], winTile: null, doraIndicators: [], uraDoraIndicators: [], mentsuOverride: null, pairOverride: null, decompIndex: 0, analysisStage: 0, conditions: {} };
+  winState = { winnerIdx: game.dealerIndex, isTsumo: false, loserIdx: -1, isRiichi: false, openMentsus: [], winTile: null, doraIndicators: [], uraDoraIndicators: [], mentsuOverride: null, pairOverride: null, decompIndex: 0, analysisStage: 0, conditions: {}, previousPlayerPositions: capturePlayerPositions() };
   buildPlayerSeg('winnerSelect');
   // 和牌者默认选第一个
   const firstBtn = document.querySelector('#winnerSelect .seg-btn');
@@ -2028,6 +2060,7 @@ function previewWin() {
 }
 
 function confirmWin() {
+  const previousPlayerPositions = winState.previousPlayerPositions;
   const han = parseInt(document.getElementById('hanSelect').value);
   const fu = parseInt(document.getElementById('fuSelect').value);
   const result = calcWinPayments(winState.winnerIdx, han, fu, winState.isTsumo, winState.loserIdx);
@@ -2072,6 +2105,7 @@ function confirmWin() {
   }
 
   render();
+  requestAnimationFrame(() => animatePlayerSeatChanges(previousPlayerPositions));
   flashDelta(changes);
   checkGameEnd();
 }
@@ -2083,7 +2117,9 @@ function advanceRound() {
 }
 
 // 流局
+let drawPlayerPositions = null;
 function openDrawModal() {
+  drawPlayerPositions = capturePlayerPositions();
   const c = document.getElementById('tenpaiSelect');
   c.innerHTML = '';
   game.players.forEach((p, i) => {
@@ -2123,6 +2159,7 @@ function previewDraw() {
 }
 
 function confirmDraw() {
+  const previousPlayerPositions = drawPlayerPositions;
   const tenpai = getSelectedTenpai();
   const drawRound = ROUND_NAMES[game.roundIndex];
   const tenpaiPlayers = [...tenpai].map(index => ({
@@ -2159,6 +2196,7 @@ function confirmDraw() {
 
   closeModal('drawOverlay');
   render();
+  requestAnimationFrame(() => animatePlayerSeatChanges(previousPlayerPositions));
   flashDelta(changes);
   checkGameEnd();
 }

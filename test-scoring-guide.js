@@ -101,6 +101,10 @@ assert(/\.player-card\.seat-东\s*\{[^}]*grid-area:\s*bottom/s.test(html), '东�
 assert(/\.player-card\.seat-南\s*\{[^}]*grid-area:\s*right/s.test(html), '南家必须显示在牌桌右侧');
 assert(/\.player-card\.seat-西\s*\{[^}]*grid-area:\s*top/s.test(html), '西家必须显示在牌桌上方');
 assert(/\.player-card\.seat-北\s*\{[^}]*grid-area:\s*left/s.test(html), '北家必须显示在牌桌左侧');
+assert(/function\s+capturePlayerPositions/.test(html), '换庄前必须记录四位玩家的位置');
+assert(/function\s+animatePlayerSeatChanges/.test(html), '换庄后必须播放玩家换座动画');
+assert(/element\.animate\(/.test(html), '换座动画必须使用浏览器动画 API 平滑移动卡片');
+assert(/prefers-reduced-motion:\s*reduce/.test(html), '换座动画必须尊重系统的减少动态效果设置');
 assert(/function\s+confirmPlayerSetup/.test(html), '必须提供确认玩家姓名的流程');
 assert(!/if\s*\(!hasPlayerNames\(\)\)\s*openPlayerSetup/.test(html), '首次进入必须使用默认姓名，不能强制弹出姓名设置');
 assert(/class="name name-edit"/.test(html) && /onclick="openPlayerSetup/.test(html), '玩家姓名必须可以从玩家卡片点击修改');
