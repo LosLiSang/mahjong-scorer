@@ -908,14 +908,22 @@ function calcPointPayments(han, fu, options = {}) {
 }
 
 function calcDrawDeltas(tenpaiSet) {
-  const tCount = tenpaiSet.size;
+  const tenpai = [...tenpaiSet].sort((a, b) => a - b);
+  const tCount = tenpai.length;
   if (tCount === 0 || tCount === 4) return [0, 0, 0, 0];
 
-  const payByNoten = 3000 / (4 - tCount);
-  const receiveByTenpai = 3000 / tCount;
-  return Array.from({ length: 4 }, (_, index) =>
-    tenpaiSet.has(index) ? receiveByTenpai : -payByNoten
-  );
+  const notenCount = 4 - tCount;
+  const pool = notenCount * 1000;
+  const baseShare = Math.floor(pool / tCount / 100) * 100;
+  let remainder = pool - baseShare * tCount;
+  const deltas = Array(4).fill(-1000);
+
+  tenpai.forEach(index => {
+    const extra = remainder >= 100 ? 100 : 0;
+    deltas[index] = baseShare + extra;
+    remainder -= extra;
+  });
+  return deltas;
 }
 
 // 导出（Node 测试用）

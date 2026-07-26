@@ -20,6 +20,7 @@ body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong
 .player-card.riichi { background: #fdf6f2; }
 .player-card .seat { font-size: 12px; color: #c96442; font-weight: 500; }
 .player-card .name { font-size: 15px; margin: 4px 0; color: #3d3929; }
+.player-card .name-edit { cursor: pointer; text-decoration: underline dotted #b9b29d; text-underline-offset: 3px; }
 .player-card .points { font-size: 22px; font-weight: 600; color: #3d3929; }
 .player-card .delta { font-size: 13px; height: 16px; color: #5a7a4a; }
 .player-card .delta.minus { color: #c96442; }
@@ -462,8 +463,8 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 <!-- 新对局玩家设置 -->
 <div class="overlay" id="playerSetupOverlay">
   <div class="modal">
-    <h3>新对局 · 玩家姓名</h3>
-    <p style="font-size:13px;color:#8a8470;margin-bottom:14px;text-align:center">按当前座次填写四位玩家，之后结算会同时显示方位和姓名。</p>
+    <h3>修改玩家姓名</h3>
+    <p style="font-size:13px;color:#8a8470;margin-bottom:14px;text-align:center">按当前玩家顺序修改姓名，不会改变点数和座次。</p>
     <div class="player-setup-grid">
       <div class="player-setup-field"><label for="playerName0">东</label><input id="playerName0" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
       <div class="player-setup-field"><label for="playerName1">南</label><input id="playerName1" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
@@ -471,7 +472,10 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
       <div class="player-setup-field"><label for="playerName3">北</label><input id="playerName3" maxlength="12" autocomplete="off" placeholder="玩家姓名"></div>
     </div>
     <div class="setup-error" id="playerSetupError"></div>
-    <button class="btn" style="width:100%;margin-top:4px" onclick="confirmPlayerSetup()">开始对局</button>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn btn-secondary" onclick="closeModal('playerSetupOverlay')">取消</button>
+      <button class="btn" onclick="confirmPlayerSetup()">保存姓名</button>
+    </div>
   </div>
 </div>
 
@@ -493,10 +497,10 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
   </div>
 </div>
 
-<script src="mahjong-logic.js?v=20260726-2"></script>
-<script src="tutorial-data.js?v=20260726-2"></script>
-<script src="yaku-data.js?v=20260726-2"></script>
-<script src="scoring-guide-data.js?v=20260726-2"></script>
+<script src="mahjong-logic.js?v=20260726-3"></script>
+<script src="tutorial-data.js?v=20260726-3"></script>
+<script src="yaku-data.js?v=20260726-3"></script>
+<script src="scoring-guide-data.js?v=20260726-3"></script>
 <script>
 // 把 mahjong-logic.js 导出的函数挂到 window（浏览器环境没有 module.exports）
 // 实际上浏览器里这些函数已经是全局的，不需要 require
@@ -909,17 +913,10 @@ function playerLabel(playerIndex) {
   return `${seatOf(playerIndex)} · ${game.players[playerIndex].name}`;
 }
 
-function hasPlayerNames(players = game.players) {
-  return players.every(player => {
-    const name = String(player.name || '').trim();
-    return name && !SEATS.some(seat => name === `${seat}家`);
-  });
-}
-
 function openPlayerSetup({ keepCurrentNames = true } = {}) {
   for (let i = 0; i < 4; i++) {
     const currentName = keepCurrentNames ? String(game.players[i]?.name || '').trim() : '';
-    document.getElementById(`playerName${i}`).value = SEATS.some(seat => currentName === `${seat}家`) ? '' : currentName;
+    document.getElementById(`playerName${i}`).value = currentName || `${SEATS[i]}家`;
   }
   document.getElementById('playerSetupError').textContent = '';
   openModal('playerSetupOverlay');
@@ -1030,7 +1027,7 @@ function render() {
     card.className = 'player-card' + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
     card.innerHTML = `
       <div class="seat">${seat}${isDealer ? ' · 亲' : ''}</div>
-      <div class="name">${p.name}</div>
+      <div class="name name-edit" role="button" tabindex="0" onclick="openPlayerSetup()" title="点击修改玩家姓名">${p.name}</div>
       <div class="points" id="pts-${i}">${p.points}</div>
       <div class="delta" id="delta-${i}"></div>
       ${p.riichi ? '<div class="riichi-mark">●</div>' : ''}
@@ -2005,8 +2002,13 @@ function confirmWin() {
     changes[p.from] = (changes[p.from] || 0) - p.amount;
     changes[p.to] = (changes[p.to] || 0) + p.amount;
   });
-  // 供托
+  // 供托由本局和牌者全部取得。
+  if (result.stickBonus > 0) {
+    game.players[winState.winnerIdx].points += result.stickBonus;
+    changes[winState.winnerIdx] = (changes[winState.winnerIdx] || 0) + result.stickBonus;
+  }
   game.riichiSticks = 0;
+  clearRoundRiichi();
 
   // 记录
   const winner = game.players[winState.winnerIdx];
@@ -2097,6 +2099,8 @@ function confirmDraw() {
     game.players[index].points += delta;
     changes[index] = delta;
   });
+  // 流局没有和牌者，供托留到下一局；仅清除本局立直标记。
+  clearRoundRiichi();
 
   // 荒牌流局一定增加一本场；亲听牌连庄，否则轮庄。
   const dealerTenpai = tenpai.has(game.dealerIndex);
@@ -2123,6 +2127,10 @@ function confirmDraw() {
 }
 
 // 立直
+function clearRoundRiichi() {
+  game.players.forEach(player => { player.riichi = false; });
+}
+
 function toggleRiichi() {
   const c = document.createElement('div');
   c.className = 'overlay active';
@@ -2160,6 +2168,11 @@ function confirmRiichi() {
       game.players[i].points -= 1000;
       game.riichiSticks++;
       changes[i] = -1000;
+    } else if (!shouldBeRiichi && game.players[i].riichi) {
+      game.players[i].riichi = false;
+      game.players[i].points += 1000;
+      game.riichiSticks = Math.max(0, game.riichiSticks - 1);
+      changes[i] = 1000;
     }
   });
   overlay.remove();
@@ -2245,7 +2258,6 @@ function resetGame() {
   undoStack = [];
   saveGame();
   render();
-  openPlayerSetup({ keepCurrentNames: false });
 }
 
 function checkGameEnd() {
@@ -2281,7 +2293,6 @@ function showGameEnd() {
 
 // 初次渲染
 render();
-if (!hasPlayerNames()) openPlayerSetup({ keepCurrentNames: false });
 
 // 包裹保存快照
 const _confirmWin = confirmWin;

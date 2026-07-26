@@ -69,13 +69,13 @@ assert.deepEqual(
 );
 assert.deepEqual(
   calcDrawDeltas(new Set([0, 2])),
-  [1500, -1500, 1500, -1500],
-  '两人听牌时听牌者各收 1500，不听者各付 1500'
+  [1000, -1000, 1000, -1000],
+  '两人听牌时平分两名不听者各付的 1000 点'
 );
 assert.deepEqual(
   calcDrawDeltas(new Set([0, 1, 2])),
-  [1000, 1000, 1000, -3000],
-  '三人听牌时听牌者各收 1000，不听者付 3000'
+  [400, 300, 300, -1000],
+  '三人听牌时按百点单位尽量平分唯一不听者的 1000 点'
 );
 assert.deepEqual(calcDrawDeltas(new Set()), [0, 0, 0, 0], '无人听牌不交换点数');
 assert.deepEqual(calcDrawDeltas(new Set([0, 1, 2, 3])), [0, 0, 0, 0], '四人听牌不交换点数');
@@ -94,6 +94,12 @@ assert(/calcDrawDeltas\(tenpai\)/.test(html), '流局预览和结算必须共用
 assert(/id="playerSetupOverlay"/.test(html), '新对局必须提供玩家姓名设置弹窗');
 assert(/id="playerName0"/.test(html) && /id="playerName3"/.test(html), '姓名设置必须包含四位玩家');
 assert(/function\s+confirmPlayerSetup/.test(html), '必须提供确认玩家姓名的流程');
+assert(!/if\s*\(!hasPlayerNames\(\)\)\s*openPlayerSetup/.test(html), '首次进入必须使用默认姓名，不能强制弹出姓名设置');
+assert(/class="name name-edit"/.test(html) && /onclick="openPlayerSetup/.test(html), '玩家姓名必须可以从玩家卡片点击修改');
+assert(/game\.players\[winState\.winnerIdx\]\.points\s*\+=\s*result\.stickBonus/.test(html), '和牌者必须实际获得全部立直供托');
+assert(/function\s+clearRoundRiichi/.test(html), '每局结算后必须统一清除本局立直状态');
+assert(/function\s+confirmWin[\s\S]*clearRoundRiichi\(\)/s.test(html), '和牌结算后必须清除立直状态');
+assert(/function\s+confirmDraw[\s\S]*clearRoundRiichi\(\)/s.test(html), '流局后必须清除立直状态但保留供托');
 assert(/game\.honba\+\+;[\s\S]*if\s*\(dealerTenpai\)/s.test(html), '荒牌流局必须先增加一本场，再判断庄家是否连庄');
 assert(/const\s+drawRound\s*=\s*ROUND_NAMES\[game\.roundIndex\]/.test(html), '流局历史必须记录结算前的局数');
 assert(/function\s+playerLabel\(playerIndex\)[\s\S]*seatOf\(playerIndex\)[\s\S]*game\.players\[playerIndex\]\.name/s.test(html), '玩家选择项必须同时显示动态方位和姓名');
