@@ -243,15 +243,38 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
 .sichuan-hero h1 { font-size: 24px; margin-bottom: 5px; }
 .sichuan-hero p { font-size: 12px; line-height: 1.65; opacity: .88; }
 .sichuan-score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sichuan-table-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr);
+  grid-template-rows: 100px 88px 100px;
+  grid-template-areas: ". top ." "left center right" ". bottom .";
+  align-items: center; gap: 6px; padding: 8px; border: 1px solid #ded8c8;
+  border-radius: 18px; background: radial-gradient(circle at center, #f8f4e8 0 31%, #eadbc3 32% 33%, #f3eadc 34% 100%);
+}
+.sichuan-table-center { grid-area: center; align-self: stretch; display: flex; flex-direction: column; justify-content: center; text-align: center; background:#fff; border:1px solid #e4dcc9; border-radius:12px; padding:7px; }
+.sichuan-table-center strong { color:#aa3f2f; font-size:15px; }
+.sichuan-table-center small { display:block; margin-top:4px; color:#8a8470; font-size:10px; line-height:1.4; }
+.sichuan-player.position-bottom { grid-area: bottom; }
+.sichuan-player.position-right { grid-area: right; }
+.sichuan-player.position-top { grid-area: top; }
+.sichuan-player.position-left { grid-area: left; }
+.sichuan-name-edit { border:0; background:none; padding:0; color:#807762; font:inherit; font-size:13px; text-decoration:underline dotted #b9b29d; text-underline-offset:3px; cursor:pointer; }
 .sichuan-player { background: #fff; border: 1px solid #e4dcc9; border-radius: 13px; padding: 12px; text-align: center; }
 .sichuan-player .name { font-size: 13px; color: #807762; }
 .sichuan-player .score { margin-top: 5px; font-size: 26px; font-weight: 700; color: #3d3929; }
 .sichuan-player .score.negative { color: #c04f39; }
-.sichuan-player .missing-suit { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: #f5eee2; color: #9a623e; font-size: 11px; }
+.sichuan-player .missing-suit { display: inline-flex; align-items:center; justify-content:center; min-height:30px; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: #f5eee2; color: #9a623e; font-size: 11px; }
+.sichuan-player .missing-suit-tile { width:22px; height:30px; object-fit:contain; display:block; }
 .sichuan-player .missing-suit.unset { color: #99917f; background: #f1efe8; }
+.missing-suit-image-btn { min-width:72px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.missing-suit-image-btn img { width:34px; height:46px; object-fit:contain; pointer-events:none; }
+.missing-suit-image-btn span { font-size:11px; pointer-events:none; }
 .sichuan-player { cursor: pointer; }
-.sichuan-fan-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.sichuan-fan-type { border: 1px solid #ddd5c4; border-radius: 8px; background: #fff; padding: 8px 4px; color: #685f4c; font: inherit; font-size: 11px; }
+.sichuan-fan-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.sichuan-fan-type { border: 1px solid #ddd5c4; border-radius: 8px; background: #fff; padding: 7px 3px; color: #685f4c; font: inherit; font-size: 11px; overflow:hidden; }
+.sichuan-fan-type > span { display:block; pointer-events:none; }
+.sichuan-fan-example { display:flex !important; justify-content:center; gap:1px; margin-top:5px; min-height:29px; overflow:hidden; }
+.sichuan-fan-example img { flex:1 1 0; min-width:0; max-width:21px; height:28px; object-fit:contain; }
 .sichuan-fan-type.active { background: #c96442; border-color: #c96442; color: #fff; }
 .sichuan-fan-group-title { grid-column: 1 / -1; color: #8a8470; font-size: 11px; margin-top: 4px; }
 .sichuan-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
@@ -268,6 +291,10 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
   .player-card .points { font-size: 17px; }
   .status-bar .round-info { font-size: 16px; }
   .status-bar .sub-info { font-size: 11px; }
+  .sichuan-table-board { grid-template-columns:minmax(0,1fr) 102px minmax(0,1fr); grid-template-rows:94px 82px 94px; gap:4px; padding:6px; }
+  .sichuan-player { padding:6px 3px; }
+  .sichuan-player .score { font-size:20px; }
+  .sichuan-name-edit { font-size:12px; }
   .scoring-guide-buttons { grid-template-columns: 1fr; }
   .scoring-guide-btn { display: grid; grid-template-columns: 32px 1fr; align-items: center; text-align: left; }
   .scoring-guide-btn span { margin: 0; }
@@ -310,7 +337,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <h1>川麻积分</h1>
     <p>只记输赢，不录手牌。胡牌、杠分、花猪与查叫都归结为“谁向谁支付多少分”。</p>
   </section>
-  <section class="sichuan-score-grid" id="sichuanPlayers"></section>
+  <section class="sichuan-table-board" id="sichuanPlayers"></section>
   <section class="sichuan-actions">
     <button class="btn" onclick="openSichuanEntry('win')">胡牌积分</button>
     <button class="btn btn-secondary" onclick="openSichuanEntry('kong')">杠分</button>
@@ -415,10 +442,10 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
     <h3 id="sichuanMissingSuitTitle">记录定缺</h3>
     <p style="font-size:13px;color:#8a8470;text-align:center;margin-bottom:12px">选择该玩家本局要缺的花色。</p>
     <div class="seg-group" id="sichuanMissingSuitSelect">
-      <button type="button" class="seg-btn" data-missing-suit="m">缺万</button>
-      <button type="button" class="seg-btn" data-missing-suit="p">缺筒</button>
-      <button type="button" class="seg-btn" data-missing-suit="s">缺索</button>
-      <button type="button" class="seg-btn" data-missing-suit="">未定</button>
+      <button type="button" class="seg-btn missing-suit-image-btn" data-missing-suit="m"><img data-missing-suit-image="m" src="tiles/Man5.svg" alt="万子"><span>万</span></button>
+      <button type="button" class="seg-btn missing-suit-image-btn" data-missing-suit="p"><img data-missing-suit-image="p" src="tiles/Pin5.svg" alt="筒子"><span>筒</span></button>
+      <button type="button" class="seg-btn missing-suit-image-btn" data-missing-suit="s"><img data-missing-suit-image="s" src="tiles/Sou5.svg" alt="索子"><span>索</span></button>
+      <button type="button" class="seg-btn missing-suit-image-btn" data-missing-suit=""><span style="font-size:26px;height:46px;display:grid;place-items:center">—</span><span>未定</span></button>
     </div>
     <button class="btn btn-secondary" style="width:100%;margin-top:14px" onclick="closeModal('sichuanMissingSuitOverlay')">取消</button>
   </div>
@@ -2610,16 +2637,42 @@ function saveSichuanGame() {
   localStorage.setItem(SICHUAN_STORAGE_KEY, JSON.stringify(sichuanGame));
 }
 
+function sichuanMissingSuitTile(suit) {
+  const tileBySuit = { m: '5m', p: '5p', s: '5s' };
+  const tileId = tileBySuit[suit];
+  return tileId ? `<img class="missing-suit-tile" src="${tileImgSrc(tileId)}" alt="定缺">` : '点此定缺';
+}
+
+const SICHUAN_FAN_EXAMPLES = {
+  pinghu: ['1m','2m','3m','4m','5m','6m','2p','3p','4p','6p','7p','8p','5s','5s'],
+  duiduihu: ['2m','2m','2m','5m','5m','5m','3p','3p','3p','8s','8s','8s','6p','6p'],
+  qingyise: ['1m','2m','3m','3m','4m','5m','6m','7m','8m','7m','8m','9m','5m','5m'],
+  daiyaojiu: ['1m','2m','3m','7m','8m','9m','1p','1p','1p','7s','8s','9s','9p','9p'],
+  qidui: ['1m','1m','3m','3m','5m','5m','7p','7p','2s','2s','6s','6s','9s','9s'],
+  qingdui: ['2m','2m','2m','4m','4m','4m','6m','6m','6m','8m','8m','8m','5m','5m'],
+  jiangdui: ['2m','2m','2m','5m','5m','5m','8p','8p','8p','2s','2s','2s','5p','5p'],
+  longqidui: ['1m','1m','2m','2m','2m','2m','4p','4p','5p','5p','7s','7s','9s','9s'],
+  qingqidui: ['1m','1m','2m','2m','3m','3m','4m','4m','5m','5m','6m','6m','9m','9m'],
+  qingyaojiu: ['1m','1m','1m','1m','2m','3m','7m','8m','9m','9m','9m','7m','8m','9m'],
+  qinglongqidui: ['1m','1m','2m','2m','4m','4m','4m','4m','5m','5m','7m','7m','9m','9m'],
+};
+
+function sichuanFanExampleHtml(typeId) {
+  const tiles = SICHUAN_FAN_EXAMPLES[typeId];
+  if (!tiles) return '';
+  return `<span class="sichuan-fan-example">${tiles.map(id => `<img src="${tileImgSrc(id)}" alt="">`).join('')}</span>`;
+}
+
 function renderSichuanScore() {
   const players = document.getElementById('sichuanPlayers');
   const history = document.getElementById('sichuanHistory');
   if (!players || !history) return;
-  players.innerHTML = sichuanGame.players.map((player, index) => {
-    const missingLabels = { m: '缺万', p: '缺筒', s: '缺索' };
-    const missing = missingLabels[player.missingSuit] || '点此定缺';
+  const positions = ['bottom', 'right', 'top', 'left'];
+  players.innerHTML = '<div class="sichuan-table-center"><strong>血战积分</strong><small>点名字改名<br>点牌图改定缺</small></div>' + sichuanGame.players.map((player, index) => {
+    const missing = sichuanMissingSuitTile(player.missingSuit);
     return `
-    <div class="sichuan-player" data-sichuan-player="${index}" onclick="openSichuanMissingSuit(${index})">
-      <div class="name">${player.name}</div>
+    <div class="sichuan-player position-${positions[index]}" data-sichuan-player="${index}" onclick="openSichuanMissingSuit(${index})">
+      <button type="button" class="sichuan-name-edit" onclick="event.stopPropagation();openSichuanSetup()">${player.name}</button>
       <div class="score${player.score < 0 ? ' negative' : ''}">${player.score > 0 ? '+' : ''}${player.score}</div>
       <div class="missing-suit${player.missingSuit ? '' : ' unset'}">${missing}</div>
     </div>`;
@@ -2681,7 +2734,7 @@ function renderSichuanFanTypes() {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'sichuan-fan-type' + (sichuanEntryState.fanTypes.has(type.id) ? ' active' : '');
-      button.textContent = `${type.name} ${type.fan}番`;
+      button.innerHTML = `<span>${type.name} ${type.fan}番</span>${sichuanFanExampleHtml(type.id)}`;
       button.onclick = () => {
         if (group === 'base') {
           SICHUAN_FAN_TYPES.filter(item => item.group === 'base').forEach(item => sichuanEntryState.fanTypes.delete(item.id));
