@@ -25,7 +25,8 @@ assert.equal(game.history.length, 0);
 
 assert(SICHUAN_FAN_TYPES.some(type => type.id === 'pinghu' && type.fan === 1), '腾讯欢乐口径必须显示平胡1番1倍');
 assert(SICHUAN_FAN_TYPES.some(type => type.id === 'qingyise' && type.fan === 3), '腾讯欢乐口径必须显示清一色3番4倍');
-assert(SICHUAN_FAN_TYPES.some(type => type.id === 'gang' && type.fan === 1), '附加番型必须包含杠');
+assert(!SICHUAN_FAN_TYPES.some(type => type.id === 'gang'), '杠只能走刮风下雨独立结算，不得作为胡牌附加番');
+assert.equal(calculateSichuanFan(['pinghu', 'gang'], 6).fan, 1, '即使旧记录携带 gang 标签，也不能增加胡牌番数');
 assert.deepEqual(
   calculateSichuanFan(['qingyise', 'gangshanghua', 'gen'], 6),
   { fan: 5, label: '清一色 + 杠上花 + 根' },
@@ -77,7 +78,7 @@ assert(/id="sichuanMissingSuitOverlay"/.test(html) && /data-missing-suit="m"/.te
 assert(/class="missing-suit\$\{player\.missingSuit/.test(html), '玩家卡片必须展示当前缺门');
 assert(/腾讯\s*\/\s*欢乐四川口径/.test(html), '川麻页面必须明确标注当前规则口径，不得冒充统一川麻规则');
 assert(/平胡\s*1\s*番\s*=\s*1\s*倍/.test(html), '页面必须解释腾讯欢乐番数与倍数的对应关系');
-assert(/calculateSichuanFan\(/.test(html), '番型选择必须驱动番数和积分计算');
+assert(/杠分单独结算/.test(html), '页面必须说明杠分与胡牌番数分开，避免重复计算');
 assert(/openSichuanEntry\('win'\)/.test(html), '川麻页面必须提供胡牌积分入口');
 assert(/openSichuanEntry\('kong'\)/.test(html), '川麻页面必须提供杠分入口');
 assert(/openSichuanEntry\('penalty'\)/.test(html), '川麻页面必须提供花猪、查叫或手动罚分入口');

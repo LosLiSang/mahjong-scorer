@@ -21,7 +21,6 @@
     { id: 'gangshanghua', name: '杠上花', fan: 1, group: 'extra' },
     { id: 'gangshangpao', name: '杠上炮', fan: 1, group: 'extra' },
     { id: 'qianggang', name: '抢杠', fan: 1, group: 'extra' },
-    { id: 'gang', name: '杠', fan: 1, group: 'extra' },
     { id: 'gen', name: '根', fan: 1, group: 'extra' },
   ];
 
