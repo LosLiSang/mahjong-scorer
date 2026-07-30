@@ -37,7 +37,7 @@ function defaultWin(game) {
 Page({
   data: {
     seats: { 3: Game.SEATS_3P, 4: Game.SEATS_4P },
-    game: null,
+    game: Game.newGame(4),
     roundName: '',
     // win modal
     showWin: false,
@@ -134,13 +134,13 @@ Page({
   },
   confirmSetup() {
     const count = this.data.setupMode;
-    const names = this.data.setupNames.slice(0, count).map(n => n.trim() || '玩家');
+    const names = this.data.setupNames.slice(0, count).map(n => n.trim());
     if (names.some(n => !n)) {
       wx.showToast({ title: '请填写所有玩家姓名', icon: 'none' });
       return;
     }
     const game = Game.newGame(count);
-    game.players.forEach((p, i) => { p.name = names[i]; });
+    game.players.forEach((p, i) => { p.name = names[i] || '玩家'; });
 
     // 保留旧存档的名字（如果存在的话，且模式不变）
     const old = this.data.game;
@@ -161,7 +161,7 @@ Page({
   },
 
   onPlayerTap(e) {
-    const idx = Number(e.currentTarget.dataset.index);
+    // 点击任意玩家卡片打开设置面板
     this.setData({ showSetup: true, setupMode: this.data.game.playerCount || 4,
       setupNames: this.data.game.players.map(p => p.name) });
   },
@@ -340,14 +340,30 @@ Page({
 
   countDora() {
     let count = 0;
+    // 手牌中的 dora
     this.data.win.doraIndicators.forEach(ind => {
       const d = Shared.nextDora(ind);
       count += this.data.hand.filter(t => t === d).length;
+    });
+    // 副露面子中的 dora
+    this.data.melds.forEach(m => {
+      const tiles = m.tiles || [];
+      this.data.win.doraIndicators.forEach(ind => {
+        const d = Shared.nextDora(ind);
+        count += tiles.filter(t => t === d).length;
+      });
     });
     if (this.data.win.riichiState !== 'none') {
       this.data.win.uraDoraIndicators.forEach(ind => {
         const d = Shared.nextDora(ind);
         count += this.data.hand.filter(t => t === d).length;
+      });
+      this.data.melds.forEach(m => {
+        const tiles = m.tiles || [];
+        this.data.win.uraDoraIndicators.forEach(ind => {
+          const d = Shared.nextDora(ind);
+          count += tiles.filter(t => t === d).length;
+        });
       });
     }
     return count;
@@ -419,7 +435,7 @@ Page({
     if (this.data.win.riichiState === 'double') condNames.push('两立直');
     CONDITION_DEFS.forEach(d => { if (this.data.win.conditions[d.key]) condNames.push(d.label); });
 
-    const seats = Game.SEATS_4P; // display labels
+    const seats = this.data.game.playerCount === 3 ? Game.SEATS_3P : Game.SEATS_4P; // display labels
     const ar = {
       title: '牌型分析结果',
       typeName: result.type === 'chiitoi' ? '七对子' : result.type === 'kokushi' ? '国士无双' : '四面子一雀头',
@@ -469,10 +485,12 @@ Page({
     const win = this.data.win;
     const game = this.data.game;
     if (!win || !game) return;
-    const han = win.han || (this.data.analysisResult ? this.data.analysisResult.han : 3);
-    const fu = FU_OPTIONS[this.data.fuIndex] || 30;
-    const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx);
-    const seats = Game.SEATS_4P;
+    // 优先使用分析结果；无分析结果时用手动值
+    const han = this.data.analysisResult ? this.data.analysisResult.han : (win.han || 3);
+    const fu = this.data.analysisResult ? this.data.analysisResult.fu : (FU_OPTIONS[this.data.fuIndex] || 30);
+    const baseOverride = this.data.analysisResult ? this.data.analysisResult.raw.basePoint : null;
+    const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx, baseOverride);
+    const seats = this.data.game.playerCount === 3 ? Game.SEATS_3P : Game.SEATS_4P;
     this.setData({
       previewTotal: payment.total,
       previewBreakdown: payment.payments.map(p => `${seats[p.from]}→${seats[p.to]} ${p.amount}`).join('  ')
@@ -485,7 +503,8 @@ Page({
     const game = this.data.game;
     const han = this.data.analysisResult ? this.data.analysisResult.han : (win.han || 3);
     const fu = this.data.analysisResult ? this.data.analysisResult.fu : FU_OPTIONS[this.data.fuIndex];
-    const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx);
+    const baseOverride = this.data.analysisResult ? this.data.analysisResult.raw.basePoint : null;
+    const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx, baseOverride);
 
     this.snapshot();
     const fullWin = Object.assign({}, win, { han, fu });
@@ -498,7 +517,7 @@ Page({
 
   // ===== 立直 =====
   openRiichi() {
-    this.setData({ showRiichi: true, riichiSelected: Game.SEATS_4P.map((_,i) => i < this.data.game.playerCount ? false : false) });
+    this.setData({ showRiichi: true, riichiSelected: new Array(this.data.game.playerCount || 4).fill(false) });
   },
   closeRiichi() { this.setData({ showRiichi: false }); },
   toggleRiichiPlayer(e) {
@@ -519,7 +538,8 @@ Page({
 
   // ===== 流局 =====
   openDraw() {
-    this.setData({ showDraw: true, tenpaiSelected: [false,false,false,false] });
+    const count = this.data.game.playerCount || 4;
+    this.setData({ showDraw: true, tenpaiSelected: new Array(count).fill(false) });
   },
   closeDraw() { this.setData({ showDraw: false }); },
   toggleTenpai(e) {

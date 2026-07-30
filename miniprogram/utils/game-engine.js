@@ -152,14 +152,14 @@ function applyDraw(game, tenpai) {
   const count = set.size;
   const total = game.playerCount || 4;
   if (count > 0 && count < total) {
+    const notenCount = total - count; // 不聴人数
     if (total === 4) {
-      const pay = [0, 3000, 1500, 1000][count];
-      const receive = [0, 1000, 1500, 3000][count];
+      const pay = [0, 3000, 1500, 1000][notenCount];       // 不聴者每人付
+      const receive = [0, 1000, 1500, 3000][notenCount];    // 聴牌者每人得
       next.players.forEach((p, idx) => { p.points += set.has(idx) ? receive : -pay; });
     } else {
-      // 三麻不聴罰符
-      const pay = [0, 2000, 1000][count];
-      const receive = [0, 1000, 2000][count];
+      const pay = [0, 2000, 1000][notenCount];
+      const receive = [0, 1000, 2000][notenCount];
       next.players.forEach((p, idx) => { p.points += set.has(idx) ? receive : -pay; });
     }
   }
