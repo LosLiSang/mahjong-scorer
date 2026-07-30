@@ -129,10 +129,7 @@
         <view
           wx:for="{{quizQuestions[quizIndex].options}}"
           wx:key="*this"
-          class="quiz-option
-            {{quizAnswer === index ? 'selected' : ''}}
-            {{quizSubmitted && index === quizQuestions[quizIndex].answer ? 'correct' : ''}}
-            {{quizSubmitted && quizAnswer === index && !quizCorrect ? 'wrong' : ''}}"
+          class="quiz-option {{quizAnswer === index ? 'selected' : ''}} {{quizSubmitted && index === quizQuestions[quizIndex].answer ? 'correct' : ''}} {{quizSubmitted && quizAnswer === index && !quizCorrect ? 'wrong' : ''}}"
           data-answer="{{index}}"
           bindtap="selectQuizOption"
         >
