@@ -43,7 +43,7 @@
 
 <!-- ═══ 胡牌弹窗 ═══ -->
 <view wx:if="{{showWin}}" class="overlay">
-  <scroll-view scroll-y class="modal" style="max-height:94vh">
+  <scroll-view scroll-y class="modal sichuan-win-modal">
     <view class="modal-title">🀄 胡牌积分</view>
 
     <!-- 收分玩家 -->
@@ -78,15 +78,14 @@
     <view class="label">番型组合</view>
     <view wx:for="{{fanGroups}}" wx:key="label" style="margin-bottom:12rpx">
       <view style="font-size:22rpx;color:#8a8470;margin-bottom:8rpx">{{item.label}}</view>
-      <view class="seg-group" style="flex-wrap:wrap">
+      <view class="fan-chip-grid">
         <view
           wx:for="{{item.types}}"
           wx:key="id"
           class="seg-btn sch-fan-btn {{winFanIds.indexOf(item.id) >= 0 ? 'active' : ''}}"
-          style="min-width:120rpx;flex:none"
           data-id="{{item.id}}"
           bindtap="toggleWinFan"
-        >{{item.name}} <text style="font-size:20rpx;opacity:.7">{{item.fan}}番</text></view>
+        ><text class="fan-name">{{item.name}}</text><text class="fan-value">{{item.fan}}番</text></view>
       </view>
     </view>
 
@@ -152,7 +151,7 @@
 
 <!-- ═══ 杠分弹窗 ═══ -->
 <view wx:if="{{showGang}}" class="overlay">
-  <view class="modal" style="max-width:520rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+  <view class="modal compact-modal">
     <view class="modal-title">杠分</view>
     <view class="label">杠牌者</view>
     <view class="seg-group">
@@ -172,7 +171,7 @@
       value="{{gangAmount}}"
       bindinput="onGangAmountInput"
     />
-    <view wx:if="{{gangAmount}}" style="font-size:24rpx;color:#8a8470;margin:8rpx 0">
+    <view wx:if="{{gangAmount}}" class="settlement-preview">
       {{seats[gangReceiver]}} 共收 {{gangAmount * 3}} 分（3人 × {{gangAmount}}）
     </view>
     <view class="modal-actions">
@@ -184,7 +183,7 @@
 
 <!-- ═══ 罚分弹窗 ═══ -->
 <view wx:if="{{showPenalty}}" class="overlay">
-  <view class="modal" style="max-width:520rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+  <view class="modal compact-modal">
     <view class="modal-title">罚分</view>
     <view class="label">罚谁</view>
     <view class="seg-group">
@@ -204,7 +203,7 @@
       value="{{penaltyAmount}}"
       bindinput="onPenaltyAmountInput"
     />
-    <view wx:if="{{penaltyAmount}}" style="font-size:24rpx;color:#8a8470;margin:8rpx 0">
+    <view wx:if="{{penaltyAmount}}" class="settlement-preview">
       {{seats[penaltyPlayer]}} 共付 {{penaltyAmount * 3}} 分（3人 × {{penaltyAmount}}）
     </view>
     <view class="modal-actions">
@@ -216,7 +215,7 @@
 
 <!-- ═══ 设置弹窗 ═══ -->
 <view wx:if="{{showSetup}}" class="overlay" bindtap="handleOverlayTap" data-id="showSetup">
-  <view class="modal">
+  <view class="modal compact-modal setup-modal">
     <view class="modal-title">对局设置</view>
     <view class="label">玩家姓名 & 定缺</view>
     <view
@@ -272,7 +271,7 @@
 
 <!-- ═══ 记录列表 ═══ -->
 <view wx:if="{{showHistory}}" class="overlay" bindtap="handleOverlayTap" data-id="showHistory">
-  <scroll-view scroll-y class="modal" style="max-height:90vh">
+  <scroll-view scroll-y class="modal history-modal">
     <view class="modal-title">对局记录</view>
     <view class="sichuan-scoreboard">
       <view wx:for="{{game.players}}" wx:key="index" class="scoreboard-item">

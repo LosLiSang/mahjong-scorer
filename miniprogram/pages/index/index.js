@@ -20,6 +20,15 @@ const CONDITION_DEFS = [
 ];
 
 const FU_OPTIONS = [20,25,30,40,50,60,70,80,90,100,110];
+const HAN_OPTIONS = Array.from({ length: 13 }, (_, i) => ({ value: i + 1, label: `${i + 1}翻` }));
+
+function buildPlayerViews(game) {
+  const classMap = { '东': 'dong', '南': 'nan', '西': 'xi', '北': 'bei' };
+  return game.players.map((player, index) => {
+    const seat = Game.seatOf(game, index);
+    return Object.assign({}, player, { index, seat, seatClass: classMap[seat] });
+  });
+}
 
 function defaultWin(game) {
   const winnerIdx = game.dealerIndex;
@@ -37,8 +46,8 @@ function defaultWin(game) {
 Page({
   data: {
     seats: { 3: Game.SEATS_3P, 4: Game.SEATS_4P },
-    seatClasses: { 3: ['dong', 'nan', 'xi'], 4: ['dong', 'nan', 'xi', 'bei'] },
     game: Game.newGame(4),
+    playerViews: buildPlayerViews(Game.newGame(4)),
     roundName: '',
     // win modal
     showWin: false,
@@ -54,6 +63,8 @@ Page({
     previewTotal: 0, previewBreakdown: '',
     fuOptions: FU_OPTIONS.map(f => ({ value: f, label: f + '符' })),
     fuIndex: 2, // 30符
+    hanOptions: HAN_OPTIONS,
+    hanIndex: 2, // 3翻
     // modals
     showRiichi: false, riichiSelected: [],
     showDraw: false, tenpaiSelected: [],
@@ -86,6 +97,7 @@ Page({
     const rn = Game.roundNames(game);
     this.setData({
       game,
+      playerViews: buildPlayerViews(game),
       roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`,
       undoStack: []
     });
@@ -111,7 +123,7 @@ Page({
     if (!stack.length) { wx.showToast({ title: '没有可撤销操作', icon: 'none' }); return; }
     const game = stack.pop();
     const rn = Game.roundNames(game);
-    this.setData({ undoStack: stack, game, roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局` });
+    this.setData({ undoStack: stack, game, playerViews: buildPlayerViews(game), roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局` });
     this.saveGame(game);
   },
 
@@ -182,7 +194,7 @@ Page({
       analysisStage: 0, analysisMessage: '', analysisResult: null,
       melds: [], decompositions: [], decompIndex: 0,
       showDora: false, showUra: false,
-      previewTotal: 0, previewBreakdown: '', fuIndex: 2
+      previewTotal: 0, previewBreakdown: '', fuIndex: 2, hanIndex: 2
     });
     this.refreshTiles();
     this.refreshConditions();
@@ -478,12 +490,13 @@ Page({
 
   selectManualHan(e) {
     const win = Shared.clone(this.data.win);
-    win.han = Number(e.currentTarget.dataset.han);
-    this.setData({ win });
+    const hanIndex = Number(e.detail.value);
+    win.han = this.data.hanOptions[hanIndex].value;
+    this.setData({ win, hanIndex, analysisResult: null, analysisMessage: '已切换为手动翻符' });
     this.previewWinCalc();
   },
   selectFu(e) {
-    this.setData({ fuIndex: Number(e.detail.value) });
+    this.setData({ fuIndex: Number(e.detail.value), analysisResult: null, analysisMessage: '已切换为手动翻符' });
     this.previewWinCalc();
   },
 
@@ -517,7 +530,7 @@ Page({
     const fullWin = Object.assign({}, win, { han, fu });
     const next = Game.applyWin(game, fullWin, payment);
     const rn = Game.roundNames(next);
-    this.setData({ game: next, roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showWin: false, analysisStage: 0 });
+    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showWin: false, analysisStage: 0 });
     this.saveGame(next);
     wx.showToast({ title: `+${payment.total}点`, icon: 'success' });
   },
@@ -539,7 +552,7 @@ Page({
     if (!ids.length) { this.setData({ showRiichi: false }); return; }
     this.snapshot();
     const next = Game.applyRiichi(this.data.game, ids);
-    this.setData({ game: next, showRiichi: false });
+    this.setData({ game: next, playerViews: buildPlayerViews(next), showRiichi: false });
     this.saveGame(next);
   },
 
@@ -560,7 +573,7 @@ Page({
     this.snapshot();
     const next = Game.applyDraw(this.data.game, ids);
     const rn = Game.roundNames(next);
-    this.setData({ game: next, roundName: rn[next.roundIndex] || '', showDraw: false });
+    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showDraw: false });
     this.saveGame(next);
   },
 

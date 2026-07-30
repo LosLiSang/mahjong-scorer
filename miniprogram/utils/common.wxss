@@ -2,6 +2,10 @@
 
 /* 基础 */
 page { background: #f5f4ee; color: #3d3929; font-family: "Noto Serif SC", "Songti SC", Georgia, serif; }
+view, text, button, input, textarea, picker, scroll-view {
+  font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
+}
+button::after { border: none; }
 .container { padding: 24rpx; padding-bottom: 120rpx; }
 
 /* 按钮 */
@@ -15,9 +19,10 @@ page { background: #f5f4ee; color: #3d3929; font-family: "Noto Serif SC", "Songt
 .hollow-btn { background: transparent; border: 1rpx solid #aaa28d; color: #746e5c; font-size: 24rpx; padding: 12rpx 20rpx; border-radius: 12rpx; }
 
 /* 弹窗 */
-.overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: flex-end; }
+.overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24rpx; box-sizing: border-box; }
 .overlay-closable { z-index: 100; }
-.modal { width: 100%; max-height: 90vh; background: #faf9f3; border-radius: 30rpx 30rpx 0 0; padding: 36rpx; box-sizing: border-box; }
+.modal { width: 100%; max-width: 680rpx; max-height: 90vh; background: #faf9f3; border-radius: 30rpx; padding: 36rpx; box-sizing: border-box; box-shadow: 0 18rpx 60rpx rgba(49,45,34,.24); }
+.compact-modal { max-width: 540rpx; height: auto; }
 .modal-title { font-size: 36rpx; font-weight: 700; text-align: center; margin-bottom: 28rpx; color: #3d3929; }
 .modal-close { position: sticky; top: -18rpx; z-index: 3; float: right; width: 60rpx; height: 60rpx; margin: -18rpx -16rpx 8rpx 16rpx; border: 2rpx solid #ddd7c8; border-radius: 50%; background: rgba(250,249,243,.96); color: #746e5c; font-size: 40rpx; line-height: 56rpx; text-align: center; }
 .modal h3 { text-align: center; margin-bottom: 28rpx; font-weight: 700; color: #3d3929; }
@@ -48,29 +53,22 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 
 /* 十字牌桌 */
 .table-board {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 200rpx minmax(0, 1fr);
-  grid-template-rows: 180rpx 160rpx 180rpx;
-  grid-template-areas: ". top ." "left center right" ". bottom .";
-  align-items: center;
-  gap: 10rpx;
+  position: relative;
+  height: 540rpx;
   margin-bottom: 20rpx;
   padding: 14rpx;
   border: 2rpx solid #ded8c8;
   border-radius: 32rpx;
   background: radial-gradient(circle at center, #f8f4e8 0 31%, #ece6d7 32% 33%, #f3efe4 34% 100%);
 }
-.table-board.sanma {
-  grid-template-rows: 180rpx 160rpx 180rpx;
-}
-.table-center { grid-area: center; align-self: stretch; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 16rpx; box-shadow: 0 4rpx 16rpx rgba(61,57,41,.08); }
+.table-center { position: absolute; left: 50%; top: 50%; width: 180rpx; min-height: 126rpx; transform: translate(-50%, -50%); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 12rpx; box-shadow: 0 4rpx 16rpx rgba(61,57,41,.08); }
 .table-center .round-info { font-size: 32rpx; font-weight: 700; color: #c96442; }
 .table-center .sub-info { font-size: 22rpx; color: #8a8470; margin-top: 6rpx; }
-.player-card { width: 100%; max-width: 240rpx; justify-self: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 14rpx 8rpx; text-align: center; position: relative; box-shadow: 0 3rpx 12rpx rgba(61,57,41,.05); }
-.player-card.seat-dong { grid-area: bottom; }
-.player-card.seat-nan { grid-area: right; }
-.player-card.seat-xi { grid-area: top; }
-.player-card.seat-bei { grid-area: left; }
+.player-card { position: absolute; left: 50%; top: 50%; width: 220rpx; min-height: 112rpx; margin-left: -110rpx; margin-top: -56rpx; box-sizing: border-box; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 12rpx 8rpx; text-align: center; box-shadow: 0 3rpx 12rpx rgba(61,57,41,.05); transition: transform .42s ease, border-color .2s ease, background-color .2s ease; }
+.player-card.seat-dong { transform: translate3d(0, 188rpx, 0); }
+.player-card.seat-nan { transform: translate3d(214rpx, 0, 0); }
+.player-card.seat-xi { transform: translate3d(0, -188rpx, 0); }
+.player-card.seat-bei { transform: translate3d(-214rpx, 0, 0); }
 .player-card.dealer { border-color: #c96442; border-width: 3rpx; }
 .player-card.riichi { background: #fdf6f2; }
 .player-card .seat-label { font-size: 22rpx; color: #c96442; font-weight: 500; }

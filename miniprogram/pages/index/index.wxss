@@ -4,13 +4,14 @@
 .actions { display: flex; flex-direction: column; gap: 14rpx; }
 
 /* 和牌面板 */
-.hand-box { min-height: 92rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; padding: 14rpx; display: flex; flex-wrap: nowrap; gap: 4rpx; align-items: center; overflow: hidden; }
-.hand-tile { flex: 1 1 0; min-width: 0; max-width: 62rpx; aspect-ratio: 34/46; object-fit: contain; border-radius: 6rpx; }
+.win-modal { max-height: 92vh; }
+.hand-box { min-height: 68rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; padding: 6rpx 10rpx; display: flex; flex-wrap: nowrap; gap: 3rpx; align-items: center; overflow: hidden; }
+.hand-tile { flex: 1 1 0; min-width: 0; max-width: 54rpx; height: 72rpx; object-fit: contain; border-radius: 5rpx; }
 .hand-tile:active { transform: scale(.9); }
 .hand-tile.win-tile { box-shadow: inset 0 0 0 5rpx #5a7a4a, 0 0 0 2rpx #5a7a4a; }
 .empty-hint { color: #b8b299; font-size: 24rpx; width: 100%; text-align: center; }
 
-.win-tile-picker { display: flex; flex-wrap: nowrap; gap: 4rpx; padding: 12rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 18rpx; min-height: 80rpx; overflow: hidden; align-items: center; }
+.win-tile-picker { display: flex; flex-wrap: nowrap; gap: 4rpx; padding: 6rpx 10rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 18rpx; min-height: 68rpx; overflow: hidden; align-items: center; }
 .win-option { flex: 1 1 0; min-width: 0; max-width: 56rpx; aspect-ratio: 30/41; border: 4rpx solid transparent; border-radius: 8rpx; padding: 2rpx; }
 .win-option.active { border-color: #5a7a4a; box-shadow: 0 0 0 4rpx rgba(90,122,74,.16); }
 
@@ -48,3 +49,8 @@
 .history-list { margin-top: 20rpx; }
 
 .loser-row { margin-bottom: 0; }
+.manual-score-row { display: flex; gap: 16rpx; margin-top: 20rpx; }
+.manual-score-field { flex: 1; min-width: 0; }
+.compact-label { margin-top: 0; }
+.picker-control { display: flex; align-items: center; justify-content: space-between; padding: 18rpx 20rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; color: #3d3929; font-size: 26rpx; }
+.picker-arrow { color: #c96442; font-size: 28rpx; }

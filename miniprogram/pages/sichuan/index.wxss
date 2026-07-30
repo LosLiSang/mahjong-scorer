@@ -3,8 +3,7 @@
 
 /* ── 牌桌微调 ── */
 .sichuan-board {
-  grid-template-rows: 200rpx 160rpx 200rpx;
-  gap: 12rpx;
+  height: 540rpx;
   border-color: #d4c8a8;
 }
 
@@ -26,7 +25,9 @@
 /* ── 玩家卡片 ── */
 .sichuan-player {
   border-color: #d4c8a8;
+  padding: 10rpx 8rpx;
 }
+.sichuan-player .name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sichuan-points {
   font-size: 36rpx;
 }
@@ -66,17 +67,29 @@
 
 /* ── 胡牌弹窗番型按钮 ── */
 .sch-fan-btn {
-  min-width: 120rpx;
-  flex: none;
+  min-width: 0;
+  width: 100%;
   font-size: 24rpx;
+  padding: 14rpx 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  white-space: nowrap;
 }
+.fan-chip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10rpx; }
+.fan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fan-value { flex-shrink: 0; font-size: 20rpx; opacity: .72; }
 
 /* ── 底分/封顶行 ── */
 .sichuan-opts-row {
   display: flex;
-  gap: 20rpx;
+  flex-direction: column;
+  gap: 12rpx;
   margin-top: 8rpx;
 }
+.sichuan-opts-row > view { width: 100%; min-width: 0; }
+.sichuan-opts-row .seg-btn { min-width: 0; padding-left: 8rpx; padding-right: 8rpx; white-space: nowrap; }
 
 /* ── 计算结果 ── */
 .sichuan-result {
@@ -86,6 +99,9 @@
 .sichuan-result .points {
   color: #c96442;
 }
+.sichuan-win-modal, .history-modal { max-height: 92vh; }
+.setup-modal { max-height: 88vh; overflow-y: auto; }
+.settlement-preview { font-size: 24rpx; color: #8a8470; margin: 10rpx 0; line-height: 1.6; text-align: center; word-break: keep-all; }
 
 /* ── 输入框 ── */
 .sichuan-input {
@@ -187,11 +203,13 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
+  flex-wrap: wrap;
 }
 .shi-index {
   font-size: 20rpx;
   color: #b8b299;
   min-width: 36rpx;
+  flex-shrink: 0;
 }
 .shi-type {
   font-size: 22rpx;
@@ -200,22 +218,31 @@
   background: #c96442;
   padding: 2rpx 12rpx;
   border-radius: 8rpx;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .shi-receiver {
   font-size: 26rpx;
   font-weight: 600;
   color: #3d3929;
   flex: 1;
+  min-width: 180rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .shi-amount {
   font-size: 28rpx;
   font-weight: 700;
   color: #5a7a4a;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .shi-detail {
   font-size: 22rpx;
   color: #8a8470;
   margin-top: 8rpx;
-  padding-left: 48rpx;
+  padding-left: 0;
   line-height: 1.6;
+  overflow-wrap: break-word;
 }

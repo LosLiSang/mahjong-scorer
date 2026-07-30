@@ -12,10 +12,10 @@
       </view>
     </view>
 
-    <view wx:for="{{game.players}}" wx:key="index"
-      class="player-card seat-{{seatClasses[game.playerCount][index]}} {{index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
-      data-index="{{index}}" bindtap="onPlayerTap">
-      <view class="seat-label">{{seats[game.playerCount][index]}}{{index === game.dealerIndex ? ' · 亲' : ''}}</view>
+    <view wx:for="{{playerViews}}" wx:key="index"
+      class="player-card seat-{{item.seatClass}} {{item.index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
+      data-index="{{item.index}}" bindtap="onPlayerTap">
+      <view class="seat-label">{{item.seat}}{{item.index === game.dealerIndex ? ' · 亲' : ''}}</view>
       <view class="name">{{item.name}}</view>
       <view class="points">{{item.points}}</view>
       <view wx:if="{{item.riichi}}" class="riichi-mark">立直</view>
@@ -40,12 +40,12 @@
 
 <!-- 和牌弹窗 -->
 <view wx:if="{{showWin}}" class="overlay">
-  <scroll-view scroll-y class="modal" style="max-height:94vh">
+  <scroll-view scroll-y class="modal win-modal">
     <view class="modal-title">和牌结算</view>
 
     <view class="label">和牌者</view>
     <view class="seg-group">
-      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{win.winnerIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectWinner">{{seats[game.playerCount][index]}}</view>
+      <view wx:for="{{playerViews}}" wx:key="index" class="seg-btn {{win.winnerIdx === item.index ? 'active' : ''}}" data-index="{{item.index}}" bindtap="selectWinner">{{item.seat}}</view>
     </view>
 
     <view class="label">方式</view>
@@ -57,7 +57,7 @@
     <view wx:if="{{!win.isTsumo}}" class="loser-row">
       <view class="label">放铳者</view>
       <view class="seg-group">
-        <view wx:for="{{game.players}}" wx:key="index" wx:if="{{index !== win.winnerIdx}}" class="seg-btn {{win.loserIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectLoser">{{seats[game.playerCount][index]}}</view>
+        <view wx:for="{{playerViews}}" wx:key="index" wx:if="{{item.index !== win.winnerIdx}}" class="seg-btn {{win.loserIdx === item.index ? 'active' : ''}}" data-index="{{item.index}}" bindtap="selectLoser">{{item.seat}}</view>
       </view>
     </view>
 
@@ -159,17 +159,17 @@
     </view>
 
     <!-- 手动确认翻/符 -->
-    <view class="btn-row" style="margin-top:20rpx">
-      <view style="flex:1">
-        <view class="label" style="margin-top:0">翻数</view>
-        <view class="seg-group" style="flex-wrap:wrap">
-          <view wx:for="{{[1,2,3,4,5,6,7,8,9,10,11,12,13]}}" wx:key="*this" class="seg-btn {{win.han === item ? 'active' : ''}}" style="min-width:70rpx;padding:12rpx 6rpx;font-size:22rpx" data-han="{{item}}" bindtap="selectManualHan">{{item}}</view>
-        </view>
+    <view class="manual-score-row">
+      <view class="manual-score-field">
+        <view class="label compact-label">翻数</view>
+        <picker mode="selector" range="{{hanOptions}}" range-key="label" value="{{hanIndex}}" bindchange="selectManualHan">
+          <view class="picker-control">{{hanOptions[hanIndex].label}}<text class="picker-arrow">⌄</text></view>
+        </picker>
       </view>
-      <view style="flex:1">
-        <view class="label" style="margin-top:0">符数</view>
+      <view class="manual-score-field">
+        <view class="label compact-label">符数</view>
         <picker mode="selector" range="{{fuOptions}}" range-key="label" value="{{fuIndex}}" bindchange="selectFu">
-          <view class="seg-btn">{{fuOptions[fuIndex].label}}</view>
+          <view class="picker-control">{{fuOptions[fuIndex].label}}<text class="picker-arrow">⌄</text></view>
         </picker>
       </view>
     </view>
@@ -189,10 +189,10 @@
 
 <!-- 立直弹窗 -->
 <view wx:if="{{showRiichi}}" class="overlay">
-  <view class="modal" style="max-width:480rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+  <view class="modal compact-modal">
     <view class="modal-title">谁立直？</view>
     <view class="seg-group">
-      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{riichiSelected[index] ? 'active' : ''}} {{item.riichi ? 'disabled' : ''}}" data-index="{{index}}" bindtap="toggleRiichiPlayer">{{seats[game.playerCount][index]}}{{item.riichi ? ' 已立直' : ''}}</view>
+      <view wx:for="{{playerViews}}" wx:key="index" class="seg-btn {{riichiSelected[item.index] ? 'active' : ''}} {{item.riichi ? 'disabled' : ''}}" data-index="{{item.index}}" bindtap="toggleRiichiPlayer">{{item.seat}}{{item.riichi ? ' 已立直' : ''}}</view>
     </view>
     <view class="modal-actions">
       <button class="btn btn-secondary" bindtap="closeRiichi">取消</button>
@@ -203,11 +203,11 @@
 
 <!-- 流局 -->
 <view wx:if="{{showDraw}}" class="overlay">
-  <view class="modal" style="max-width:480rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+  <view class="modal compact-modal">
     <view class="modal-title">听牌宣告</view>
     <view style="font-size:22rpx;color:#8a8470;text-align:center;margin-bottom:20rpx">勾选听牌的玩家</view>
     <view class="seg-group">
-      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{tenpaiSelected[index] ? 'active' : ''}}" data-index="{{index}}" bindtap="toggleTenpai">{{seats[game.playerCount][index]}}</view>
+      <view wx:for="{{playerViews}}" wx:key="index" class="seg-btn {{tenpaiSelected[item.index] ? 'active' : ''}}" data-index="{{item.index}}" bindtap="toggleTenpai">{{item.seat}}</view>
     </view>
     <view class="modal-actions">
       <button class="btn btn-secondary" bindtap="closeDraw">取消</button>
@@ -218,7 +218,7 @@
 
 <!-- 历史 -->
 <view wx:if="{{showHistory}}" class="overlay" bindtap="handleOverlayTap" data-id="showHistory">
-  <view class="modal">
+  <view class="modal compact-modal">
     <view class="modal-title">对局记录</view>
     <view class="history-list">
       <view wx:for="{{game.history}}" wx:key="index" class="history-item">
@@ -234,7 +234,7 @@
 
 <!-- 设置 -->
 <view wx:if="{{showSetup}}" class="overlay" bindtap="handleOverlayTap" data-id="showSetup">
-  <view class="modal">
+  <view class="modal compact-modal">
     <view class="modal-title">对局设置</view>
     <view class="label">人数模式</view>
     <view class="seg-group">
