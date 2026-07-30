@@ -5,6 +5,14 @@ const { MAHJONG_TUTORIAL } = require('../../utils/tutorial-data');
 const PROGRESS_KEY = 'mj_tutorial_progress_v1';
 
 Page({
+  copyContact() {
+    wx.setClipboardData({
+      data: 'lisangcode@outlook.com',
+      success: () => wx.showToast({ title: '邮箱已复制', icon: 'success' })
+    });
+  },
+
+
   data: {
     lessons: [],
     progress: [],

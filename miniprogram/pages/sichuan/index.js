@@ -25,6 +25,14 @@ function buildFanGroups() {
 }
 
 Page({
+  copyContact() {
+    wx.setClipboardData({
+      data: 'lisangcode@outlook.com',
+      success: () => wx.showToast({ title: '邮箱已复制', icon: 'success' })
+    });
+  },
+
+
   data: {
     seats: SEATS,
     seatClasses: ['dong', 'nan', 'xi', 'bei'],

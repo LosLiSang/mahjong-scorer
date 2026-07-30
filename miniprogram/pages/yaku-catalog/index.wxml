@@ -32,6 +32,10 @@
 </wxs>
 
 <view class="container">
+  <view class="rights-banner" bindtap="copyContact">
+    <text class="rights-owner">© 2026 Lisang</text>
+    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
+  </view>
   <!-- 分类过滤 chips -->
   <scroll-view class="category-bar" scroll-x enable-flex>
     <view class="category-chips">

@@ -7,6 +7,9 @@ view, text, button, input, textarea, picker, scroll-view {
 }
 button::after { border: none; }
 .container { padding: 24rpx; padding-bottom: 120rpx; }
+.rights-banner { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-bottom: 18rpx; padding: 12rpx 16rpx; border: 1rpx solid #ded8c8; border-radius: 14rpx; background: rgba(250,249,243,.88); color: #746e5c; font-size: 20rpx; line-height: 1.35; }
+.rights-owner { flex-shrink: 0; color: #c46645; font-weight: 700; white-space: nowrap; }
+.rights-contact { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
 
 /* 按钮 */
 .btn { background: #c96442; color: #fff; border: none; padding: 28rpx; border-radius: 18rpx; font-size: 30rpx; font-weight: 600; }

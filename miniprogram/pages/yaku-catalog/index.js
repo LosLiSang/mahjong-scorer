@@ -12,6 +12,14 @@ const CATEGORIES = [
 ];
 
 Page({
+  copyContact() {
+    wx.setClipboardData({
+      data: 'lisangcode@outlook.com',
+      success: () => wx.showToast({ title: '邮箱已复制', icon: 'success' })
+    });
+  },
+
+
   data: {
     categories: CATEGORIES,
     activeCategory: 'all',
