@@ -4,7 +4,7 @@
   <!-- ═══ 十字牌桌 ═══ -->
   <view class="table-board sichuan-board">
     <view class="table-center sichuan-center">
-      <view class="center-title">🀄 川麻积分</view>
+      <view class="center-title">川麻积分</view>
       <view wx:if="{{game.history.length}}" class="center-sub">已记录 {{game.history.length}} 笔</view>
     </view>
 
@@ -76,6 +76,7 @@
 
     <!-- 番型选择 -->
     <view class="label">番型组合</view>
+    <view class="fan-help">点击选择，长按查看牌型示例</view>
     <view wx:for="{{fanGroups}}" wx:key="label" style="margin-bottom:12rpx">
       <view style="font-size:22rpx;color:#8a8470;margin-bottom:8rpx">{{item.label}}</view>
       <view class="fan-chip-grid">
@@ -85,6 +86,7 @@
           class="seg-btn sch-fan-btn {{winFanIds.indexOf(item.id) >= 0 ? 'active' : ''}}"
           data-id="{{item.id}}"
           bindtap="toggleWinFan"
+          bindlongpress="showFanExample"
         ><text class="fan-name">{{item.name}}</text><text class="fan-value">{{item.fan}}番</text></view>
       </view>
     </view>
@@ -147,6 +149,19 @@
       <button class="btn" bindtap="confirmWin">确认结算</button>
     </view>
   </scroll-view>
+</view>
+
+<!-- ═══ 番型示例 ═══ -->
+<view wx:if="{{showFanExample && fanExample}}" class="overlay fan-example-overlay" bindtap="closeFanExample">
+  <view class="modal compact-modal fan-example-modal" catchtap="noop">
+    <view class="modal-title">{{fanExample.name}} · {{fanExample.fan}}番</view>
+    <view class="fan-example-text">{{fanExample.exampleText}}</view>
+    <view wx:if="{{fanExample.exampleImages.length}}" class="fan-example-tiles">
+      <image wx:for="{{fanExample.exampleImages}}" wx:key="key" class="fan-example-tile {{item.isHaku ? 'haku-tile' : ''}}" src="{{item.src}}" mode="aspectFit" />
+    </view>
+    <view wx:else class="fan-example-note">这是和牌时机或附加条件，不对应固定手牌结构。</view>
+    <button class="btn btn-secondary fan-example-close" bindtap="closeFanExample">知道了</button>
+  </view>
 </view>
 
 <!-- ═══ 杠分弹窗 ═══ -->

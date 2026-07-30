@@ -4,7 +4,7 @@ const {
   createSichuanGame, createTransferEntry, applySichuanEntry,
   undoSichuanEntry, setSichuanMissingSuit
 } = require('../../utils/sichuan-score');
-const { clone } = require('../../utils/shared');
+const { clone, tileSrc } = require('../../utils/shared');
 
 const STORAGE_KEY = 'mj_sichuan_v1';
 const SEATS = ['东', '南', '西', '北'];
@@ -13,8 +13,11 @@ const FAN_CAP_OPTIONS = [3, 4, 5, 6];
 const BASE_SCORE_OPTIONS = [1, 2, 5, 10];
 
 function buildFanGroups() {
-  const base = SICHUAN_FAN_TYPES.filter(t => t.group === 'base');
-  const extra = SICHUAN_FAN_TYPES.filter(t => t.group === 'extra');
+  const decorate = type => Object.assign({}, type, {
+    exampleImages: (type.exampleTiles || []).map((id, index) => ({ key: `${id}-${index}`, src: tileSrc(id), isHaku: id === '5z' }))
+  });
+  const base = SICHUAN_FAN_TYPES.filter(t => t.group === 'base').map(decorate);
+  const extra = SICHUAN_FAN_TYPES.filter(t => t.group === 'extra').map(decorate);
   return [
     { label: '基础番型', types: base },
     { label: '额外番型', types: extra }
@@ -54,7 +57,9 @@ Page({
     showHistory: false,
     historyList: [],
     // Fan groups for display
-    fanGroups: buildFanGroups()
+    fanGroups: buildFanGroups(),
+    showFanExample: false,
+    fanExample: null
   },
 
   onLoad() {
@@ -126,6 +131,22 @@ Page({
     this.setData({ winFanIds: ids });
     this.previewWin();
   },
+
+  showFanExample(e) {
+    const id = e.currentTarget.dataset.id;
+    let target = null;
+    this.data.fanGroups.some(group => {
+      target = group.types.find(type => type.id === id) || null;
+      return !!target;
+    });
+    if (target) this.setData({ showFanExample: true, fanExample: target });
+  },
+
+  closeFanExample() {
+    this.setData({ showFanExample: false, fanExample: null });
+  },
+
+  noop() {},
 
   setWinRootCount(e) {
     const v = Number(e.currentTarget.dataset.value);

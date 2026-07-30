@@ -12,9 +12,10 @@
   border-color: #d4c8a8;
 }
 .center-title {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 700;
   color: #c96442;
+  white-space: nowrap;
 }
 .center-sub {
   font-size: 22rpx;
@@ -72,16 +73,18 @@
   min-width: 0;
   width: 100%;
   font-size: 24rpx;
-  padding: 14rpx 8rpx;
+  min-height: 72rpx;
+  padding: 12rpx 14rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8rpx;
   white-space: nowrap;
 }
-.fan-chip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10rpx; }
+.fan-chip-grid { display: grid; grid-template-columns: 1fr; gap: 10rpx; }
 .fan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .fan-value { flex-shrink: 0; font-size: 20rpx; opacity: .72; }
+.fan-help { margin: -4rpx 0 14rpx; color: #a09a87; font-size: 21rpx; }
 
 .root-options { flex-wrap: nowrap; }
 .root-options .seg-btn { min-width: 0; flex: 1; padding-left: 4rpx; padding-right: 4rpx; white-space: nowrap; }
@@ -111,7 +114,10 @@
 /* ── 输入框 ── */
 .sichuan-input {
   width: 100%;
-  padding: 20rpx;
+  height: 88rpx;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 20rpx;
   background: #fff;
   border: 2rpx solid #e8e5d8;
   border-radius: 14rpx;
@@ -143,13 +149,25 @@
 }
 .setup-name-input {
   flex: 1;
-  padding: 16rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 16rpx;
   background: #faf8f2;
   border: 2rpx solid #e8e5d8;
   border-radius: 14rpx;
   font-size: 28rpx;
   color: #3d3929;
+  box-sizing: border-box;
 }
+
+/* ── 番型示例 ── */
+.fan-example-overlay { z-index: 130; }
+.fan-example-modal { max-width: 640rpx; }
+.fan-example-text { color: #746e5c; font-size: 25rpx; line-height: 1.7; text-align: center; }
+.fan-example-tiles { display: flex; flex-wrap: nowrap; justify-content: center; gap: 2rpx; margin: 24rpx -12rpx 0; overflow: hidden; }
+.fan-example-tile { flex: 1 1 0; min-width: 0; max-width: 42rpx; height: 58rpx; }
+.fan-example-note { margin-top: 24rpx; padding: 18rpx; border-radius: 14rpx; background: #f1eee4; color: #8a8470; font-size: 23rpx; line-height: 1.6; text-align: center; }
+.fan-example-close { width: 100%; margin-top: 24rpx; }
 .missing-suit-btn {
   min-width: 80rpx;
   font-size: 24rpx;
