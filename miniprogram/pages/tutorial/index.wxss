@@ -1,5 +1,5 @@
 /* pages/tutorial/index.wxss — 教学馆 */
-@import "../../utils/common.wxss";
+@import "/utils/common.wxss";
 
 /* ===== Hero ===== */
 .hero {

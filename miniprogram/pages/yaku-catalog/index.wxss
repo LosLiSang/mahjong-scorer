@@ -1,5 +1,5 @@
 /* pages/yaku-catalog/index.wxss — 役种图鉴 */
-@import "../../utils/common.wxss";
+@import "/utils/common.wxss";
 
 /* ===== 分类过滤栏 ===== */
 .category-bar {

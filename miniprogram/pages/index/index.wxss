@@ -1,5 +1,5 @@
 /* pages/index/index.wxss */
-@import "../../utils/common.wxss";
+@import "/utils/common.wxss";
 
 .actions { display: flex; flex-direction: column; gap: 14rpx; }
 

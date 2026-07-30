@@ -1,5 +1,5 @@
 /* pages/sichuan/index.wxss — 川麻积分样式 */
-@import "../../utils/common.wxss";
+@import "/utils/common.wxss";
 
 /* ── 牌桌微调 ── */
 .sichuan-board {

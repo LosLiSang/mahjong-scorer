@@ -1,5 +1,5 @@
 /* pages/scoring-guide/index.wxss — 算分详解样式 */
-@import "../../utils/common.wxss";
+@import "/utils/common.wxss";
 
 /* ===== Tab 条 ===== */
 .tabs { margin-bottom: 28rpx; }
