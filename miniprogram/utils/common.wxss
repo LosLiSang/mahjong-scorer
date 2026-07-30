@@ -15,7 +15,7 @@ page { background: #f5f4ee; color: #3d3929; font-family: "Noto Serif SC", "Songt
 .hollow-btn { background: transparent; border: 1rpx solid #aaa28d; color: #746e5c; font-size: 24rpx; padding: 12rpx 20rpx; border-radius: 12rpx; }
 
 /* 弹窗 */
-.overlay { position: fixed; inset: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: flex-end; }
+.overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: flex-end; }
 .overlay-closable { z-index: 100; }
 .modal { width: 100%; max-height: 90vh; background: #faf9f3; border-radius: 30rpx 30rpx 0 0; padding: 36rpx; box-sizing: border-box; }
 .modal-title { font-size: 36rpx; font-weight: 700; text-align: center; margin-bottom: 28rpx; color: #3d3929; }
