@@ -91,7 +91,7 @@
 
     <!-- 根数 -->
     <view class="label">根数（四张一样未杠）</view>
-    <view class="seg-group" style="max-width:500rpx">
+    <view class="seg-group root-options" style="max-width:500rpx">
       <view
         wx:for="{{[0,1,2,3,4]}}"
         wx:key="*this"

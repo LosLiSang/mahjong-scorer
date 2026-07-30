@@ -30,6 +30,8 @@
 .sichuan-player .name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sichuan-points {
   font-size: 36rpx;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── 缺门徽章 ── */
@@ -80,6 +82,9 @@
 .fan-chip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10rpx; }
 .fan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .fan-value { flex-shrink: 0; font-size: 20rpx; opacity: .72; }
+
+.root-options { flex-wrap: nowrap; }
+.root-options .seg-btn { min-width: 0; flex: 1; padding-left: 4rpx; padding-right: 4rpx; white-space: nowrap; }
 
 /* ── 底分/封顶行 ── */
 .sichuan-opts-row {
@@ -200,10 +205,10 @@
   padding: 16rpx 20rpx;
 }
 .shi-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12rpx;
-  flex-wrap: wrap;
 }
 .shi-index {
   font-size: 20rpx;
