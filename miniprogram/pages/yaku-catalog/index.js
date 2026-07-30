@@ -1,6 +1,6 @@
 // pages/yaku-catalog/index.js — 役种图鉴
-const { YAKU_CATALOG, CATEGORY_LABELS, filterYakuCatalog, getYakuById, formatYakuHan } = require('../../utils/yaku-data');
-const { tileSrc, tileDisplay } = require('../../utils/shared');
+const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan } = require('../../utils/yaku-data');
+const { tileSrc } = require('../../utils/shared');
 
 const CATEGORIES = [
   { key: 'all', label: '全部' },
@@ -10,14 +10,6 @@ const CATEGORIES = [
   { key: '6han', label: '六翻役' },
   { key: 'yakuman', label: '役满' },
 ];
-
-const HAN_COLORS = {
-  '1han': '#c96442',
-  '2han': '#c99442',
-  '3han': '#c4a242',
-  '6han': '#a45ac4',
-  'yakuman': '#c4425a',
-};
 
 Page({
   data: {
@@ -55,18 +47,4 @@ Page({
   },
 
   stopPropagation() {}, // prevent overlay click-through
-
-  // helpers for WXML
-  getHanBadgeStyle(category) {
-    return `background:${HAN_COLORS[category] || '#c96442'}`;
-  },
-
-  getConditionPreview(condition) {
-    if (!condition) return '';
-    return condition.length > 24 ? condition.slice(0, 24) + '…' : condition;
-  },
-
-  getDetailHanColor(category) {
-    return HAN_COLORS[category] || '#c96442';
-  },
 });

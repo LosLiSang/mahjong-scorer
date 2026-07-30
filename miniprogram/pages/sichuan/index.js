@@ -51,6 +51,7 @@ Page({
     setupMissingSuits: ['', '', '', ''],
     // History
     showHistory: false,
+    historyList: [],
     // Fan groups for display
     fanGroups: buildFanGroups()
   },
@@ -305,14 +306,14 @@ Page({
   },
 
   confirmSetup() {
-    const names = this.data.setupNames.map(n => n.trim() || '玩家');
+    const names = this.data.setupNames.map(n => n.trim());
     if (names.some(n => !n)) {
       wx.showToast({ title: '请填写所有玩家姓名', icon: 'none' });
       return;
     }
     const next = clone(this.data.game);
     next.players.forEach((p, i) => {
-      p.name = names[i];
+      p.name = names[i] || '玩家';
       p.missingSuit = this.data.setupMissingSuits[i] || '';
     });
     this.setData({ game: next, showSetup: false });
@@ -381,7 +382,7 @@ Page({
   handleOverlayTap(e) {
     if (e.target === e.currentTarget) {
       const id = e.currentTarget.dataset.id;
-      this.setData({ [id]: false });
+      if (id) this.setData({ [id]: false });
     }
-  }
+  },
 });
