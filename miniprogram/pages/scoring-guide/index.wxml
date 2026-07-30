@@ -1,0 +1,181 @@
+<!-- pages/scoring-guide/index.wxml — 算分详解 -->
+<view class="container">
+  <!-- ===== Tab 切换 ===== -->
+  <view class="seg-group tabs">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="seg-btn {{currentTab === item.key ? 'active' : ''}}"
+      data-tab="{{item.key}}"
+      bindtap="onTabTap"
+    >{{item.label}}</view>
+  </view>
+
+  <!-- ==================== Tab: 符数 ==================== -->
+  <view wx:if="{{currentTab === 'fu'}}" class="tab-content">
+    <view class="guide-intro">
+      <text class="intro-title">符数是什么？</text>
+      <text class="intro-text">符数是衡量手牌「含金量」的基础单位。一副手牌从副底 20 符出发，根据面子构成、听牌形、雀头和和牌方式逐项加符，最终向上进位到整十。</text>
+    </view>
+
+    <!-- 符数参考表 -->
+    <view class="section-title">📋 符数细目</view>
+    <view class="fu-table">
+      <view class="fu-table-header">
+        <text class="fu-col-name">项目</text>
+        <text class="fu-col-value">符数</text>
+        <text class="fu-col-detail">说明</text>
+      </view>
+      <view wx:for="{{fuExported}}" wx:key="title" class="fu-table-row">
+        <text class="fu-col-name">{{item.title}}</text>
+        <text class="fu-col-value">{{item.value}}</text>
+        <text class="fu-col-detail">{{item.detail}}</text>
+      </view>
+    </view>
+
+    <!-- 完整计算示例 42→50 -->
+    <view class="section-title">🧮 完整示例：42 符 → 50 符</view>
+    <view class="fu-example">
+      <text class="example-desc">{{fuExample.desc}}</text>
+      <view class="example-steps">
+        <view wx:for="{{fuExample.steps}}" wx:key="label" class="example-step">
+          <text class="step-label">{{item.label}}</text>
+          <text class="step-fu">+{{item.fu}} 符</text>
+          <text class="step-note">{{item.note}}</text>
+        </view>
+      </view>
+      <view class="example-total">
+        <text class="total-label">合计</text>
+        <text class="total-raw">{{fuExample.steps[0].fu}} + {{fuExample.steps[1].fu}} + {{fuExample.steps[2].fu}} + {{fuExample.steps[3].fu}} + {{fuExample.steps[4].fu}} = {{fuExample.raw}} 符</text>
+        <text class="total-rounded">进位 → <text class="highlight">{{fuExample.rounded}} 符</text></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== Tab: 点数 ==================== -->
+  <view wx:if="{{currentTab === 'points'}}" class="tab-content">
+    <view class="guide-intro">
+      <text class="intro-title">点数怎么算？</text>
+      <text class="intro-text">基本点 = 符 × 2^(番+2)。子荣和 = 基本点 × 4，亲荣和 = 基本点 × 6（向上百位取整）。自摸时亲付基本点 × 2，子付基本点 × 1。5 番以上进入满贯档，基本点不再按公式计算。</text>
+    </view>
+
+    <!-- 交互式计算器 -->
+    <view class="section-title">🔢 点数学计算器</view>
+    <view class="calculator">
+      <!-- 番数选择 -->
+      <text class="label">番数</text>
+      <picker
+        mode="selector"
+        range="{{hanValues}}"
+        value="{{hanIndex}}"
+        bindchange="onHanChange"
+      >
+        <view class="picker-value">
+          <text>{{hanValues[hanIndex]}} 番{{hanValues[hanIndex] >= 13 ? '（役满）' : hanValues[hanIndex] >= 5 ? '（满贯档）' : ''}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+
+      <!-- 符数选择 -->
+      <text class="label">符数</text>
+      <picker
+        mode="selector"
+        range="{{fuValues}}"
+        value="{{fuIndex}}"
+        bindchange="onFuChange"
+      >
+        <view class="picker-value">
+          <text>{{fuValues[fuIndex]}} 符</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+
+      <!-- 亲子切换 -->
+      <text class="label">和牌者</text>
+      <view class="toggle-row">
+        <view
+          class="toggle-btn {{!isDealer ? 'active' : ''}}"
+          bindtap="toggleDealer"
+        >子</view>
+        <view
+          class="toggle-btn {{isDealer ? 'active' : ''}}"
+          bindtap="toggleDealer"
+        >亲</view>
+      </view>
+
+      <!-- 和牌方式 -->
+      <text class="label">和牌方式</text>
+      <view class="toggle-row">
+        <view
+          class="toggle-btn {{!isTsumo ? 'active' : ''}}"
+          bindtap="toggleTsumo"
+        >荣和</view>
+        <view
+          class="toggle-btn {{isTsumo ? 'active' : ''}}"
+          bindtap="toggleTsumo"
+        >自摸</view>
+      </view>
+    </view>
+
+    <!-- 计算结果 -->
+    <view wx:if="{{calcResult}}" class="result-box calc-result">
+      <view class="calc-head">
+        <text class="calc-condition">{{calcResult.isDealer ? '亲' : '子'}} · {{calcResult.isTsumo ? '自摸' : '荣和'}}</text>
+        <text wx:if="{{calcResult.manganLabel}}" class="calc-mangan-badge">{{calcResult.manganLabel}}</text>
+      </view>
+      <text class="points">{{calcResult.totalPoints}} 点</text>
+      <view class="calc-detail">
+        <text class="calc-base">{{calcResult.han}} 番 {{calcResult.fu}} 符</text>
+        <text class="calc-formula">{{calcResult.formula}}</text>
+        <text class="calc-breakdown">{{calcResult.breakdown}}</text>
+      </view>
+      <view wx:if="{{!calcResult.isMangan}}" class="calc-expand">
+        <text class="expand-title">基本点计算过程：</text>
+        <text class="expand-text">{{calcResult.baseFormula}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== Tab: 满贯 ==================== -->
+  <view wx:if="{{currentTab === 'mangan'}}" class="tab-content">
+    <view class="guide-intro">
+      <text class="intro-title">什么是满贯？</text>
+      <text class="intro-text">当番与符的组合使得「基本点」达到或超过 2000 点时，不再按公式计算，而是直接取固定的档位点。具体对应关系如下：</text>
+    </view>
+
+    <view class="section-title">📊 满贯档位</view>
+    <view class="mangan-cards">
+      <view wx:for="{{limitExported}}" wx:key="name" class="mangan-card">
+        <view class="mangan-card-head">
+          <text class="mangan-name">{{item.name}}</text>
+        </view>
+        <view class="mangan-card-body">
+          <view class="mangan-row">
+            <text class="mangan-key">番数范围</text>
+            <text class="mangan-val">{{item.range}}</text>
+          </view>
+          <view class="mangan-row">
+            <text class="mangan-key">基本点</text>
+            <text class="mangan-val base">{{item.base}}</text>
+          </view>
+          <view class="mangan-row">
+            <text class="mangan-key">子荣和</text>
+            <text class="mangan-val">{{item.childRon}}</text>
+          </view>
+          <view class="mangan-row">
+            <text class="mangan-key">亲荣和</text>
+            <text class="mangan-val dealer">{{item.dealerRon}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="mangan-tip">
+      <text class="tip-icon">💡</text>
+      <text class="tip-text">满贯判定不只看番数：4 番 40 符以上、3 番 70 符以上也会进入满贯档位。满贯档确定后，符数不再影响最终点数。</text>
+    </view>
+  </view>
+
+  <!-- 底栏留白 -->
+  <view class="bottom-spacer"></view>
+</view>

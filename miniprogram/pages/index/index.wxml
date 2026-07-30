@@ -1,163 +1,257 @@
-<view class="page">
-  <view class="round-card">
-    <view>
-      <view class="round-title">{{roundName}}局</view>
+<!-- pages/index/index.wxml — 日麻计分器 -->
+
+<view class="container">
+  <!-- 十字牌桌 -->
+  <view class="table-board {{game.mode === 'sanma' ? 'sanma' : ''}}">
+    <view class="table-center status-bar">
+      <view class="round-info">{{roundName}}局</view>
       <view class="sub-info">本场 {{game.honba}} · 供托 {{game.riichiSticks * 1000}}</view>
+      <view class="sub-info" style="font-size:20rpx;margin-top:4rpx">
+        <text wx:if="{{game.mode === 'sanma'}}">· 三麻 {{game.sanmaTsumoRule === 'loss' ? '自摸损' : '自摸折半'}}</text>
+        <text wx:else>四麻</text>
+      </view>
     </view>
-    <view class="round-seat">{{seats[game.dealerIndex]}} · 亲</view>
-  </view>
 
-  <view class="players">
-    <view wx:for="{{game.players}}" wx:key="index" class="player-card {{index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}">
-      <view class="seat">{{seats[index]}}{{index === game.dealerIndex ? ' · 亲' : ''}}</view>
-      <view class="player-name">{{item.name}}</view>
+    <view wx:for="{{game.players}}" wx:key="index"
+      class="player-card seat-{{seats[game.playerCount][index]}} {{index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
+      data-index="{{index}}" bindtap="onPlayerTap">
+      <view class="seat-label">{{seats[game.playerCount][index]}}{{index === game.dealerIndex ? ' · 亲' : ''}}</view>
+      <view class="name">{{item.name}}</view>
       <view class="points">{{item.points}}</view>
-      <view wx:if="{{item.riichi}}" class="riichi-dot">●</view>
+      <view wx:if="{{item.riichi}}" class="riichi-mark">立直</view>
     </view>
   </view>
 
+  <!-- 操作按钮 -->
   <view class="actions">
-    <button class="primary" bindtap="openWin">和牌结算</button>
-    <button bindtap="openRiichi">立直</button>
-    <button bindtap="openDraw">流局</button>
-    <button bindtap="undo">撤销</button>
-  </view>
-
-  <view class="history-card" wx:if="{{game.history.length}}">
-    <view class="section-title">最近记录</view>
-    <view wx:for="{{historyTop}}" wx:key="index" class="history-item">
-      <text>{{item.round}}局 · {{item.type === 'win' ? '和牌' : '流局'}}</text>
-      <text wx:if="{{item.type === 'win'}}">{{seats[item.winner]}} +{{item.total}}</text>
-      <text wx:else>听牌 {{item.tenpai.length}} 人</text>
+    <button class="btn" bindtap="openWin">和牌结算</button>
+    <view class="btn-row">
+      <button class="btn btn-secondary btn-small" bindtap="openRiichi">立直</button>
+      <button class="btn btn-secondary btn-small" bindtap="openDraw">流局</button>
+    </view>
+    <view class="toolbar">
+      <button class="btn btn-danger btn-small" bindtap="undo">撤销</button>
+      <button class="btn btn-danger btn-small" bindtap="showHistory">记录</button>
+      <button class="btn btn-danger btn-small" bindtap="openPlayerSetup">设置</button>
+      <button class="btn btn-danger btn-small" bindtap="resetGame">重置</button>
     </view>
   </view>
-
-  <button class="reset" bindtap="resetGame">重置整场</button>
 </view>
 
-<!-- 和牌面板 -->
+<!-- 和牌弹窗 -->
 <view wx:if="{{showWin}}" class="overlay">
-  <scroll-view scroll-y class="modal">
+  <scroll-view scroll-y class="modal" style="max-height:94vh">
     <view class="modal-title">和牌结算</view>
 
     <view class="label">和牌者</view>
-    <view class="segments">
-      <view wx:for="{{game.players}}" wx:key="index" class="segment {{win.winnerIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectWinner">{{seats[index]}}</view>
+    <view class="seg-group">
+      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{win.winnerIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectWinner">{{seats[game.playerCount][index]}}</view>
     </view>
 
     <view class="label">方式</view>
-    <view class="segments">
-      <view class="segment {{!win.isTsumo ? 'active' : ''}}" data-value="ron" bindtap="selectWinType">荣和</view>
-      <view class="segment {{win.isTsumo ? 'active' : ''}}" data-value="tsumo" bindtap="selectWinType">自摸</view>
+    <view class="seg-group">
+      <view class="seg-btn {{!win.isTsumo ? 'active' : ''}}" data-value="ron" bindtap="selectWinType">荣和</view>
+      <view class="seg-btn {{win.isTsumo ? 'active' : ''}}" data-value="tsumo" bindtap="selectWinType">自摸</view>
     </view>
 
-    <block wx:if="{{!win.isTsumo}}">
+    <view wx:if="{{!win.isTsumo}}" class="loser-row">
       <view class="label">放铳者</view>
-      <view class="segments">
-        <view wx:for="{{game.players}}" wx:key="index" wx:if="{{index !== win.winnerIdx}}" class="segment {{win.loserIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectLoser">{{seats[index]}}</view>
+      <view class="seg-group">
+        <view wx:for="{{game.players}}" wx:key="index" wx:if="{{index !== win.winnerIdx}}" class="seg-btn {{win.loserIdx === index ? 'active' : ''}}" data-index="{{index}}" bindtap="selectLoser">{{seats[game.playerCount][index]}}</view>
       </view>
-    </block>
+    </view>
 
-    <view class="label-row"><text>手牌</text><text>{{hand.length}} 张</text></view>
+    <!-- 手牌选牌区 -->
+    <view class="label-row"><text>手牌（{{hand.length}} 张）</text></view>
     <view class="hand-box">
-      <image wx:for="{{handDisplay}}" wx:key="key" class="hand-tile {{item.isWinTile ? 'win-tile' : ''}} {{item.isHaku ? 'haku' : ''}}" src="{{item.src}}" mode="aspectFit" data-index="{{index}}" bindtap="removeTile" />
-      <view wx:if="{{!hand.length}}" class="empty">点击下方牌面加入手牌</view>
+      <image wx:for="{{handDisplay}}" wx:key="key" class="hand-tile {{item.isWinTile ? 'win-tile' : ''}}" src="{{item.src}}" mode="aspectFit" data-index="{{index}}" bindtap="removeTile" />
+      <view wx:if="{{!hand.length}}" class="empty-hint">点击下方牌面加入手牌</view>
     </view>
 
+    <!-- 最终和牌张 -->
     <view class="label-row"><text>最终和牌张</text><text>{{winTileName}}</text></view>
-    <view class="win-picker">
+    <view class="win-tile-picker">
       <view wx:for="{{winTileOptions}}" wx:key="id" class="win-option {{win.winTile === item.id ? 'active' : ''}}" data-id="{{item.id}}" bindtap="selectWinTile">
-        <image class="tile-image {{item.isHaku ? 'haku' : ''}}" src="{{item.src}}" mode="aspectFit" />
+        <image class="tile-img {{item.isHaku ? 'haku-tile' : ''}}" src="{{item.src}}" mode="aspectFit" />
       </view>
-      <view wx:if="{{!winTileOptions.length}}" class="empty">选牌后指定胡到的最后一张</view>
+      <view wx:if="{{!winTileOptions.length}}" class="empty-hint">选牌后指定胡到的最后一张</view>
     </view>
 
-    <view class="keyboard">
+    <!-- 选牌键盘 -->
+    <view class="tile-keyboard">
       <view wx:for="{{tileRows}}" wx:key="label" class="tile-row">
         <view wx:for="{{item.tiles}}" wx:key="id" class="tile-key {{item.disabled ? 'disabled' : ''}}" data-id="{{item.id}}" bindtap="addTile">
-          <image class="tile-image {{item.isHaku ? 'haku' : ''}}" src="{{item.src}}" mode="aspectFit" />
-          <view wx:if="{{item.count}}" class="badge">{{item.count}}</view>
+          <image class="tile-img {{item.isHaku ? 'haku-tile' : ''}}" src="{{item.src}}" mode="aspectFit" />
+          <view wx:if="{{item.count}}" class="count-badge">{{item.count}}</view>
         </view>
       </view>
     </view>
-    <view class="inline-actions"><button bindtap="clearHand">清空</button><button bindtap="undoTile">撤销选牌</button></view>
-
-    <view class="label">立直状态</view>
-    <view class="segments">
-      <view class="segment {{win.riichiState === 'none' ? 'active' : ''}}" data-value="none" bindtap="selectRiichiState">未立直</view>
-      <view class="segment {{win.riichiState === 'riichi' ? 'active' : ''}}" data-value="riichi" bindtap="selectRiichiState">立直</view>
-      <view class="segment {{win.riichiState === 'double' ? 'active' : ''}}" data-value="double" bindtap="selectRiichiState">两立直</view>
+    <view class="btn-row" style="margin:14rpx 0">
+      <button class="btn btn-secondary btn-small" bindtap="clearHand">清空</button>
+      <button class="btn btn-secondary btn-small" bindtap="undoTile">撤销</button>
     </view>
-    <view class="hint">{{win.riichiState === 'none' ? '裏宝牌无效' : '裏宝牌有效'}}</view>
 
+    <!-- 立直状态 -->
+    <view class="label">立直状态</view>
+    <view class="seg-group">
+      <view class="seg-btn {{win.riichiState === 'none' ? 'active' : ''}}" data-value="none" bindtap="selectRiichiState">未立直</view>
+      <view class="seg-btn {{win.riichiState === 'riichi' ? 'active' : ''}}" data-value="riichi" bindtap="selectRiichiState">立直</view>
+      <view class="seg-btn {{win.riichiState === 'double' ? 'active' : ''}}" data-value="double" bindtap="selectRiichiState">两立直</view>
+    </view>
+    <view style="font-size:22rpx;color:#8a8470;margin-top:6rpx">{{win.riichiState === 'none' ? '裏宝牌无效' : '裏宝牌有效'}}</view>
+
+    <!-- 宝牌指示牌 -->
     <view class="fold-title" data-key="showDora" bindtap="toggleFold">表宝牌指示牌（{{win.doraIndicators.length}}）</view>
     <view wx:if="{{showDora}}" class="picker-grid">
       <view wx:for="{{doraTiles}}" wx:key="id" class="mini-option {{item.selected ? 'active' : ''}}" data-id="{{item.id}}" data-kind="dora" bindtap="toggleDora">
-        <image class="tile-image {{item.isHaku ? 'haku' : ''}}" src="{{item.src}}" mode="aspectFit" />
+        <image class="tile-img {{item.isHaku ? 'haku-tile' : ''}}" src="{{item.src}}" mode="aspectFit" />
       </view>
     </view>
     <view class="fold-title" data-key="showUra" bindtap="toggleFold">裏宝牌指示牌（{{win.uraDoraIndicators.length}}）</view>
     <view wx:if="{{showUra}}" class="picker-grid">
       <view wx:for="{{uraTiles}}" wx:key="id" class="mini-option {{item.selected ? 'active' : ''}}" data-id="{{item.id}}" data-kind="ura" bindtap="toggleDora">
-        <image class="tile-image {{item.isHaku ? 'haku' : ''}}" src="{{item.src}}" mode="aspectFit" />
+        <image class="tile-img {{item.isHaku ? 'haku-tile' : ''}}" src="{{item.src}}" mode="aspectFit" />
       </view>
     </view>
 
-    <view wx:if="{{analysisStage}}" class="analysis-options">
-      <view class="section-title">面子修正</view>
-      <view wx:for="{{melds}}" wx:key="index" wx:for-index="meldIndex" class="meld-row">
-        <view class="meld-tiles">
-          <image wx:for="{{item.displayTiles}}" wx:for-item="tile" wx:key="key" class="meld-tile {{tile.isHaku ? 'haku' : ''}}" src="{{tile.src}}" mode="aspectFit" />
-        </view>
-        <view class="meld-modes">
-          <view wx:for="{{item.modes}}" wx:for-item="mode" wx:for-index="modeIndex" wx:key="key" class="mode {{item.mode === mode.key ? 'active' : ''}}" data-index="{{meldIndex}}" data-mode="{{mode.key}}" bindtap="setMeldMode">{{mode.label}}</view>
-        </view>
+    <!-- 三麻拔北 -->
+    <view wx:if="{{game.mode === 'sanma'}}" style="margin-top:14rpx">
+      <view class="label">拔北数量（每张 +1 翻）</view>
+      <view class="seg-group">
+        <view wx:for="{{[0,1,2,3,4]}}" wx:key="*this" class="seg-btn {{win.northCount === item ? 'active' : ''}}" data-count="{{item}}" bindtap="selectNorthCount">{{item}}</view>
       </view>
+    </view>
 
-      <view class="section-title">特殊和牌条件</view>
+    <!-- 特殊和牌条件 -->
+    <view wx:if="{{analysisStage}}" style="margin-top:14rpx">
+      <view class="label">特殊和牌条件</view>
       <view class="condition-grid">
         <view wx:for="{{conditions}}" wx:key="key" class="condition {{item.active ? 'active' : ''}} {{item.disabled ? 'disabled' : ''}}" data-key="{{item.key}}" bindtap="toggleCondition">{{item.label}}</view>
       </view>
     </view>
 
-    <button class="analyze" bindtap="analyzeHand">{{analysisStage ? '重新分析并更新结果' : '分析牌型'}}</button>
+    <!-- 分析按钮 -->
+    <button class="btn analyze-btn" bindtap="analyzeHand">{{analysisStage ? '重新分析并更新结果' : '分析牌型'}}</button>
     <view wx:if="{{analysisMessage}}" class="analysis-message">{{analysisMessage}}</view>
+
+    <!-- 面子修正 -->
+    <view wx:if="{{analysisStage}}" class="analysis-options">
+      <view class="label">面子修正（点击切换明/暗/杠）</view>
+      <view wx:for="{{melds}}" wx:key="index" wx:for-index="meldIndex" class="meld-row">
+        <view class="meld-tiles">
+          <image wx:for="{{item.displayTiles}}" wx:for-item="tile" wx:key="key" class="meld-tile {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+        </view>
+        <view class="meld-modes">
+          <view wx:for="{{item.modes}}" wx:for-item="mode" wx:key="key" class="mode {{item.mode === mode.key ? 'active' : ''}}" data-meld-idx="{{meldIndex}}" data-mode="{{mode.key}}" bindtap="setMeldMode">{{mode.label}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 分析结果 -->
     <view wx:if="{{analysisResult}}" class="result-card">
       <view class="result-title">{{analysisResult.title}}</view>
-      <view>牌型：{{analysisResult.typeName}}</view>
-      <view>等待：{{analysisResult.waitName}}</view>
+      <view>类型：{{analysisResult.typeName}} · 等待：{{analysisResult.waitName}}</view>
       <view>状态：{{analysisResult.closedName}} · {{analysisResult.conditionText}}</view>
       <view>役：{{analysisResult.yakuText}}</view>
       <view>宝牌：{{analysisResult.doraCount}} 番</view>
       <view class="score-line">{{analysisResult.scoreText}}</view>
-      <view class="payment" wx:for="{{analysisResult.payments}}" wx:key="index">{{item}}</view>
+      <view wx:for="{{analysisResult.payments}}" wx:key="index" class="payment-line">{{item}}</view>
+    </view>
+
+    <!-- 手动确认翻/符 -->
+    <view class="btn-row" style="margin-top:20rpx">
+      <view style="flex:1">
+        <view class="label" style="margin-top:0">翻数</view>
+        <view class="seg-group" style="flex-wrap:wrap">
+          <view wx:for="{{[1,2,3,4,5,6,7,8,9,10,11,12,13]}}" wx:key="*this" class="seg-btn {{win.han === item ? 'active' : ''}}" style="min-width:70rpx;padding:12rpx 6rpx;font-size:22rpx" data-han="{{item}}" bindtap="selectManualHan">{{item}}</view>
+        </view>
+      </view>
+      <view style="flex:1">
+        <view class="label" style="margin-top:0">符数</view>
+        <picker mode="selector" range="{{fuOptions}}" range-key="label" value="{{fuIndex}}" bindchange="selectFu">
+          <view class="seg-btn">{{fuOptions[fuIndex].label}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 支付预览 -->
+    <view class="result-box" wx:if="{{previewTotal > 0}}">
+      <view class="points">{{previewTotal}} 点</view>
+      <view class="detail" wx:if="{{previewBreakdown}}">{{previewBreakdown}}</view>
     </view>
 
     <view class="modal-actions">
-      <button bindtap="closeWin">取消</button>
-      <button class="primary" disabled="{{!analysisResult}}" bindtap="confirmWin">确认结算</button>
+      <button class="btn btn-secondary" bindtap="closeWin">取消</button>
+      <button class="btn" bindtap="confirmWin">确认结算</button>
     </view>
   </scroll-view>
 </view>
 
-<!-- 立直面板 -->
-<view wx:if="{{showRiichiModal}}" class="overlay">
-  <view class="modal small">
+<!-- 立直弹窗 -->
+<view wx:if="{{showRiichi}}" class="overlay">
+  <view class="modal" style="max-width:480rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
     <view class="modal-title">谁立直？</view>
-    <view class="segments">
-      <view wx:for="{{game.players}}" wx:key="index" class="segment {{riichiSelected[index] ? 'active' : ''}} {{item.riichi ? 'disabled' : ''}}" data-index="{{index}}" bindtap="toggleRiichiPlayer">{{seats[index]}}{{item.riichi ? ' ●' : ''}}</view>
+    <view class="seg-group">
+      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{riichiSelected[index] ? 'active' : ''}} {{item.riichi ? 'disabled' : ''}}" data-index="{{index}}" bindtap="toggleRiichiPlayer">{{seats[game.playerCount][index]}}{{item.riichi ? ' 已立直' : ''}}</view>
     </view>
-    <view class="modal-actions"><button bindtap="closeRiichi">取消</button><button class="primary" bindtap="confirmRiichi">确认</button></view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeRiichi">取消</button>
+      <button class="btn" bindtap="confirmRiichi">确认</button>
+    </view>
   </view>
 </view>
 
-<!-- 流局面板 -->
-<view wx:if="{{showDrawModal}}" class="overlay">
-  <view class="modal small">
-    <view class="modal-title">流局听牌者</view>
-    <view class="segments">
-      <view wx:for="{{game.players}}" wx:key="index" class="segment {{tenpaiSelected[index] ? 'active' : ''}}" data-index="{{index}}" bindtap="toggleTenpai">{{seats[index]}}</view>
+<!-- 流局 -->
+<view wx:if="{{showDraw}}" class="overlay">
+  <view class="modal" style="max-width:480rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+    <view class="modal-title">听牌宣告</view>
+    <view style="font-size:22rpx;color:#8a8470;text-align:center;margin-bottom:20rpx">勾选听牌的玩家</view>
+    <view class="seg-group">
+      <view wx:for="{{game.players}}" wx:key="index" class="seg-btn {{tenpaiSelected[index] ? 'active' : ''}}" data-index="{{index}}" bindtap="toggleTenpai">{{seats[game.playerCount][index]}}</view>
     </view>
-    <view class="modal-actions"><button bindtap="closeDraw">取消</button><button class="primary" bindtap="confirmDraw">确认流局</button></view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeDraw">取消</button>
+      <button class="btn" bindtap="confirmDraw">确认流局</button>
+    </view>
+  </view>
+</view>
+
+<!-- 历史 -->
+<view wx:if="{{showHistory}}" class="overlay" bindtap="handleOverlayTap" data-id="showHistory">
+  <view class="modal">
+    <view class="modal-title">对局记录</view>
+    <view class="history-list">
+      <view wx:for="{{game.history}}" wx:key="index" class="history-item">
+        <text>{{item.round}} · {{item.type === 'win' ? '和牌' : '流局'}}</text>
+        <text wx:if="{{item.type === 'win'}}"><text class="who">{{seats[game.playerCount][item.winner]}}</text> +{{item.total}}</text>
+        <text wx:else>听牌 {{item.tenpai.length}} 人</text>
+      </view>
+      <view wx:if="{{!game.history.length}}" style="text-align:center;color:#aaa;padding:40rpx">暂无记录</view>
+    </view>
+    <button class="btn btn-secondary" style="margin-top:20rpx;width:100%" bindtap="closeHistory">关闭</button>
+  </view>
+</view>
+
+<!-- 设置 -->
+<view wx:if="{{showSetup}}" class="overlay" bindtap="handleOverlayTap" data-id="showSetup">
+  <view class="modal">
+    <view class="modal-title">对局设置</view>
+    <view class="label">人数模式</view>
+    <view class="seg-group">
+      <view class="seg-btn {{setupMode === 4 ? 'active' : ''}}" data-count="4" bindtap="selectPlayerCount">四麻 · 4人</view>
+      <view class="seg-btn {{setupMode === 3 ? 'active' : ''}}" data-count="3" bindtap="selectPlayerCount">三麻 · 3人</view>
+    </view>
+    <view wx:if="{{setupMode === 3}}" style="margin:16rpx 0;padding:16rpx;border-radius:14rpx;background:#f1f5ee;font-size:22rpx;color:#536349;line-height:1.7">
+      三麻：35000 点起，东南各三局，自摸损。拔北与禁用二至八万请在录入时注意。
+    </view>
+    <view class="label">玩家姓名</view>
+    <view wx:for="{{setupNames}}" wx:key="index" wx:if="{{index < setupMode}}" style="display:flex;gap:14rpx;align-items:center;margin-bottom:14rpx">
+      <text style="color:#c96442;font-weight:700;min-width:40rpx">{{['一','二','三','四'][index]}}</text>
+      <input style="flex:1;padding:16rpx;background:#fff;border:2rpx solid #e8e5d8;border-radius:14rpx" value="{{item}}" data-index="{{index}}" bindinput="onSetupNameInput" maxlength="12" />
+    </view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeSetup">取消</button>
+      <button class="btn" bindtap="confirmSetup">开始/保存</button>
+    </view>
   </view>
 </view>

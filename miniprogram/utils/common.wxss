@@ -1,0 +1,85 @@
+/* common.wxss — 日麻计分器 · 共享样式 */
+
+/* 基础 */
+page { background: #f5f4ee; color: #3d3929; font-family: "Noto Serif SC", "Songti SC", Georgia, serif; }
+.container { padding: 24rpx; padding-bottom: 120rpx; }
+
+/* 按钮 */
+.btn { background: #c96442; color: #fff; border: none; padding: 28rpx; border-radius: 18rpx; font-size: 30rpx; font-weight: 600; }
+.btn:active { opacity: 0.7; }
+.btn-secondary { background: #e8e5d8; color: #3d3929; }
+.btn-danger { background: #8a8470; color: #fff; }
+.btn-small { padding: 16rpx 24rpx; font-size: 24rpx; }
+.btn-row { display: flex; gap: 14rpx; }
+.btn-row .btn { flex: 1; }
+.hollow-btn { background: transparent; border: 1rpx solid #aaa28d; color: #746e5c; font-size: 24rpx; padding: 12rpx 20rpx; border-radius: 12rpx; }
+
+/* 弹窗 */
+.overlay { position: fixed; inset: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: flex-end; }
+.overlay-closable { z-index: 100; }
+.modal { width: 100%; max-height: 90vh; background: #faf9f3; border-radius: 30rpx 30rpx 0 0; padding: 36rpx; box-sizing: border-box; }
+.modal-title { font-size: 36rpx; font-weight: 700; text-align: center; margin-bottom: 28rpx; color: #3d3929; }
+.modal-close { position: sticky; top: -18rpx; z-index: 3; float: right; width: 60rpx; height: 60rpx; margin: -18rpx -16rpx 8rpx 16rpx; border: 2rpx solid #ddd7c8; border-radius: 50%; background: rgba(250,249,243,.96); color: #746e5c; font-size: 40rpx; line-height: 56rpx; text-align: center; }
+.modal h3 { text-align: center; margin-bottom: 28rpx; font-weight: 700; color: #3d3929; }
+.modal-actions { display: flex; gap: 14rpx; margin-top: 28rpx; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
+.modal-actions .btn { flex: 1; }
+
+/* seg-group 分段选择 */
+.seg-group { display: flex; gap: 10rpx; flex-wrap: wrap; }
+.seg-btn { flex: 1; min-width: 120rpx; padding: 18rpx 14rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; color: #3d3929; text-align: center; font-size: 26rpx; }
+.seg-btn.active { background: #c96442; border-color: #c96442; color: #fff; }
+.seg-btn.disabled { opacity: .35; }
+label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 0 10rpx; font-weight: 500; }
+.label-row { display: flex; justify-content: space-between; font-size: 24rpx; color: #8a8470; margin: 18rpx 0 8rpx; }
+
+/* 牌图 */
+.tile-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.haku-tile { background: #fffef9; border: 2rpx solid #8f8a7c; border-radius: 6rpx; box-sizing: border-box; box-shadow: 0 2rpx 4rpx rgba(50,45,32,.18); }
+
+/* 结果卡片 */
+.result-box { background: #fff; border: 2rpx solid #e8e5d8; border-radius: 18rpx; padding: 24rpx; margin: 24rpx 0; text-align: center; }
+.result-box .points { font-size: 48rpx; font-weight: 700; color: #5a7a4a; }
+.result-box .detail { font-size: 24rpx; color: #8a8470; margin-top: 10rpx; }
+.result-box .breakdown { font-size: 22rpx; color: #8a8470; margin-top: 12rpx; line-height: 1.8; white-space: pre-line; }
+
+/* 历史 */
+.history-item { background: #fff; border: 2rpx solid #e8e5d8; padding: 16rpx 20rpx; border-radius: 14rpx; margin-bottom: 8rpx; font-size: 22rpx; color: #8a8470; display: flex; justify-content: space-between; }
+.history-item .who { color: #c96442; font-weight: 700; }
+
+/* 十字牌桌 */
+.table-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200rpx minmax(0, 1fr);
+  grid-template-rows: 180rpx 160rpx 180rpx;
+  grid-template-areas: ". top ." "left center right" ". bottom .";
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+  padding: 14rpx;
+  border: 2rpx solid #ded8c8;
+  border-radius: 32rpx;
+  background: radial-gradient(circle at center, #f8f4e8 0 31%, #ece6d7 32% 33%, #f3efe4 34% 100%);
+}
+.table-board.sanma {
+  grid-template-rows: 180rpx 160rpx 180rpx;
+}
+.table-center { grid-area: center; align-self: stretch; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 16rpx; box-shadow: 0 4rpx 16rpx rgba(61,57,41,.08); }
+.table-center .round-info { font-size: 32rpx; font-weight: 700; color: #c96442; }
+.table-center .sub-info { font-size: 22rpx; color: #8a8470; margin-top: 6rpx; }
+.player-card { width: 100%; max-width: 240rpx; justify-self: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 14rpx 8rpx; text-align: center; position: relative; box-shadow: 0 3rpx 12rpx rgba(61,57,41,.05); }
+.player-card.seat-东 { grid-area: bottom; }
+.player-card.seat-南 { grid-area: right; }
+.player-card.seat-西 { grid-area: top; }
+.player-card.seat-北 { grid-area: left; }
+.player-card.dealer { border-color: #c96442; border-width: 3rpx; }
+.player-card.riichi { background: #fdf6f2; }
+.player-card .seat-label { font-size: 22rpx; color: #c96442; font-weight: 500; }
+.player-card .name { font-size: 28rpx; margin: 6rpx 0; color: #3d3929; }
+.player-card .points { font-size: 34rpx; font-weight: 700; color: #3d3929; }
+.player-card .delta { font-size: 22rpx; height: 28rpx; color: #5a7a4a; }
+.player-card .delta.minus { color: #c96442; }
+.player-card .riichi-mark { position: absolute; top: 8rpx; right: 10rpx; font-size: 20rpx; color: #c96442; }
+
+/* 工具栏 */
+.toolbar { display: flex; gap: 14rpx; margin-top: 20rpx; }
+.toolbar .btn { flex: 1; }

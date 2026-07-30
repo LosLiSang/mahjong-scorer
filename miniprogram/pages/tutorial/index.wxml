@@ -1,0 +1,174 @@
+<!-- pages/tutorial/index.wxml — 教学馆 -->
+
+<view class="container">
+  <!-- Hero -->
+  <view class="hero">
+    <view class="hero-title">从认牌到看懂点数</view>
+    <view class="hero-sub">系统学习日麻基础，新手也能快速上手计分</view>
+    <view class="progress-section">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+      </view>
+      <view class="progress-text">已学 {{completedCount}} / {{totalLessons}} 节（{{progressPercent}}%）</view>
+    </view>
+  </view>
+
+  <!-- 课程列表 -->
+  <view class="section-title">📚 课程</view>
+  <view class="lesson-list">
+    <view
+      wx:for="{{lessons}}"
+      wx:key="id"
+      class="lesson-card"
+      data-id="{{item.id}}"
+      bindtap="openLesson"
+    >
+      <view class="lesson-card-inner">
+        <view class="lesson-number">第{{index + 1}}节</view>
+        <view class="lesson-info">
+          <view class="lesson-card-title">{{item.title}}</view>
+          <view class="lesson-card-summary">{{item.summary}}</view>
+        </view>
+      </view>
+      <view class="lesson-arrow">›</view>
+      <view wx:if="{{progress.indexOf(item.id) >= 0}}" class="lesson-check">✓</view>
+    </view>
+  </view>
+
+  <!-- 入门测验 -->
+  <view class="section-title">📝 入门测验</view>
+  <view class="quiz-entry" bindtap="openQuiz">
+    <view class="quiz-entry-icon">✍️</view>
+    <view class="quiz-entry-info">
+      <view class="quiz-entry-title">6 道基础选择题</view>
+      <view class="quiz-entry-desc">测测你对日麻基础的了解程度</view>
+    </view>
+    <view class="lesson-arrow">›</view>
+  </view>
+
+  <!-- 工具入口 -->
+  <view class="section-title">🧭 工具</view>
+  <view class="nav-cards">
+    <view class="nav-card" bindtap="goToYakuCatalog">
+      <view class="nav-card-icon">📋</view>
+      <view class="nav-card-title">役种图鉴</view>
+      <view class="nav-card-desc">查看全部役种、番数与条件</view>
+      <view class="nav-card-arrow">›</view>
+    </view>
+    <view class="nav-card" bindtap="goToScoringGuide">
+      <view class="nav-card-icon">🧮</view>
+      <view class="nav-card-title">算分详解</view>
+      <view class="nav-card-desc">符数、番数、点数档位完全拆解</view>
+      <view class="nav-card-arrow">›</view>
+    </view>
+  </view>
+</view>
+
+<!-- 课程弹窗 -->
+<view wx:if="{{showLesson}}" class="overlay" bindtap="closeLesson">
+  <view class="tutorial-modal" catchtap="noop">
+    <view class="modal-close" bindtap="closeLesson">✕</view>
+    <scroll-view scroll-y class="lesson-scroll">
+      <view class="lesson-eyebrow">{{activeLesson.eyebrow}}</view>
+      <view class="lesson-title">{{activeLesson.title}}</view>
+      <view class="lesson-summary">{{activeLesson.summary}}</view>
+
+      <view wx:if="{{activeLesson.points.length}}" class="lesson-points">
+        <view wx:for="{{activeLesson.points}}" wx:key="*this" class="lesson-point-item">
+          <text class="point-bullet">•</text>
+          <text>{{item}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{activeLesson.tileGroups.length}}" class="lesson-tile-groups">
+        <view wx:for="{{activeLesson.tileGroups}}" wx:key="label" class="tile-group">
+          <view class="tile-group-label">{{item.label}}</view>
+          <view class="tile-row-inline">
+            <image
+              wx:for="{{item.displayTiles}}"
+              wx:key="id"
+              class="lesson-tile-img"
+              src="{{item.src}}"
+              mode="aspectFit"
+            />
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{activeLesson.tip}}" class="lesson-tip">
+        <text class="tip-icon">💡</text>
+        <text>{{activeLesson.tip}}</text>
+      </view>
+    </scroll-view>
+
+    <view class="lesson-modal-actions">
+      <button class="btn" bindtap="completeLesson">学完这节 ✓</button>
+    </view>
+  </view>
+</view>
+
+<!-- 测验弹窗 -->
+<view wx:if="{{showQuiz}}" class="overlay">
+  <view class="tutorial-modal quiz-modal">
+    <view class="modal-close" bindtap="closeQuiz">✕</view>
+
+    <block wx:if="{{!showQuizResult}}">
+      <!-- 进度 -->
+      <view class="quiz-progress">
+        <text>第 {{quizIndex + 1}} / {{quizQuestions.length}} 题</text>
+        <view class="quiz-progress-bar">
+          <view class="quiz-progress-fill" style="width: {{(quizIndex + 1) / quizQuestions.length * 100}}%"></view>
+        </view>
+      </view>
+
+      <!-- 题目 -->
+      <view class="quiz-question">{{quizQuestions[quizIndex].question}}</view>
+
+      <!-- 选项 -->
+      <view class="quiz-options">
+        <view
+          wx:for="{{quizQuestions[quizIndex].options}}"
+          wx:key="*this"
+          class="quiz-option
+            {{quizAnswer === index ? 'selected' : ''}}
+            {{quizSubmitted && index === quizQuestions[quizIndex].answer ? 'correct' : ''}}
+            {{quizSubmitted && quizAnswer === index && !quizCorrect ? 'wrong' : ''}}"
+          data-answer="{{index}}"
+          bindtap="selectQuizOption"
+        >
+          <text class="option-letter">{{['A','B','C','D'][index]}}</text>
+          <text class="option-text">{{item}}</text>
+        </view>
+      </view>
+
+      <!-- 解析 -->
+      <view wx:if="{{quizSubmitted}}" class="quiz-explanation">
+        <view class="quiz-explanation-header {{quizCorrect ? 'correct' : 'wrong'}}">
+          {{quizCorrect ? '✅ 回答正确！' : '❌ 回答错误'}}
+        </view>
+        <view class="quiz-explanation-text">{{quizExplanation}}</view>
+        <button class="btn" bindtap="nextQuizQuestion">
+          {{quizIndex + 1 >= quizQuestions.length ? '查看成绩' : '下一题'}}
+        </button>
+      </view>
+
+      <!-- 提交 -->
+      <view wx:if="{{!quizSubmitted}}" class="quiz-submit-area">
+        <button class="btn" bindtap="submitQuizAnswer" disabled="{{quizAnswer < 0}}">确认答案</button>
+      </view>
+    </block>
+
+    <!-- 成绩 -->
+    <block wx:if="{{showQuizResult}}">
+      <view class="quiz-result">
+        <view class="quiz-result-score">{{quizScore}} / {{quizQuestions.length}}</view>
+        <view class="quiz-result-label">你的得分</view>
+        <view class="quiz-result-text">{{quizResultText}}</view>
+      </view>
+      <view class="lesson-modal-actions">
+        <button class="btn btn-secondary" bindtap="closeQuiz">返回</button>
+        <button class="btn" bindtap="restartQuiz">再做一次</button>
+      </view>
+    </block>
+  </view>
+</view>

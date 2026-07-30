@@ -1,0 +1,227 @@
+/* pages/yaku-catalog/index.wxss — 役种图鉴 */
+@import "/utils/common.wxss";
+
+/* ===== 分类过滤栏 ===== */
+.category-bar {
+  white-space: nowrap;
+  padding-bottom: 8rpx;
+  margin: 0 -24rpx 20rpx;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+}
+.category-chips {
+  display: inline-flex;
+  gap: 14rpx;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 16rpx 28rpx;
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #3d3929;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.chip.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 卡片网格 ===== */
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+  padding-bottom: 40rpx;
+}
+.yaku-card {
+  flex: 1 1 calc(50% - 9rpx);
+  min-width: 310rpx;
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 20rpx;
+  padding: 22rpx;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2rpx 10rpx rgba(61,57,41,.04);
+}
+.yaku-card:active {
+  transform: scale(.97);
+  background: #fdfaf4;
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 6rpx 16rpx;
+  border-radius: 10rpx;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.card-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 8rpx;
+  line-height: 1.2;
+}
+.card-cond {
+  font-size: 22rpx;
+  color: #8a8470;
+  line-height: 1.5;
+  margin-bottom: 10rpx;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+.tag {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  background: #f5f4ee;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  color: #8a8470;
+}
+
+/* ===== 空态 ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  color: #b8b299;
+  font-size: 26rpx;
+  gap: 14rpx;
+}
+.empty-icon {
+  font-size: 72rpx;
+}
+
+/* ===== 详情弹窗 ===== */
+.detail-modal {
+  width: 100%;
+  max-height: 88vh;
+  background: #faf9f3;
+  border-radius: 30rpx 30rpx 0 0;
+  padding: 36rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+.detail-close {
+  position: sticky;
+  top: -18rpx;
+  z-index: 3;
+  float: right;
+  width: 60rpx;
+  height: 60rpx;
+  margin: -18rpx -16rpx 8rpx 16rpx;
+  border: 2rpx solid #ddd7c8;
+  border-radius: 50%;
+  background: rgba(250,249,243,.96);
+  color: #746e5c;
+  font-size: 36rpx;
+  line-height: 56rpx;
+  text-align: center;
+}
+
+/* ---- 详情标题 ---- */
+.detail-header {
+  text-align: center;
+  padding: 10rpx 0 20rpx;
+}
+.detail-badge {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  border-radius: 14rpx;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+.detail-name {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #3d3929;
+  line-height: 1.2;
+}
+
+/* ---- 详情分区 ---- */
+.detail-section {
+  margin-top: 28rpx;
+}
+.detail-section-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #c96442;
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+.detail-cond-text {
+  font-size: 28rpx;
+  color: #3d3929;
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  padding: 20rpx;
+  line-height: 1.7;
+}
+.detail-pitfall {
+  font-size: 26rpx;
+  color: #8a7070;
+  background: #fff8e8;
+  border: 2rpx solid #f0e8d0;
+  border-radius: 14rpx;
+  padding: 18rpx 22rpx;
+  line-height: 1.7;
+}
+.detail-tip {
+  font-size: 26rpx;
+  color: #5a7a4a;
+  background: #f4faf2;
+  border: 2rpx solid #d8e8d0;
+  border-radius: 14rpx;
+  padding: 18rpx 22rpx;
+  line-height: 1.7;
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 30rpx;
+}
+.detail-tags .tag {
+  padding: 8rpx 20rpx;
+  font-size: 22rpx;
+}
+
+/* ---- 牌例区域 ---- */
+.example-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  padding: 16rpx;
+  justify-content: center;
+}
+.example-tile {
+  width: 56rpx;
+  height: 76rpx;
+  border-radius: 6rpx;
+  object-fit: contain;
+  box-shadow: 0 2rpx 6rpx rgba(61,57,41,.08);
+}
+
+/* ---- 底部留白 ---- */
+.pad-bottom {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}

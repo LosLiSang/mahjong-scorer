@@ -1,0 +1,221 @@
+/* pages/sichuan/index.wxss — 川麻积分样式 */
+@import "/utils/common.wxss";
+
+/* ── 牌桌微调 ── */
+.sichuan-board {
+  grid-template-rows: 200rpx 160rpx 200rpx;
+  gap: 12rpx;
+  border-color: #d4c8a8;
+}
+
+.sichuan-center {
+  background: linear-gradient(135deg, #fdf6ee, #f9f1e2);
+  border-color: #d4c8a8;
+}
+.center-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #c96442;
+}
+.center-sub {
+  font-size: 22rpx;
+  color: #8a8470;
+  margin-top: 6rpx;
+}
+
+/* ── 玩家卡片 ── */
+.sichuan-player {
+  border-color: #d4c8a8;
+}
+.sichuan-points {
+  font-size: 36rpx;
+}
+
+/* ── 缺门徽章 ── */
+.missing-badge {
+  margin-top: 6rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 10rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+  display: inline-block;
+}
+.missing-m {
+  background: #e8f0e0;
+  color: #4a6e3a;
+  border: 1rpx solid #b8d4a0;
+}
+.missing-p {
+  background: #e0e8f0;
+  color: #3a4e6e;
+  border: 1rpx solid #a0b8d4;
+}
+.missing-s {
+  background: #f0e0e0;
+  color: #6e3a3a;
+  border: 1rpx solid #d4a0a0;
+}
+
+/* ── 操作区 ── */
+.sichuan-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+/* ── 胡牌弹窗番型按钮 ── */
+.sch-fan-btn {
+  min-width: 120rpx;
+  flex: none;
+  font-size: 24rpx;
+}
+
+/* ── 底分/封顶行 ── */
+.sichuan-opts-row {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 8rpx;
+}
+
+/* ── 计算结果 ── */
+.sichuan-result {
+  border-color: #c96442;
+  background: #fef9f5;
+}
+.sichuan-result .points {
+  color: #c96442;
+}
+
+/* ── 输入框 ── */
+.sichuan-input {
+  width: 100%;
+  padding: 20rpx;
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #3d3929;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* ── 设置面板 ── */
+.setup-player-row {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+}
+.setup-player-header {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.setup-seat {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #c96442;
+  min-width: 48rpx;
+}
+.setup-name-input {
+  flex: 1;
+  padding: 16rpx;
+  background: #faf8f2;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  color: #3d3929;
+}
+.missing-suit-btn {
+  min-width: 80rpx;
+  font-size: 24rpx;
+}
+
+/* ── 记分板 ── */
+.sichuan-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+  margin-bottom: 24rpx;
+}
+.scoreboard-item {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  padding: 16rpx 8rpx;
+  text-align: center;
+}
+.sb-seat {
+  display: block;
+  font-size: 20rpx;
+  color: #c96442;
+  font-weight: 500;
+}
+.sb-name {
+  display: block;
+  font-size: 24rpx;
+  color: #3d3929;
+  margin: 4rpx 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-score {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.sb-score.plus { color: #5a7a4a; }
+.sb-score.minus { color: #c96442; }
+
+/* ── 记录列表 ── */
+.sichuan-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.sichuan-history-item {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  padding: 16rpx 20rpx;
+}
+.shi-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.shi-index {
+  font-size: 20rpx;
+  color: #b8b299;
+  min-width: 36rpx;
+}
+.shi-type {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #fff;
+  background: #c96442;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+}
+.shi-receiver {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3d3929;
+  flex: 1;
+}
+.shi-amount {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #5a7a4a;
+}
+.shi-detail {
+  font-size: 22rpx;
+  color: #8a8470;
+  margin-top: 8rpx;
+  padding-left: 48rpx;
+  line-height: 1.6;
+}

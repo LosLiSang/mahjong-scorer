@@ -1,6 +1,10 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/tutorial/index",
+    "pages/yaku-catalog/index",
+    "pages/scoring-guide/index",
+    "pages/sichuan/index"
   ],
   "window": {
     "navigationBarTitleText": "日麻计分",
@@ -8,6 +12,26 @@
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f5f1e6",
     "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8a8470",
+    "selectedColor": "#c46645",
+    "backgroundColor": "#faf8f2",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "日麻计分"
+      },
+      {
+        "pagePath": "pages/tutorial/index",
+        "text": "教学馆"
+      },
+      {
+        "pagePath": "pages/sichuan/index",
+        "text": "川麻积分"
+      }
+    ]
   },
   "lazyCodeLoading": "requiredComponents"
 }

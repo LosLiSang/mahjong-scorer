@@ -1,0 +1,125 @@
+<!-- pages/yaku-catalog/index.wxml — 役种图鉴 -->
+<wxs module="utils">
+  var TILE_FILES = {
+    '1m':'Man1','2m':'Man2','3m':'Man3','4m':'Man4','5m':'Man5','6m':'Man6','7m':'Man7','8m':'Man8','9m':'Man9',
+    '1p':'Pin1','2p':'Pin2','3p':'Pin3','4p':'Pin4','5p':'Pin5','6p':'Pin6','7p':'Pin7','8p':'Pin8','9p':'Pin9',
+    '1s':'Sou1','2s':'Sou2','3s':'Sou3','4s':'Sou4','5s':'Sou5','6s':'Sou6','7s':'Sou7','8s':'Sou8','9s':'Sou9',
+    '1z':'Ton','2z':'Nan','3z':'Shaa','4z':'Pei','5z':'Haku','6z':'Hatsu','7z':'Chun'
+  };
+  module.exports.tileSrc = function(id) {
+    var file = TILE_FILES[id];
+    return file ? '/assets/tiles/' + file + '.svg' : '/assets/tiles/Blank.svg';
+  };
+  module.exports.truncate = function(text, len) {
+    if (!text) return '';
+    return text.length > len ? text.slice(0, len) + '…' : text;
+  };
+  module.exports.getBadgeColor = function(cat) {
+    var map = { '1han':'#c96442','2han':'#c99442','3han':'#c4a242','6han':'#a45ac4','yakuman':'#c4425a' };
+    return map[cat] || '#c96442';
+  };
+  module.exports.formatHan = function(yaku) {
+    if (!yaku) return '';
+    if (yaku.category === 'yakuman') return '役满';
+    if (yaku.hanOpen === null) return '门前' + yaku.hanClosed + '翻 · 副露不可';
+    if (yaku.hanClosed === yaku.hanOpen) return yaku.hanClosed + '翻';
+    return '门前' + yaku.hanClosed + '翻 · 副露' + yaku.hanOpen + '翻';
+  };
+  module.exports.getExampleTile = function(example) {
+    if (!example || !example.length || !example[0]) return [];
+    return example[0].filter(function(t) { return t; });
+  };
+</wxs>
+
+<view class="container">
+  <!-- 分类过滤 chips -->
+  <scroll-view class="category-bar" scroll-x enable-flex>
+    <view class="category-chips">
+      <view
+        wx:for="{{categories}}" wx:key="key"
+        class="chip {{activeCategory === item.key ? 'active' : ''}}"
+        style="{{activeCategory === item.key ? 'background:' + utils.getBadgeColor(item.key) + ';border-color:' + utils.getBadgeColor(item.key) : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onCategoryTap"
+      >{{item.label}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 役种卡片 grid -->
+  <view class="card-grid">
+    <block wx:for="{{list}}" wx:key="id">
+      <view class="yaku-card chip-{{item.category}}" data-id="{{item.id}}" bindtap="onCardTap">
+        <view class="card-badge" style="background:{{utils.getBadgeColor(item.category)}}">{{utils.formatHan(item)}}</view>
+        <view class="card-name">{{item.name}}</view>
+        <view class="card-cond">{{utils.truncate(item.condition, 24)}}</view>
+        <view class="card-tags" wx:if="{{item.tags && item.tags.length}}">
+          <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" class="tag">{{tag}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 空态 -->
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text class="empty-icon">🀄</text>
+    <text>该分类下暂无役种</text>
+  </view>
+</view>
+
+<!-- 详情弹窗 -->
+<view wx:if="{{detailYaku}}" class="overlay" bindtap="closeDetail">
+  <scroll-view scroll-y class="detail-modal" bindtap="stopPropagation">
+    <!-- 关闭按钮 -->
+    <view class="detail-close" bindtap="closeDetail">✕</view>
+
+    <!-- 标题区 -->
+    <view class="detail-header">
+      <view class="detail-badge" style="background:{{utils.getBadgeColor(detailYaku.category)}}">{{utils.formatHan(detailYaku)}}</view>
+      <view class="detail-name">{{detailYaku.name}}</view>
+    </view>
+
+    <!-- 条件 -->
+    <view class="detail-section">
+      <view class="detail-section-title">成立条件</view>
+      <view class="detail-cond-text">{{detailYaku.condition}}</view>
+    </view>
+
+    <!-- 鸣牌限制 -->
+    <view class="detail-section">
+      <view class="detail-section-title">鸣牌限制</view>
+      <view class="detail-cond-text">{{detailYaku.openPenalty || '—'}}</view>
+    </view>
+
+    <!-- 牌例 -->
+    <view class="detail-section" wx:if="{{detailYaku.example && detailYaku.example.length > 0 && utils.getExampleTile(detailYaku.example).length > 0}}">
+      <view class="detail-section-title">牌例</view>
+      <view class="example-row">
+        <image
+          wx:for="{{utils.getExampleTile(detailYaku.example)}}" wx:key="*this" wx:for-item="tid"
+          src="{{utils.tileSrc(tid)}}"
+          mode="aspectFit"
+          class="example-tile {{tid === '5z' ? 'haku-tile' : ''}}"
+        />
+      </view>
+    </view>
+
+    <!-- 易错点 -->
+    <view class="detail-section" wx:if="{{detailYaku.pitfall}}">
+      <view class="detail-section-title">⚠ 易错点</view>
+      <view class="detail-pitfall">{{detailYaku.pitfall}}</view>
+    </view>
+
+    <!-- 小贴士 -->
+    <view class="detail-section" wx:if="{{detailYaku.tip}}">
+      <view class="detail-section-title">💡 小贴士</view>
+      <view class="detail-tip">{{detailYaku.tip}}</view>
+    </view>
+
+    <!-- 标签 -->
+    <view class="detail-section" wx:if="{{detailYaku.tags && detailYaku.tags.length}}">
+      <view class="detail-tags">
+        <text wx:for="{{detailYaku.tags}}" wx:key="*this" wx:for-item="tag" class="tag">{{tag}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

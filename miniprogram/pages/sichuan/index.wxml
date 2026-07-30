@@ -1,0 +1,305 @@
+<!-- pages/sichuan/index.wxml — 川麻积分 -->
+<import src="/utils/common.wxss" />
+
+<view class="container">
+  <!-- ═══ 十字牌桌 ═══ -->
+  <view class="table-board sichuan-board">
+    <view class="table-center sichuan-center">
+      <view class="center-title">🀄 川麻积分</view>
+      <view wx:if="{{game.history.length}}" class="center-sub">已记录 {{game.history.length}} 笔</view>
+    </view>
+
+    <view
+      wx:for="{{game.players}}"
+      wx:key="index"
+      class="player-card seat-{{seats[index]}} sichuan-player"
+      data-index="{{index}}"
+    >
+      <view class="seat-label">{{seats[index]}}</view>
+      <view class="name">{{item.name}}</view>
+      <view class="points sichuan-points">{{item.score >= 0 ? '+' : ''}}{{item.score}}</view>
+      <view wx:if="{{item.missingSuit}}" class="missing-badge missing-{{item.missingSuit}}">
+        {{item.missingSuit === 'm' ? '缺万' : item.missingSuit === 'p' ? '缺筒' : '缺索'}}
+      </view>
+    </view>
+  </view>
+
+  <!-- ═══ 操作按钮 ═══ -->
+  <view class="sichuan-actions">
+    <view class="btn-row">
+      <button class="btn" bindtap="openWin">胡牌积分</button>
+    </view>
+    <view class="btn-row">
+      <button class="btn btn-secondary" bindtap="openGang">杠分</button>
+      <button class="btn btn-secondary" bindtap="openPenalty">罚分</button>
+    </view>
+    <view class="toolbar">
+      <button class="btn btn-danger btn-small" bindtap="undo">撤销</button>
+      <button class="btn btn-danger btn-small" bindtap="openSetup">设置</button>
+      <button class="btn btn-danger btn-small" bindtap="openHistory">记录</button>
+      <button class="btn btn-danger btn-small" bindtap="resetGame">重置</button>
+    </view>
+  </view>
+</view>
+
+<!-- ═══ 胡牌弹窗 ═══ -->
+<view wx:if="{{showWin}}" class="overlay">
+  <scroll-view scroll-y class="modal" style="max-height:94vh">
+    <view class="modal-title">🀄 胡牌积分</view>
+
+    <!-- 收分玩家 -->
+    <view class="label">收分玩家</view>
+    <view class="seg-group">
+      <view
+        wx:for="{{game.players}}"
+        wx:key="index"
+        class="seg-btn {{winReceiver === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="selectWinReceiver"
+      >{{seats[index]}} · {{item.name}}</view>
+    </view>
+
+    <!-- 付款玩家 (多选) -->
+    <view class="label">付款玩家（可多选）</view>
+    <view class="seg-group">
+      <view
+        wx:for="{{game.players}}"
+        wx:key="index"
+        wx:if="{{index !== winReceiver}}"
+        class="seg-btn {{winPayers[index] ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="toggleWinPayer"
+      >{{seats[index]}} · {{item.name}}</view>
+    </view>
+    <view wx:if="{{winPayerCount}}" style="font-size:22rpx;color:#8a8470;margin-top:4rpx">
+      已选 {{winPayerCount}} 人
+    </view>
+
+    <!-- 番型选择 -->
+    <view class="label">番型组合</view>
+    <view wx:for="{{fanGroups}}" wx:key="label" style="margin-bottom:12rpx">
+      <view style="font-size:22rpx;color:#8a8470;margin-bottom:8rpx">{{item.label}}</view>
+      <view class="seg-group" style="flex-wrap:wrap">
+        <view
+          wx:for="{{item.types}}"
+          wx:key="id"
+          class="seg-btn sch-fan-btn {{winFanIds.indexOf(item.id) >= 0 ? 'active' : ''}}"
+          style="min-width:120rpx;flex:none"
+          data-id="{{item.id}}"
+          bindtap="toggleWinFan"
+        >{{item.name}} <text style="font-size:20rpx;opacity:.7">{{item.fan}}番</text></view>
+      </view>
+    </view>
+
+    <!-- 根数 -->
+    <view class="label">根数（四张一样未杠）</view>
+    <view class="seg-group" style="max-width:500rpx">
+      <view
+        wx:for="{{[0,1,2,3,4]}}"
+        wx:key="*this"
+        class="seg-btn {{winRootCount === item ? 'active' : ''}}"
+        style="flex:1"
+        data-value="{{item}}"
+        bindtap="setWinRootCount"
+      >{{item}}根</view>
+    </view>
+
+    <!-- 底分 + 封顶 -->
+    <view class="sichuan-opts-row">
+      <view style="flex:1">
+        <view class="label">底分</view>
+        <view class="seg-group">
+          <view
+            wx:for="{{baseScoreOptions}}"
+            wx:key="*this"
+            class="seg-btn {{winBaseScore === item ? 'active' : ''}}"
+            style="flex:1"
+            data-value="{{item}}"
+            bindtap="setWinBaseScore"
+          >{{item}}</view>
+        </view>
+      </view>
+      <view style="flex:1">
+        <view class="label">封顶</view>
+        <view class="seg-group">
+          <view
+            wx:for="{{fanCapOptions}}"
+            wx:key="*this"
+            class="seg-btn {{winFanCap === item ? 'active' : ''}}"
+            style="flex:1"
+            data-value="{{item}}"
+            bindtap="setWinFanCap"
+          >{{item}}番</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 预览 -->
+    <view wx:if="{{winFanPreview}}" class="result-box sichuan-result">
+      <view class="detail">{{winFanPreview.label}}</view>
+      <view class="points">{{winFanPreview.fan}}番</view>
+      <view class="detail" style="margin-top:8rpx">
+        每人 {{winFanPreview.amountPerPayer}} 分
+        <text wx:if="{{winPayerCount}}"> · 合计 {{winFanPreview.total}} 分</text>
+      </view>
+    </view>
+
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeWin">取消</button>
+      <button class="btn" bindtap="confirmWin">确认结算</button>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- ═══ 杠分弹窗 ═══ -->
+<view wx:if="{{showGang}}" class="overlay">
+  <view class="modal" style="max-width:520rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+    <view class="modal-title">杠分</view>
+    <view class="label">杠牌者</view>
+    <view class="seg-group">
+      <view
+        wx:for="{{game.players}}"
+        wx:key="index"
+        class="seg-btn {{gangReceiver === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="selectGangReceiver"
+      >{{seats[index]}} · {{item.name}}</view>
+    </view>
+    <view class="label">每人支付金额</view>
+    <input
+      class="sichuan-input"
+      type="digit"
+      placeholder="输入金额"
+      value="{{gangAmount}}"
+      bindinput="onGangAmountInput"
+    />
+    <view wx:if="{{gangAmount}}" style="font-size:24rpx;color:#8a8470;margin:8rpx 0">
+      {{seats[gangReceiver]}} 共收 {{gangAmount * 3}} 分（3人 × {{gangAmount}}）
+    </view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeGang">取消</button>
+      <button class="btn" bindtap="confirmGang">确认</button>
+    </view>
+  </view>
+</view>
+
+<!-- ═══ 罚分弹窗 ═══ -->
+<view wx:if="{{showPenalty}}" class="overlay">
+  <view class="modal" style="max-width:520rpx;margin:auto 40rpx;border-radius:28rpx;height:auto">
+    <view class="modal-title">罚分</view>
+    <view class="label">罚谁</view>
+    <view class="seg-group">
+      <view
+        wx:for="{{game.players}}"
+        wx:key="index"
+        class="seg-btn {{penaltyPlayer === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="selectPenaltyPlayer"
+      >{{seats[index]}} · {{item.name}}</view>
+    </view>
+    <view class="label">罚分金额（付给每人）</view>
+    <input
+      class="sichuan-input"
+      type="digit"
+      placeholder="输入罚分金额"
+      value="{{penaltyAmount}}"
+      bindinput="onPenaltyAmountInput"
+    />
+    <view wx:if="{{penaltyAmount}}" style="font-size:24rpx;color:#8a8470;margin:8rpx 0">
+      {{seats[penaltyPlayer]}} 共付 {{penaltyAmount * 3}} 分（3人 × {{penaltyAmount}}）
+    </view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closePenalty">取消</button>
+      <button class="btn" bindtap="confirmPenalty">确认</button>
+    </view>
+  </view>
+</view>
+
+<!-- ═══ 设置弹窗 ═══ -->
+<view wx:if="{{showSetup}}" class="overlay" bindtap="handleOverlayTap" data-id="showSetup">
+  <view class="modal">
+    <view class="modal-title">对局设置</view>
+    <view class="label">玩家姓名 & 定缺</view>
+    <view
+      wx:for="{{setupNames}}"
+      wx:key="index"
+      class="setup-player-row"
+    >
+      <view class="setup-player-header">
+        <text class="setup-seat">{{seats[index]}}</text>
+        <input
+          class="setup-name-input"
+          value="{{item}}"
+          data-index="{{index}}"
+          bindinput="onSetupNameInput"
+          placeholder="玩家{{index + 1}}"
+          maxlength="12"
+        />
+      </view>
+      <view class="seg-group" style="margin-top:8rpx">
+        <view
+          class="seg-btn missing-suit-btn {{setupMissingSuits[index] === 'm' ? 'active' : ''}}"
+          data-index="{{index}}"
+          data-suit="m"
+          bindtap="setMissingSuit"
+        >缺万</view>
+        <view
+          class="seg-btn missing-suit-btn {{setupMissingSuits[index] === 'p' ? 'active' : ''}}"
+          data-index="{{index}}"
+          data-suit="p"
+          bindtap="setMissingSuit"
+        >缺筒</view>
+        <view
+          class="seg-btn missing-suit-btn {{setupMissingSuits[index] === 's' ? 'active' : ''}}"
+          data-index="{{index}}"
+          data-suit="s"
+          bindtap="setMissingSuit"
+        >缺索</view>
+        <view
+          wx:if="{{setupMissingSuits[index]}}"
+          class="seg-btn missing-suit-btn"
+          data-index="{{index}}"
+          data-suit="{{setupMissingSuits[index]}}"
+          bindtap="setMissingSuit"
+        >清除</view>
+      </view>
+    </view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeSetup">取消</button>
+      <button class="btn" bindtap="confirmSetup">保存</button>
+    </view>
+  </view>
+</view>
+
+<!-- ═══ 记录列表 ═══ -->
+<view wx:if="{{showHistory}}" class="overlay" bindtap="handleOverlayTap" data-id="showHistory">
+  <scroll-view scroll-y class="modal" style="max-height:90vh">
+    <view class="modal-title">对局记录</view>
+    <view class="sichuan-scoreboard">
+      <view wx:for="{{game.players}}" wx:key="index" class="scoreboard-item">
+        <text class="sb-seat">{{seats[index]}}</text>
+        <text class="sb-name">{{item.name}}</text>
+        <text class="sb-score {{item.score >= 0 ? 'plus' : 'minus'}}">{{item.score >= 0 ? '+' : ''}}{{item.score}}</text>
+      </view>
+    </view>
+    <view wx:if="{{game.history.length}}" class="sichuan-history">
+      <view
+        wx:for="{{historyList}}"
+        wx:key="index"
+        class="sichuan-history-item"
+      >
+        <view class="shi-header">
+          <text class="shi-index">#{{item.index}}</text>
+          <text class="shi-type">{{item.type}}</text>
+          <text class="shi-receiver">{{item.receiver}} · {{item.receiverName}}</text>
+          <text class="shi-amount">+{{item.amount}}分</text>
+        </view>
+        <view class="shi-detail">{{item.label}}</view>
+      </view>
+    </view>
+    <view wx:else style="text-align:center;color:#aaa;padding:60rpx">暂无记录</view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeHistory">关闭</button>
+    </view>
+  </scroll-view>
+</view>

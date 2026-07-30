@@ -1,0 +1,333 @@
+/* pages/scoring-guide/index.wxss — 算分详解样式 */
+@import "/utils/common.wxss";
+
+/* ===== Tab 条 ===== */
+.tabs { margin-bottom: 28rpx; }
+.tabs .seg-btn { font-size: 28rpx; padding: 20rpx 14rpx; }
+
+.tab-content { padding-bottom: 40rpx; }
+
+/* ===== 引导文字 ===== */
+.guide-intro {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  padding: 28rpx;
+  margin-bottom: 28rpx;
+}
+.intro-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 14rpx;
+}
+.intro-text {
+  font-size: 26rpx;
+  color: #746e5c;
+  line-height: 1.8;
+}
+
+/* ===== 区块标题 ===== */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3d3929;
+  margin: 36rpx 0 20rpx;
+}
+
+/* ===== 符数表 ===== */
+.fu-table {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  overflow: hidden;
+}
+.fu-table-header {
+  display: flex;
+  background: #f5f4ee;
+  padding: 18rpx 20rpx;
+  border-bottom: 2rpx solid #e8e5d8;
+}
+.fu-table-header text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #8a8470;
+}
+.fu-table-row {
+  display: flex;
+  padding: 16rpx 20rpx;
+  border-bottom: 1rpx solid #f0ece0;
+  align-items: flex-start;
+}
+.fu-table-row:last-child { border-bottom: none; }
+.fu-col-name {
+  width: 130rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #3d3929;
+  font-weight: 600;
+}
+.fu-col-value {
+  width: 120rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #c96442;
+  font-weight: 700;
+  text-align: center;
+}
+.fu-col-detail {
+  flex: 1;
+  font-size: 22rpx;
+  color: #8a8470;
+  line-height: 1.6;
+}
+
+/* ===== 符计算示例 ===== */
+.fu-example {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  padding: 28rpx;
+}
+.example-desc {
+  font-size: 24rpx;
+  color: #746e5c;
+  line-height: 1.8;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.example-steps {
+  background: #fdfaf5;
+  border-radius: 14rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+.example-step {
+  display: flex;
+  align-items: baseline;
+  padding: 10rpx 0;
+  border-bottom: 1rpx dashed #e8e5d8;
+}
+.example-step:last-child { border-bottom: none; }
+.step-label {
+  width: 160rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #3d3929;
+  font-weight: 500;
+}
+.step-fu {
+  width: 100rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #c96442;
+  font-weight: 700;
+  text-align: center;
+}
+.step-note {
+  flex: 1;
+  font-size: 22rpx;
+  color: #8a8470;
+}
+.example-total {
+  background: #f0ebdf;
+  border-radius: 14rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+.total-label {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 8rpx;
+}
+.total-raw {
+  display: block;
+  font-size: 22rpx;
+  color: #746e5c;
+  margin-bottom: 6rpx;
+}
+.total-rounded {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #3d3929;
+}
+.total-rounded .highlight {
+  color: #c96442;
+  font-size: 34rpx;
+}
+
+/* ===== 计算器 ===== */
+.calculator {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  padding: 28rpx;
+}
+.picker-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f4ee;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #3d3929;
+  margin-bottom: 8rpx;
+}
+.picker-arrow { font-size: 32rpx; color: #c96442; }
+
+.toggle-row {
+  display: flex;
+  gap: 14rpx;
+  margin-bottom: 8rpx;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 20rpx;
+  background: #f5f4ee;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 14rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #3d3929;
+  transition: all 0.15s;
+}
+.toggle-btn.active {
+  background: #c96442;
+  border-color: #c96442;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 计算结果 ===== */
+.calc-result { margin-top: 28rpx; }
+.calc-head {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 12rpx;
+}
+.calc-condition {
+  font-size: 24rpx;
+  color: #8a8470;
+}
+.calc-mangan-badge {
+  background: #c96442;
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-weight: 600;
+}
+.calc-detail { margin-top: 12rpx; }
+.calc-base {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3d3929;
+  margin-bottom: 8rpx;
+}
+.calc-formula {
+  display: block;
+  font-size: 22rpx;
+  color: #746e5c;
+  margin-bottom: 4rpx;
+}
+.calc-breakdown {
+  display: block;
+  font-size: 22rpx;
+  color: #5a7a4a;
+}
+.calc-expand {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx dashed #e8e5d8;
+}
+.expand-title {
+  display: block;
+  font-size: 22rpx;
+  color: #8a8470;
+  margin-bottom: 8rpx;
+}
+.expand-text {
+  display: block;
+  font-size: 22rpx;
+  color: #746e5c;
+  font-family: monospace;
+  line-height: 1.8;
+}
+
+/* ===== 满贯卡片 ===== */
+.mangan-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+.mangan-card {
+  background: #fff;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  overflow: hidden;
+}
+.mangan-card-head {
+  background: linear-gradient(135deg, #c96442, #a84e32);
+  padding: 18rpx 24rpx;
+}
+.mangan-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #fff;
+}
+.mangan-card-body { padding: 20rpx 24rpx; }
+.mangan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid #f5f4ee;
+}
+.mangan-row:last-child { border-bottom: none; }
+.mangan-key {
+  font-size: 24rpx;
+  color: #8a8470;
+}
+.mangan-val {
+  font-size: 24rpx;
+  color: #3d3929;
+  font-weight: 500;
+}
+.mangan-val.base {
+  color: #c96442;
+  font-weight: 700;
+}
+.mangan-val.dealer {
+  color: #c96442;
+  font-weight: 600;
+}
+
+/* ===== 满贯提示 ===== */
+.mangan-tip {
+  margin-top: 28rpx;
+  background: #fffef7;
+  border: 2rpx solid #e8e5d8;
+  border-radius: 18rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+.tip-icon { font-size: 28rpx; flex-shrink: 0; margin-top: 2rpx; }
+.tip-text {
+  font-size: 24rpx;
+  color: #746e5c;
+  line-height: 1.8;
+}
+
+/* ===== 底栏留白 ===== */
+.bottom-spacer { height: 100rpx; }
