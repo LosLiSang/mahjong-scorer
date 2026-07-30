@@ -37,6 +37,7 @@ function defaultWin(game) {
 Page({
   data: {
     seats: { 3: Game.SEATS_3P, 4: Game.SEATS_4P },
+    seatClasses: { 3: ['dong', 'nan', 'xi'], 4: ['dong', 'nan', 'xi', 'bei'] },
     game: Game.newGame(4),
     roundName: '',
     // win modal

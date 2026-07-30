@@ -13,7 +13,7 @@
     </view>
 
     <view wx:for="{{game.players}}" wx:key="index"
-      class="player-card seat-{{seats[game.playerCount][index]}} {{index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
+      class="player-card seat-{{seatClasses[game.playerCount][index]}} {{index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
       data-index="{{index}}" bindtap="onPlayerTap">
       <view class="seat-label">{{seats[game.playerCount][index]}}{{index === game.dealerIndex ? ' · 亲' : ''}}</view>
       <view class="name">{{item.name}}</view>

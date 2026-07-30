@@ -24,7 +24,8 @@ function buildFanGroups() {
 Page({
   data: {
     seats: SEATS,
-    game: null,
+    seatClasses: ['dong', 'nan', 'xi', 'bei'],
+    game: createSichuanGame(['玩家一', '玩家二', '玩家三', '玩家四']),
     // Win modal (胡牌)
     showWin: false,
     winReceiver: 0,

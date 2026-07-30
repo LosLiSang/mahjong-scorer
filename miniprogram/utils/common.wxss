@@ -67,10 +67,10 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 .table-center .round-info { font-size: 32rpx; font-weight: 700; color: #c96442; }
 .table-center .sub-info { font-size: 22rpx; color: #8a8470; margin-top: 6rpx; }
 .player-card { width: 100%; max-width: 240rpx; justify-self: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 14rpx 8rpx; text-align: center; position: relative; box-shadow: 0 3rpx 12rpx rgba(61,57,41,.05); }
-.player-card.seat-东 { grid-area: bottom; }
-.player-card.seat-南 { grid-area: right; }
-.player-card.seat-西 { grid-area: top; }
-.player-card.seat-北 { grid-area: left; }
+.player-card.seat-dong { grid-area: bottom; }
+.player-card.seat-nan { grid-area: right; }
+.player-card.seat-xi { grid-area: top; }
+.player-card.seat-bei { grid-area: left; }
 .player-card.dealer { border-color: #c96442; border-width: 3rpx; }
 .player-card.riichi { background: #fdf6f2; }
 .player-card .seat-label { font-size: 22rpx; color: #c96442; font-weight: 500; }

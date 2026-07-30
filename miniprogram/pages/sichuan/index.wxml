@@ -11,7 +11,7 @@
     <view
       wx:for="{{game.players}}"
       wx:key="index"
-      class="player-card seat-{{seats[index]}} sichuan-player"
+      class="player-card seat-{{seatClasses[index]}} sichuan-player"
       data-index="{{index}}"
     >
       <view class="seat-label">{{seats[index]}}</view>
