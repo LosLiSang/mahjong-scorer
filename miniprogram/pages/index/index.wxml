@@ -1,10 +1,6 @@
 <!-- pages/index/index.wxml — 日麻计分器 -->
 
 <view class="container">
-  <view class="rights-banner" bindtap="copyContact">
-    <text class="rights-owner">© 2026 Lisang</text>
-    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
-  </view>
   <!-- 十字牌桌 -->
   <view class="table-board {{game.mode === 'sanma' ? 'sanma' : ''}}">
     <view class="table-center status-bar">
@@ -39,6 +35,10 @@
       <button class="btn btn-danger btn-small" bindtap="openPlayerSetup">设置</button>
       <button class="btn btn-danger btn-small" bindtap="resetGame">重置</button>
     </view>
+  </view>
+  <view class="rights-banner" bindtap="copyContact">
+    <text class="rights-owner">© 2026 Lisang</text>
+    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
   </view>
 </view>
 
@@ -251,7 +251,7 @@
     <view class="label">玩家姓名</view>
     <view wx:for="{{setupNames}}" wx:key="index" wx:if="{{index < setupMode}}" style="display:flex;gap:14rpx;align-items:center;margin-bottom:14rpx">
       <text style="color:#c96442;font-weight:700;min-width:40rpx">{{['一','二','三','四'][index]}}</text>
-      <input style="flex:1;padding:16rpx;background:#fff;border:2rpx solid #e8e5d8;border-radius:14rpx" value="{{item}}" data-index="{{index}}" bindinput="onSetupNameInput" maxlength="12" />
+      <input class="setup-name-input serif-input" value="{{item}}" data-index="{{index}}" bindinput="onSetupNameInput" maxlength="12" />
     </view>
     <view class="modal-actions">
       <button class="btn btn-secondary" bindtap="closeSetup">取消</button>

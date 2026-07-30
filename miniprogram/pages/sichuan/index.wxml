@@ -1,10 +1,6 @@
 <!-- pages/sichuan/index.wxml — 川麻积分 -->
 
 <view class="container">
-  <view class="rights-banner" bindtap="copyContact">
-    <text class="rights-owner">© 2026 Lisang</text>
-    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
-  </view>
   <!-- ═══ 十字牌桌 ═══ -->
   <view class="table-board sichuan-board">
     <view class="table-center sichuan-center">
@@ -42,6 +38,10 @@
       <button class="btn btn-danger btn-small" bindtap="openHistory">记录</button>
       <button class="btn btn-danger btn-small" bindtap="resetGame">重置</button>
     </view>
+  </view>
+  <view class="rights-banner" bindtap="copyContact">
+    <text class="rights-owner">© 2026 Lisang</text>
+    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
   </view>
 </view>
 
@@ -245,7 +245,7 @@
       <view class="setup-player-header">
         <text class="setup-seat">{{seats[index]}}</text>
         <input
-          class="setup-name-input"
+          class="setup-name-input serif-input"
           value="{{item}}"
           data-index="{{index}}"
           bindinput="onSetupNameInput"
