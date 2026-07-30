@@ -1,5 +1,4 @@
 <!-- pages/sichuan/index.wxml — 川麻积分 -->
-<import src="/utils/common.wxss" />
 
 <view class="container">
   <!-- ═══ 十字牌桌 ═══ -->

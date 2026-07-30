@@ -27,7 +27,6 @@ Page({
     detailYaku: null,
     detailHanLabel: '',
     exampleTiles: [],
-    tileSrc,  // expose for WXML
   },
 
   onLoad() {
