@@ -88,6 +88,8 @@ Page({
   },
 
   onShow() {
+    const tabBar = this.getTabBar && this.getTabBar();
+    if (tabBar) tabBar.setData({ selected: 0 });
     // tabBar 切回时重新从 storage 加载，确保数据同步
     if (!this.data.game || !this.data.game.players) return;
     this.saveGame(this.data.game);

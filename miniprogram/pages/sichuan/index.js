@@ -72,6 +72,8 @@ Page({
   },
 
   onShow() {
+    const tabBar = this.getTabBar && this.getTabBar();
+    if (tabBar) tabBar.setData({ selected: 2 });
     // tabBar 切回时同步数据
     this.saveGame(this.data.game);
   },
