@@ -1,6 +1,6 @@
 // pages/tutorial/index.js — 日麻计分器 · 教学馆
 const Shared = require('../../utils/shared');
-const { MAHJONG_TUTORIAL, gradeTutorialQuiz } = require('../../utils/tutorial-data');
+const { MAHJONG_TUTORIAL } = require('../../utils/tutorial-data');
 
 const PROGRESS_KEY = 'mj_tutorial_progress_v1';
 
@@ -59,7 +59,7 @@ Page({
       quizQuestions: MAHJONG_TUTORIAL.quiz || [],
       quizAnswers: new Array(MAHJONG_TUTORIAL.quiz.length).fill(-1),
     });
-    this.loadProgress();
+    // loadProgress 在 onShow 中调用，此处不重复
   },
 
   loadProgress() {

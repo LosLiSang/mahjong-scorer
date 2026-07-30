@@ -65,6 +65,11 @@ Page({
     this.initGame(game);
   },
 
+  onShow() {
+    // tabBar 切回时同步数据
+    this.saveGame(this.data.game);
+  },
+
   initGame(game) {
     this.setData({ game });
     this.saveGame(game);

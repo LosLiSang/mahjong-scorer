@@ -75,6 +75,12 @@ Page({
     this.initGame(game);
   },
 
+  onShow() {
+    // tabBar 切回时重新从 storage 加载，确保数据同步
+    if (!this.data.game || !this.data.game.players) return;
+    this.saveGame(this.data.game);
+  },
+
   initGame(game) {
     const rn = Game.roundNames(game);
     this.setData({
