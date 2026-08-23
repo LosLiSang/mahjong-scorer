@@ -1,3 +1,6 @@
 *.log
+node_modules/
+.verification/
 .DS_Store
 Thumbs.db
+project.private.config.json

@@ -2,47 +2,27 @@
 @import "/utils/common.wxss";
 
 /* ── 牌桌微调 ── */
-.sichuan-board {
-  height: 540rpx;
-  border-color: #d4c8a8;
-}
-
-.sichuan-center {
-  background: linear-gradient(135deg, #fdf6ee, #f9f1e2);
-  border-color: #d4c8a8;
-}
-.center-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #c96442;
-  white-space: nowrap;
-}
-.center-sub {
-  font-size: 22rpx;
-  color: #8a8470;
-  margin-top: 6rpx;
-}
+.sichuan-board { border-color: #d8d1c3; }
+.sichuan-center { border-color: #d8d1c3; background: rgba(255,255,255,.96); }
+.center-title { color: #c96442; font-size: 28rpx; font-weight: 700; line-height: 1.35; white-space: nowrap; }
+.center-sub { margin-top: 4rpx; color: #8a8470; font-size: 18rpx; }
 
 /* ── 玩家卡片 ── */
-.sichuan-player {
-  border-color: #d4c8a8;
-  padding: 10rpx 8rpx;
-}
+.sichuan-player { border-color: #d8d1c3; }
 .sichuan-player .name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.sichuan-points {
-  font-size: 36rpx;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
+.sichuan-points { font-size: 34rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ── 缺门徽章 ── */
 .missing-badge {
-  margin-top: 6rpx;
-  padding: 4rpx 16rpx;
-  border-radius: 10rpx;
-  font-size: 20rpx;
+  position: absolute;
+  left: 50%;
+  bottom: -15rpx;
+  transform: translateX(-50%);
+  padding: 3rpx 13rpx;
+  border-radius: 9rpx;
+  font-size: 17rpx;
   font-weight: 600;
-  display: inline-block;
+  white-space: nowrap;
 }
 .missing-m {
   background: #e8f0e0;
@@ -161,7 +141,7 @@
 }
 
 /* ── 番型示例 ── */
-.fan-example-overlay { z-index: 130; }
+.fan-example-overlay { z-index: 1300; }
 .fan-example-modal { max-width: 640rpx; }
 .fan-example-text { color: #746e5c; font-size: 25rpx; line-height: 1.7; text-align: center; }
 .fan-example-tiles { display: flex; flex-wrap: nowrap; justify-content: center; gap: 2rpx; margin: 24rpx -12rpx 0; overflow: hidden; }

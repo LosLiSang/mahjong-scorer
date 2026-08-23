@@ -5,6 +5,7 @@
 ## 功能
 
 - 四人整场点数、本场与供托管理
+- 微信小程序日麻房间：房间码/分享加入、多人实时同步、版本冲突保护
 - SVG 麻将牌选牌器
 - 指定最终和牌张
 - 普通牌型、七对子、国士无双与役满分析
@@ -33,11 +34,19 @@ python3 -m http.server 8080
 
 小程序与 H5 共用同一套 `mahjong-logic.js` 计分核心，牌图保存在 `miniprogram/assets/tiles/`。
 
+### 实时房间
+
+实时房间仅在微信小程序日麻计分页提供，使用微信云开发。未配置云环境时保持纯本地模式，不影响原有功能。
+
+部署步骤、集合权限和真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
+
 ## 测试
 
 ```bash
 node test-logic.js
 node test-miniprogram.js
+node test-room-domain.js
+node test-room-service.js
 ```
 
 ## 线上地址

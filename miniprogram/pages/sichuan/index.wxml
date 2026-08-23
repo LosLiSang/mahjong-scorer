@@ -3,9 +3,27 @@
 <view class="container">
   <!-- ═══ 十字牌桌 ═══ -->
   <view class="table-board sichuan-board">
+    <view class="table-corner corner-tl">
+      <text class="corner-label">模式</text>
+      <text class="corner-value">川麻</text>
+    </view>
+    <view class="table-corner corner-tr">
+      <text class="corner-label">人数</text>
+      <text class="corner-value">4 人</text>
+    </view>
+    <view class="table-corner corner-bl">
+      <text class="corner-label">记录</text>
+      <text class="corner-value">{{game.history.length}} 笔</text>
+    </view>
+    <view class="table-corner corner-br">
+      <text class="corner-label">状态</text>
+      <text class="corner-value">{{game.history.length ? '进行中' : '待开局'}}</text>
+    </view>
+
     <view class="table-center sichuan-center">
+      <view class="center-kicker">即时结算</view>
       <view class="center-title">川麻积分</view>
-      <view wx:if="{{game.history.length}}" class="center-sub">已记录 {{game.history.length}} 笔</view>
+      <view class="center-sub">四人零和计分</view>
     </view>
 
     <view
@@ -46,8 +64,8 @@
 </view>
 
 <!-- ═══ 胡牌弹窗 ═══ -->
-<view wx:if="{{showWin}}" class="overlay">
-  <scroll-view scroll-y class="modal sichuan-win-modal">
+<view wx:if="{{showWin}}" class="overlay tab-safe-overlay">
+  <scroll-view scroll-y class="modal sichuan-win-modal tab-safe-scroll-modal">
     <view class="modal-title">🀄 胡牌积分</view>
 
     <!-- 收分玩家 -->
@@ -156,7 +174,7 @@
 </view>
 
 <!-- ═══ 番型示例 ═══ -->
-<view wx:if="{{showFanExample && fanExample}}" class="overlay fan-example-overlay" bindtap="closeFanExample">
+<view wx:if="{{showFanExample && fanExample}}" class="overlay tab-safe-overlay fan-example-overlay" bindtap="closeFanExample">
   <view class="modal compact-modal fan-example-modal" catchtap="noop">
     <view class="modal-title">{{fanExample.name}} · {{fanExample.fan}}番</view>
     <view class="fan-example-text">{{fanExample.exampleText}}</view>
@@ -169,7 +187,7 @@
 </view>
 
 <!-- ═══ 杠分弹窗 ═══ -->
-<view wx:if="{{showGang}}" class="overlay">
+<view wx:if="{{showGang}}" class="overlay tab-safe-overlay">
   <view class="modal compact-modal">
     <view class="modal-title">杠分</view>
     <view class="label">杠牌者</view>
@@ -201,7 +219,7 @@
 </view>
 
 <!-- ═══ 罚分弹窗 ═══ -->
-<view wx:if="{{showPenalty}}" class="overlay">
+<view wx:if="{{showPenalty}}" class="overlay tab-safe-overlay">
   <view class="modal compact-modal">
     <view class="modal-title">罚分</view>
     <view class="label">罚谁</view>
@@ -233,7 +251,7 @@
 </view>
 
 <!-- ═══ 设置弹窗 ═══ -->
-<view wx:if="{{showSetup}}" class="overlay" bindtap="handleOverlayTap" data-id="showSetup">
+<view wx:if="{{showSetup}}" class="overlay tab-safe-overlay" bindtap="handleOverlayTap" data-id="showSetup">
   <view class="modal compact-modal setup-modal">
     <view class="modal-title">对局设置</view>
     <view class="label">玩家姓名 & 定缺</view>
@@ -289,8 +307,8 @@
 </view>
 
 <!-- ═══ 记录列表 ═══ -->
-<view wx:if="{{showHistory}}" class="overlay" bindtap="handleOverlayTap" data-id="showHistory">
-  <scroll-view scroll-y class="modal history-modal">
+<view wx:if="{{showHistory}}" class="overlay tab-safe-overlay" bindtap="handleOverlayTap" data-id="showHistory">
+  <scroll-view scroll-y class="modal history-modal tab-safe-scroll-modal">
     <view class="modal-title">对局记录</view>
     <view class="sichuan-scoreboard">
       <view wx:for="{{game.players}}" wx:key="index" class="scoreboard-item">
