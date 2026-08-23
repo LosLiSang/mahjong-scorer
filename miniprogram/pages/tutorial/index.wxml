@@ -40,7 +40,7 @@
   <view class="quiz-entry" bindtap="openQuiz">
     <view class="quiz-entry-icon">✍️</view>
     <view class="quiz-entry-info">
-      <view class="quiz-entry-title">6 道基础选择题</view>
+      <view class="quiz-entry-title">{{quizQuestions.length}} 道基础选择题</view>
       <view class="quiz-entry-desc">测测你对日麻基础的了解程度</view>
     </view>
     <view class="lesson-arrow">›</view>
@@ -69,7 +69,7 @@
 </view>
 
 <!-- 课程弹窗 -->
-<view wx:if="{{showLesson}}" class="overlay" bindtap="closeLesson">
+<view wx:if="{{showLesson}}" class="overlay tab-safe-overlay" bindtap="closeLesson">
   <view class="tutorial-modal" catchtap="noop">
     <view class="modal-close" bindtap="closeLesson">✕</view>
     <scroll-view scroll-y class="lesson-scroll">
@@ -84,6 +84,14 @@
         </view>
       </view>
 
+      <view wx:if="{{activeLesson.terms && activeLesson.terms.length}}" class="lesson-terms">
+        <view class="lesson-terms-title">📖 术语</view>
+        <view wx:for="{{activeLesson.terms}}" wx:key="term" class="term-item">
+          <text class="term-name">{{item.term}}</text>
+          <text class="term-def">{{item.def}}</text>
+        </view>
+      </view>
+
       <view wx:if="{{activeLesson.tileGroups.length}}" class="lesson-tile-groups">
         <view wx:for="{{activeLesson.tileGroups}}" wx:key="label" class="tile-group">
           <view class="tile-group-label">{{item.label}}</view>
@@ -95,6 +103,12 @@
               src="{{item.src}}"
               mode="aspectFit"
             />
+            <image
+              wx:if="{{item.winTile}}"
+              class="lesson-tile-img lesson-win-tile {{item.winTile.id === '5z' ? 'haku-tile' : ''}}"
+              src="{{item.winTile.src}}"
+              mode="aspectFit"
+            />
           </view>
         </view>
       </view>
@@ -103,6 +117,7 @@
         <text class="tip-icon">💡</text>
         <text>{{activeLesson.tip}}</text>
       </view>
+      <view class="lesson-scroll-gap"></view>
     </scroll-view>
 
     <view class="lesson-modal-actions">
@@ -112,7 +127,7 @@
 </view>
 
 <!-- 测验弹窗 -->
-<view wx:if="{{showQuiz}}" class="overlay">
+<view wx:if="{{showQuiz}}" class="overlay tab-safe-overlay">
   <view class="tutorial-modal quiz-modal">
     <view class="modal-close" bindtap="closeQuiz">✕</view>
 

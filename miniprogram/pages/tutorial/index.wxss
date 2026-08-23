@@ -87,12 +87,13 @@
 
 /* ===== 课程弹窗 ===== */
 .tutorial-modal {
-  width: 100%; max-width: 680rpx; max-height: 90vh; background: #faf9f3;
+  width: 100%; max-width: 680rpx; height: calc(100vh - 156rpx - env(safe-area-inset-bottom));
+  max-height: 90vh; background: #faf9f3;
   border-radius: 30rpx; padding: 36rpx;
-  box-sizing: border-box; display: flex; flex-direction: column;
+  box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;
   box-shadow: 0 18rpx 60rpx rgba(49,45,34,.24);
 }
-.lesson-scroll { flex: 1; max-height: 70vh; }
+.lesson-scroll { flex: 1; min-height: 0; }
 .lesson-eyebrow { color: #c96442; font-size: 22rpx; font-weight: 700; text-align: center; }
 .lesson-title {
   font-size: 36rpx; font-weight: 700; text-align: center; color: #3d3929; margin: 12rpx 0;
@@ -106,19 +107,38 @@
 }
 .point-bullet { color: #c96442; min-width: 24rpx; }
 
+/* 术语释义 */
+.lesson-terms { margin: 4rpx 0 20rpx; }
+.lesson-terms-title { font-size: 22rpx; font-weight: 700; color: #c96442; margin-bottom: 10rpx; letter-spacing: 1rpx; }
+.term-item {
+  display: flex; gap: 12rpx; align-items: flex-start; padding: 12rpx 16rpx;
+  background: #f7f4ec; border: 2rpx solid #e6e1d2; border-radius: 12rpx; margin-bottom: 8rpx;
+}
+.term-name { color: #c96442; font-weight: 700; font-size: 24rpx; flex: 0 0 auto; min-width: 132rpx; }
+.term-def { color: #5a5748; font-size: 24rpx; line-height: 1.6; }
+
 .lesson-tile-groups { margin-bottom: 20rpx; }
 .tile-group { margin-bottom: 14rpx; }
 .tile-group-label { font-size: 22rpx; color: #746e5c; margin-bottom: 8rpx; }
-.tile-row-inline { display: flex; flex-wrap: wrap; gap: 6rpx; padding: 14rpx; background: #eeeadd; border-radius: 14rpx; }
-.lesson-tile-img { width: 52rpx; height: 70rpx; border-radius: 4rpx; }
+.tile-row-inline { display: flex; flex-wrap: nowrap; gap: 4rpx; padding: 12rpx; background: #eeeadd; border-radius: 14rpx; align-items: center; }
+.lesson-tile-img { width: 34rpx; height: 46rpx; flex: 0 0 auto; border-radius: 4rpx; }
+.lesson-win-tile { margin-left: 20rpx; }
 
 .lesson-tip {
   display: flex; gap: 10rpx; border-left: 5rpx solid #5a7a4a;
   padding: 16rpx 20rpx; background: #f1f5ee; color: #536349;
-  border-radius: 0 14rpx 14rpx 0; font-size: 22rpx; line-height: 1.65;
+  border-radius: 0 14rpx 14rpx 0; font-size: 22rpx; line-height: 1.65; margin-bottom: 8rpx;
 }
 .tip-icon { font-size: 24rpx; flex-shrink: 0; }
-.lesson-modal-actions { margin-top: 24rpx; padding-bottom: env(safe-area-inset-bottom); }
+/* 课程弹窗底部操作区：独立页脚条，避免压住滚动内容 */
+.lesson-modal-actions {
+  flex: 0 0 auto; margin-top: 16rpx; padding: 18rpx 0 calc(12rpx + env(safe-area-inset-bottom));
+  border-top: 2rpx solid #ece7db;
+}
+.lesson-modal-actions .btn { padding: 18rpx; font-size: 28rpx; }
+.lesson-scroll-gap { height: 20rpx; }
+/* 课程弹窗关闭按钮改为右上角（flex 容器里 float 失效，用 align-self 归位） */
+.tutorial-modal .modal-close { align-self: flex-end; }
 
 /* ===== 测验 ===== */
 .quiz-modal { max-height: 94vh; }

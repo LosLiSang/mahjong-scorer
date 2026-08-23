@@ -54,14 +54,21 @@ Page({
     // pre-process lesson tileGroups to include full image paths
     const lessons = rawLessons.map(lesson => ({
       ...lesson,
-      tileGroups: (lesson.tileGroups || []).map(group => ({
-        ...group,
-        displayTiles: (group.tiles || []).map(id => ({
-          id,
-          src: Shared.tileSrc(id),
-          display: Shared.tileShortName(id),
-        })),
-      })),
+      tileGroups: (lesson.tileGroups || []).map(group => {
+        const tiles = group.tiles || [];
+        const win = group.win || '';
+        let handTiles = tiles.slice();
+        if (win) {
+          const idx = handTiles.lastIndexOf(win);
+          if (idx >= 0) handTiles.splice(idx, 1);
+        }
+        return {
+          ...group,
+          win,
+          displayTiles: handTiles.map(id => ({ id, src: Shared.tileSrc(id), display: Shared.tileShortName(id) })),
+          winTile: win ? { id: win, src: Shared.tileSrc(win), display: Shared.tileShortName(win) } : null,
+        };
+      }),
     }));
     this.setData({
       lessons,
