@@ -2,6 +2,11 @@
 const Shared = require('../../utils/shared');
 const Logic = require('../../utils/mahjong-logic');
 const Game = require('../../utils/game-engine');
+const RoomService = require('../../utils/room-service');
+
+const LOCAL_STORAGE_KEY = 'mj_game_v2';
+const ACTIVE_ROOM_KEY = 'mj_active_room_v1';
+const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
 
 const MELD_MODES = {
   shuntsu: [{ key:'closed', label:'门前' }, { key:'open', label:'副露' }],
@@ -58,7 +63,7 @@ Page({
     playerViews: buildPlayerViews(Game.newGame(4)),
     roundName: '',
     // win modal
-    showWin: false,
+    showWin: false, winStep: 1,
     hand: [], handDisplay: [], handHistory: [], win: null,
     winTileOptions: [], winTileName: '未选择',
     tileRows: [], doraTiles: [], uraTiles: [],
@@ -78,12 +83,32 @@ Page({
     showDraw: false, tenpaiSelected: [],
     showHistory: false,
     showSetup: false, setupMode: 4, setupNames: ['','','',''],
-    undoStack: []
+    undoStack: [],
+    // realtime room
+    roomConfigured: RoomService.isConfigured(),
+    room: null,
+    roomConnected: false,
+    roomOnline: true,
+    roomBusy: false,
+    roomWritable: false,
+    showRoom: false,
+    roomPanelMode: 'create',
+    roomMode: 4,
+    roomNickname: '',
+    roomSeatIndex: 0,
+    roomSeatOptions: [],
+    joinRoomCode: '',
+    joinPreview: null,
+    joinSeatIndex: -1,
+    joinRoomFull: false,
+    pendingSharedRoomCode: '',
+    lastSeenRoomActionId: '',
+    roomActivityViews: []
   },
 
-  onLoad() {
+  onLoad(options) {
     let game;
-    try { game = wx.getStorageSync('mj_game_v2'); } catch(e) {}
+    try { game = wx.getStorageSync(LOCAL_STORAGE_KEY); } catch(e) {}
     if (!game || !game.players || ![3,4].includes(game.players.length)) {
       game = Game.newGame(4);
     }
@@ -93,14 +118,53 @@ Page({
     if (!game.sanmaTsumoRule) game.sanmaTsumoRule = 'loss';
     if (!game.history) game.history = [];
     this.initGame(game);
+    // 预构建牌面数据，保证首次打开结算弹窗前页面状态完整。
+    this.setData({ win: defaultWin(game) });
+    this.refreshTiles();
+    this.initRoomNetworkState();
+
+    let nickname = '';
+    let activeRoomCode = '';
+    try {
+      nickname = wx.getStorageSync(ROOM_NICKNAME_KEY) || '';
+      activeRoomCode = wx.getStorageSync(ACTIVE_ROOM_KEY) || '';
+    } catch (e) {}
+    const sharedCode = RoomService.normalizeCode(options && options.room);
+    this.setData({
+      roomNickname: nickname,
+      pendingSharedRoomCode: sharedCode,
+      joinRoomCode: sharedCode || ''
+    });
+
+    if (sharedCode) {
+      this.setData({ showRoom: true, roomPanelMode: 'join' });
+      if (this.data.roomConfigured) this.inspectJoinRoom();
+    } else if (activeRoomCode && this.data.roomConfigured) {
+      this.resumeRoom(activeRoomCode);
+    }
   },
 
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
     if (tabBar) tabBar.setData({ selected: 0 });
-    // tabBar 切回时重新从 storage 加载，确保数据同步
+    if (this.data.room && this.data.room.roomCode && this.data.roomConfigured) {
+      this.startRoomWatch(this.data.room.roomCode).catch(err => this.roomError(err));
+      return;
+    }
     if (!this.data.game || !this.data.game.players) return;
     this.saveGame(this.data.game);
+  },
+
+  onHide() {
+    RoomService.stopWatch();
+    if (this.data.room) this.updateRoomWritable({ roomConnected: false });
+  },
+
+  onUnload() {
+    RoomService.stopWatch();
+    if (this._networkHandler && wx.offNetworkStatusChange) {
+      wx.offNetworkStatusChange(this._networkHandler);
+    }
   },
 
   initGame(game) {
@@ -115,7 +179,337 @@ Page({
   },
 
   saveGame(game) {
-    try { wx.setStorageSync('mj_game_v2', game); } catch(e) {}
+    if (this.data.room) return;
+    try { wx.setStorageSync(LOCAL_STORAGE_KEY, game); } catch(e) {}
+  },
+
+  initRoomNetworkState() {
+    if (wx.getNetworkType) {
+      wx.getNetworkType({
+        success: res => this.updateRoomWritable({ roomOnline: res.networkType !== 'none' })
+      });
+    }
+    if (wx.onNetworkStatusChange) {
+      this._networkHandler = res => {
+        this.updateRoomWritable({ roomOnline: !!res.isConnected });
+        if (res.isConnected && this.data.room && this.data.room.roomCode) {
+          this.startRoomWatch(this.data.room.roomCode).catch(err => this.roomError(err));
+        }
+      };
+      wx.onNetworkStatusChange(this._networkHandler);
+    }
+  },
+
+  updateRoomWritable(patch) {
+    const next = Object.assign({
+      room: this.data.room,
+      roomConnected: this.data.roomConnected,
+      roomOnline: this.data.roomOnline,
+      roomBusy: this.data.roomBusy
+    }, patch || {});
+    next.roomWritable = !!(
+      next.room && next.room.status === 'active' &&
+      next.roomConnected && next.roomOnline && !next.roomBusy
+    );
+    this.setData(next);
+  },
+
+  roomError(err) {
+    wx.showToast({ title: (err && err.message) || '房间操作失败', icon: 'none', duration: 2500 });
+  },
+
+  roomSeatOptions(count, seats) {
+    const labels = count === 3 ? Game.SEATS_3P : Game.SEATS_4P;
+    return labels.map((label, index) => ({
+      index,
+      label,
+      occupied: !!(seats && seats[index] && seats[index].occupied),
+      nickname: seats && seats[index] ? seats[index].nickname : `玩家${index + 1}`
+    }));
+  },
+
+  openRoomPanel() {
+    const panelMode = this.data.room ? 'current' : (this.data.pendingSharedRoomCode ? 'join' : 'create');
+    const preview = this.data.joinPreview;
+    const count = preview ? (preview.mode === 'sanma' ? 3 : 4) : (this.data.roomMode || 4);
+    this.setData({
+      showRoom: true,
+      roomSeatOptions: this.roomSeatOptions(count, preview && preview.seats),
+      roomPanelMode: panelMode
+    });
+  },
+
+  closeRoomPanel() { this.setData({ showRoom: false }); },
+
+  switchRoomPanel(e) {
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ roomPanelMode: mode, joinPreview: mode === 'join' ? this.data.joinPreview : null });
+  },
+
+  selectRoomMode(e) {
+    const count = Number(e.currentTarget.dataset.count) === 3 ? 3 : 4;
+    this.setData({
+      roomMode: count,
+      roomSeatIndex: 0,
+      roomSeatOptions: this.roomSeatOptions(count)
+    });
+  },
+
+  onRoomNicknameInput(e) {
+    const roomNickname = e.detail.value;
+    this.setData({ roomNickname });
+    try { wx.setStorageSync(ROOM_NICKNAME_KEY, roomNickname); } catch (err) {}
+  },
+
+  selectRoomSeat(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (e.currentTarget.dataset.join) {
+      const option = this.data.roomSeatOptions[index];
+      if (option && !option.occupied) this.setData({ joinSeatIndex: index });
+      return;
+    }
+    this.setData({ roomSeatIndex: index });
+  },
+
+  onJoinRoomCodeInput(e) {
+    this.setData({
+      joinRoomCode: RoomService.normalizeCode(e.detail.value),
+      joinPreview: null,
+      joinSeatIndex: -1,
+      joinRoomFull: false
+    });
+  },
+
+  async createRoom() {
+    if (!this.data.roomConfigured) return this.roomError(new Error('请先配置微信云开发环境'));
+    if (!this.data.roomNickname.trim()) return this.roomError(new Error('请填写微信昵称'));
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const room = await RoomService.create({
+        mode: this.data.roomMode,
+        seatIndex: this.data.roomSeatIndex,
+        nickname: this.data.roomNickname
+      });
+      try { wx.setStorageSync(ACTIVE_ROOM_KEY, room.roomCode); } catch (e) {}
+      this.applyRoom(room, false);
+      this.setData({ showRoom: false, roomPanelMode: 'current' });
+      await this.startRoomWatch(room.roomCode);
+      wx.showToast({ title: `房间 ${room.roomCode}`, icon: 'success' });
+    } catch (err) {
+      this.roomError(err);
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  async inspectJoinRoom() {
+    if (!this.data.roomConfigured) return this.roomError(new Error('请先配置微信云开发环境'));
+    const code = RoomService.normalizeCode(this.data.joinRoomCode);
+    if (code.length !== 6) return this.roomError(new Error('请输入 6 位房间码'));
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const preview = await RoomService.inspect(code);
+      const count = preview.mode === 'sanma' ? 3 : 4;
+      const options = this.roomSeatOptions(count, preview.seats);
+      const firstEmpty = options.find(item => !item.occupied);
+      this.setData({
+        joinPreview: preview,
+        joinRoomCode: preview.roomCode,
+        roomSeatOptions: options,
+        joinSeatIndex: firstEmpty ? firstEmpty.index : 0,
+        joinRoomFull: !firstEmpty
+      });
+    } catch (err) {
+      this.setData({ joinPreview: null, joinSeatIndex: -1, joinRoomFull: false });
+      this.roomError(err);
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  async joinRoom() {
+    if (!this.data.joinPreview) return this.inspectJoinRoom();
+    if (!this.data.roomNickname.trim()) return this.roomError(new Error('请填写微信昵称'));
+    if (this.data.joinSeatIndex < 0) return this.roomError(new Error('请选择空座位'));
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const room = await RoomService.join({
+        roomCode: this.data.joinPreview.roomCode,
+        seatIndex: this.data.joinSeatIndex,
+        nickname: this.data.roomNickname
+      });
+      try { wx.setStorageSync(ACTIVE_ROOM_KEY, room.roomCode); } catch (e) {}
+      this.applyRoom(room, false);
+      this.setData({ showRoom: false, roomPanelMode: 'current', pendingSharedRoomCode: '' });
+      await this.startRoomWatch(room.roomCode);
+      wx.showToast({ title: '已加入房间', icon: 'success' });
+    } catch (err) {
+      this.roomError(err);
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  async resumeRoom(roomCode) {
+    try {
+      await this.startRoomWatch(roomCode);
+    } catch (err) {
+      this.roomError(err);
+    }
+  },
+
+  async startRoomWatch(roomCode) {
+    if (!this.data.roomOnline || !this.data.roomConfigured) return;
+    try {
+      await RoomService.watch(roomCode, {
+        onChange: room => {
+          this.updateRoomWritable({ roomConnected: true });
+          this.applyRoom(room, true);
+        },
+        onRemoved: () => {
+          this.leaveRoomLocally(false);
+          wx.showToast({ title: '房主已释放你的座位', icon: 'none' });
+        },
+        onError: err => {
+          this.updateRoomWritable({ roomConnected: false });
+          if (err.code === 'NOT_ROOM_MEMBER') this.leaveRoomLocally(false);
+          else this.roomError(err);
+        }
+      });
+    } catch (err) {
+      this.updateRoomWritable({ roomConnected: false });
+      throw err;
+    }
+  },
+
+  formatRoomActionTime(value) {
+    const raw = value && value.$date ? value.$date : value;
+    const date = raw instanceof Date ? raw : new Date(raw);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = number => String(number).padStart(2, '0');
+    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  },
+
+  applyRoom(room, notify) {
+    if (!room || !room.game) return;
+    const previousActionId = this.data.lastSeenRoomActionId;
+    const action = room.lastAction;
+    const rn = Game.roundNames(room.game);
+    const roomActivityViews = (room.activity || []).map(item => ({
+      id: item.id,
+      summary: item.summary,
+      operatorNickname: item.operatorNickname,
+      timeText: this.formatRoomActionTime(item.createdAt),
+      isMine: item.isMine
+    }));
+    this.updateRoomWritable({
+      room,
+      game: room.game,
+      playerViews: buildPlayerViews(room.game),
+      roundName: rn[room.game.roundIndex] || `第${room.game.roundIndex + 1}局`,
+      undoStack: [],
+      roomActivityViews,
+      lastSeenRoomActionId: action && action.id || previousActionId
+    });
+    if (notify && action && action.id !== previousActionId && previousActionId && !action.isMine) {
+      wx.showToast({ title: action.summary || `${action.operatorNickname} 更新了房间`, icon: 'none' });
+    }
+  },
+
+  leaveRoomLocally(showToast) {
+    RoomService.stopWatch();
+    try { wx.removeStorageSync(ACTIVE_ROOM_KEY); } catch (e) {}
+    let localGame;
+    try { localGame = wx.getStorageSync(LOCAL_STORAGE_KEY); } catch (e) {}
+    if (!localGame || !localGame.players) localGame = Game.newGame(4);
+    this.setData({
+      room: null,
+      roomConnected: false,
+      roomWritable: false,
+      showRoom: false,
+      joinPreview: null,
+      joinRoomFull: false,
+      pendingSharedRoomCode: '',
+      lastSeenRoomActionId: '',
+      roomActivityViews: []
+    });
+    this.initGame(localGame);
+    if (showToast !== false) wx.showToast({ title: '已返回本地计分', icon: 'none' });
+  },
+
+  leaveRoom() {
+    wx.showModal({
+      title: '返回本地计分',
+      content: '当前联网房间会断开，但座位仍保留。之后可通过房间码重新进入。',
+      success: res => { if (res.confirm) this.leaveRoomLocally(true); }
+    });
+  },
+
+  copyRoomCode() {
+    if (!this.data.room) return;
+    wx.setClipboardData({ data: this.data.room.roomCode });
+  },
+
+  async releaseRoomSeat(e) {
+    if (!this.data.room || !this.data.room.isHost) return;
+    const seatIndex = Number(e.currentTarget.dataset.index);
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const room = await RoomService.releaseSeat(this.data.room.roomCode, this.data.room.version, seatIndex);
+      this.applyRoom(room, false);
+    } catch (err) {
+      this.roomError(err);
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  endRoom() {
+    if (!this.data.room || !this.data.room.isHost) return;
+    wx.showModal({
+      title: '结束房间',
+      content: '结束后房间转为只读，并保留 30 天。',
+      success: async res => {
+        if (!res.confirm) return;
+        this.updateRoomWritable({ roomBusy: true });
+        try {
+          const room = await RoomService.end(this.data.room.roomCode, this.data.room.version);
+          this.applyRoom(room, false);
+          this.setData({ showRoom: false });
+        } catch (err) {
+          this.roomError(err);
+        } finally {
+          this.updateRoomWritable({ roomBusy: false });
+        }
+      }
+    });
+  },
+
+  async submitRoomGame(nextGame, commandType, summary) {
+    if (!this.data.roomWritable) throw new Error(this.data.roomOnline ? '正在重新连接房间' : '当前网络不可用，不能提交计分');
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const room = await RoomService.command({
+        roomCode: this.data.room.roomCode,
+        expectedVersion: this.data.room.version,
+        commandType,
+        summary,
+        nextGame
+      });
+      this.applyRoom(room, false);
+      return room;
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  onShareAppMessage() {
+    const room = this.data.room;
+    if (!room) return { title: '日麻整场计分器', path: '/pages/index/index' };
+    return {
+      title: `加入日麻房间 ${room.roomCode}`,
+      path: `/pages/index/index?room=${room.roomCode}`
+    };
   },
 
   seatsFor(pIdx) {
@@ -124,11 +518,25 @@ Page({
   },
 
   snapshot() {
+    if (this.data.room) return;
     const stack = (this.data.undoStack || []).concat([Shared.clone(this.data.game)]).slice(-30);
     this.setData({ undoStack: stack });
   },
 
-  undo() {
+  async undo() {
+    if (this.data.room) {
+      if (!this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
+      this.updateRoomWritable({ roomBusy: true });
+      try {
+        const room = await RoomService.undo(this.data.room.roomCode, this.data.room.version);
+        this.applyRoom(room, false);
+      } catch (err) {
+        this.roomError(err);
+      } finally {
+        this.updateRoomWritable({ roomBusy: false });
+      }
+      return;
+    }
     const stack = this.data.undoStack.slice();
     if (!stack.length) { wx.showToast({ title: '没有可撤销操作', icon: 'none' }); return; }
     const game = stack.pop();
@@ -138,14 +546,33 @@ Page({
   },
 
   resetGame() {
-    wx.showModal({ title: '重置整场', content: '所有点数和记录都会清空。', success: res => {
+    if (this.data.room && !this.data.room.isHost) {
+      return this.roomError(new Error('只有房主可以重置整场'));
+    }
+    wx.showModal({ title: '重置整场', content: '所有点数和记录都会清空。', success: async res => {
       if (!res.confirm) return;
+      if (this.data.room) {
+        this.updateRoomWritable({ roomBusy: true });
+        try {
+          const room = await RoomService.reset(this.data.room.roomCode, this.data.room.version);
+          this.applyRoom(room, false);
+        } catch (err) {
+          this.roomError(err);
+        } finally {
+          this.updateRoomWritable({ roomBusy: false });
+        }
+        return;
+      }
       const game = Game.newGame(this.data.game.playerCount || 4);
       this.initGame(game);
     }});
   },
 
   openPlayerSetup() {
+    if (this.data.room) {
+      this.openRoomPanel();
+      return;
+    }
     const g = this.data.game;
     const names = g.players.map(p => p.name);
     this.setData({ showSetup: true, setupMode: g.playerCount || 4, setupNames: names.concat(['','','','']).slice(0,4) });
@@ -190,6 +617,10 @@ Page({
   },
 
   onPlayerTap(e) {
+    if (this.data.room) {
+      this.openRoomPanel();
+      return;
+    }
     // 点击任意玩家卡片打开设置面板
     this.setData({ showSetup: true, setupMode: this.data.game.playerCount || 4,
       setupNames: this.data.game.players.map(p => p.name) });
@@ -197,10 +628,11 @@ Page({
 
   // ===== 和牌面板 =====
   openWin() {
+    if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
     const g = this.data.game;
     const win = defaultWin(g);
     this.setData({
-      showWin: true, win, hand: [], handHistory: [],
+      showWin: true, winStep: 1, win, hand: [], handHistory: [],
       analysisStage: 0, analysisMessage: '', analysisResult: null,
       melds: [], decompositions: [], decompIndex: 0,
       showDora: false, showUra: false,
@@ -210,6 +642,14 @@ Page({
     this.refreshConditions();
   },
   closeWin() { this.setData({ showWin: false, analysisStage: 0, melds: [], decompositions: [] }); },
+
+  // ===== 分步向导 =====
+  nextWinStep() { this.setData({ winStep: Math.min(3, this.data.winStep + 1) }); },
+  prevWinStep() { this.setData({ winStep: Math.max(1, this.data.winStep - 1) }); },
+  goWinStep(e) {
+    const step = Number(e.currentTarget.dataset.step);
+    this.setData({ winStep: Math.min(3, Math.max(1, step)) });
+  },
 
   selectWinner(e) {
     const idx = Number(e.currentTarget.dataset.index);
@@ -251,6 +691,8 @@ Page({
     const win = Shared.clone(this.data.win);
     win.northCount = count;
     this.setData({ win });
+    // 已分析过则按新拔北重算，避免丢弃中间分析结果
+    if (this.data.analysisStage) this.analyzeHand();
   },
 
   // ===== 选牌 =====
@@ -312,8 +754,11 @@ Page({
     const idx = arr.indexOf(id);
     if (idx >= 0) arr.splice(idx, 1); else arr.push(id);
     win[field] = arr;
-    this.setData({ win, analysisResult: null });
+    this.setData({ win });
     this.refreshTiles();
+    // 已分析过则按新 dora 重算，避免把中间分析结果丢弃
+    if (this.data.analysisStage) this.analyzeHand();
+    else this.setData({ analysisResult: null });
   },
 
   // ===== 分析 =====
@@ -478,6 +923,10 @@ Page({
       raw: result, payment, han, fu
     };
     this.setData({ analysisMessage: '分析完成。可调整后重新分析。', analysisResult: ar });
+    // 翻/符选择器继承分析结果，便于在“宝牌”步直接查看或微调
+    const hanIndex = Math.max(0, Math.min(HAN_OPTIONS.length - 1, han - 1));
+    const fuIdx = FU_OPTIONS.indexOf(fu);
+    this.setData({ hanIndex, fuIndex: fuIdx >= 0 ? fuIdx : this.data.fuIndex });
     this.previewWinCalc();
   },
 
@@ -528,7 +977,7 @@ Page({
   },
 
   // ===== 确认 =====
-  confirmWin() {
+  async confirmWin() {
     const win = this.data.win;
     const game = this.data.game;
     const han = this.data.analysisResult ? this.data.analysisResult.han : (win.han || 3);
@@ -536,9 +985,21 @@ Page({
     const baseOverride = this.data.analysisResult ? this.data.analysisResult.raw.basePoint : null;
     const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx, baseOverride);
 
-    this.snapshot();
     const fullWin = Object.assign({}, win, { han, fu });
     const next = Game.applyWin(game, fullWin, payment);
+    if (this.data.room) {
+      const winnerName = game.players[win.winnerIdx].name;
+      try {
+        await this.submitRoomGame(next, 'win', `${winnerName} 完成和牌结算`);
+        this.setData({ showWin: false, analysisStage: 0 });
+        wx.showToast({ title: `+${payment.total}点`, icon: 'success' });
+      } catch (err) {
+        this.roomError(err);
+      }
+      return;
+    }
+
+    this.snapshot();
     const rn = Game.roundNames(next);
     this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showWin: false, analysisStage: 0 });
     this.saveGame(next);
@@ -547,6 +1008,7 @@ Page({
 
   // ===== 立直 =====
   openRiichi() {
+    if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
     this.setData({ showRiichi: true, riichiSelected: new Array(this.data.game.playerCount || 4).fill(false) });
   },
   closeRiichi() { this.setData({ showRiichi: false }); },
@@ -557,17 +1019,28 @@ Page({
     sel[i] = !sel[i];
     this.setData({ riichiSelected: sel });
   },
-  confirmRiichi() {
+  async confirmRiichi() {
     const ids = this.data.riichiSelected.map((v,i) => v ? i : -1).filter(i => i >= 0);
     if (!ids.length) { this.setData({ showRiichi: false }); return; }
-    this.snapshot();
     const next = Game.applyRiichi(this.data.game, ids);
+    if (this.data.room) {
+      try {
+        const names = ids.map(id => this.data.game.players[id].name).join('、');
+        await this.submitRoomGame(next, 'riichi', `${names} 宣告立直`);
+        this.setData({ showRiichi: false });
+      } catch (err) {
+        this.roomError(err);
+      }
+      return;
+    }
+    this.snapshot();
     this.setData({ game: next, playerViews: buildPlayerViews(next), showRiichi: false });
     this.saveGame(next);
   },
 
   // ===== 流局 =====
   openDraw() {
+    if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
     const count = this.data.game.playerCount || 4;
     this.setData({ showDraw: true, tenpaiSelected: new Array(count).fill(false) });
   },
@@ -578,10 +1051,19 @@ Page({
     a[i] = !a[i];
     this.setData({ tenpaiSelected: a });
   },
-  confirmDraw() {
+  async confirmDraw() {
     const ids = this.data.tenpaiSelected.map((v,i) => v ? i : -1).filter(i => i >= 0);
-    this.snapshot();
     const next = Game.applyDraw(this.data.game, ids);
+    if (this.data.room) {
+      try {
+        await this.submitRoomGame(next, 'draw', `完成流局结算（${ids.length} 人听牌）`);
+        this.setData({ showDraw: false });
+      } catch (err) {
+        this.roomError(err);
+      }
+      return;
+    }
+    this.snapshot();
     const rn = Game.roundNames(next);
     this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showDraw: false });
     this.saveGame(next);

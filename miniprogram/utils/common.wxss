@@ -24,8 +24,13 @@ button::after { border: none; }
 .hollow-btn { background: transparent; border: 1rpx solid #aaa28d; color: #746e5c; font-size: 24rpx; padding: 12rpx 20rpx; border-radius: 12rpx; }
 
 /* 弹窗 */
-.overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(49,45,34,.48); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24rpx; box-sizing: border-box; }
-.overlay-closable { z-index: 100; }
+.overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(49,45,34,.48); z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 24rpx; box-sizing: border-box; }
+.overlay-closable { z-index: 1200; }
+/* 自定义 tabBar 作为独立组件层时可能盖住页面弹窗；tab 页面显式缩短遮罩与弹窗可用高度。 */
+.tab-safe-overlay { bottom: calc(108rpx + env(safe-area-inset-bottom)); }
+.tab-safe-overlay > .modal,
+.tab-safe-overlay > .tutorial-modal { max-height: calc(100vh - 156rpx - env(safe-area-inset-bottom)); }
+.tab-safe-scroll-modal { height: calc(100vh - 156rpx - env(safe-area-inset-bottom)); max-height: calc(100vh - 156rpx - env(safe-area-inset-bottom)); }
 .modal { width: 100%; max-width: 680rpx; max-height: 90vh; background: #faf9f3; border-radius: 30rpx; padding: 36rpx; box-sizing: border-box; box-shadow: 0 18rpx 60rpx rgba(49,45,34,.24); }
 .compact-modal { max-width: 540rpx; height: auto; }
 .modal-title { font-size: 36rpx; font-weight: 700; text-align: center; margin-bottom: 28rpx; color: #3d3929; }
@@ -39,6 +44,8 @@ button::after { border: none; }
 .seg-btn { flex: 1; min-width: 120rpx; padding: 18rpx 14rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; color: #3d3929; text-align: center; font-size: 26rpx; }
 .seg-btn.active { background: #c96442; border-color: #c96442; color: #fff; }
 .seg-btn.disabled { opacity: .35; }
+/* 座位等一排按钮：去掉最小宽度，让 4 个按钮排成一行（避免折成 3+1） */
+.seg-group.seg-one-line .seg-btn { min-width: 0; }
 label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 0 10rpx; font-weight: 500; }
 .label-row { display: flex; justify-content: space-between; font-size: 24rpx; color: #8a8470; margin: 18rpx 0 8rpx; }
 
@@ -56,32 +63,46 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 .history-item { background: #fff; border: 2rpx solid #e8e5d8; padding: 16rpx 20rpx; border-radius: 14rpx; margin-bottom: 8rpx; font-size: 22rpx; color: #8a8470; display: flex; justify-content: space-between; }
 .history-item .who { color: #c96442; font-weight: 700; }
 
-/* 十字牌桌 */
+/* 极简四向牌桌 */
 .table-board {
   position: relative;
-  height: 540rpx;
-  margin-bottom: 20rpx;
+  height: 560rpx;
+  margin-bottom: 26rpx;
   padding: 14rpx;
-  border: 2rpx solid #ded8c8;
-  border-radius: 32rpx;
-  background: radial-gradient(circle at center, #f8f4e8 0 31%, #ece6d7 32% 33%, #f3efe4 34% 100%);
+  border: 2rpx solid #d9d4c8;
+  border-radius: 28rpx;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1rpx), #e8e3d9 calc(50% - 1rpx), #e8e3d9 calc(50% + 1rpx), transparent calc(50% + 1rpx)),
+    linear-gradient(transparent calc(50% - 1rpx), #e8e3d9 calc(50% - 1rpx), #e8e3d9 calc(50% + 1rpx), transparent calc(50% + 1rpx)),
+    #faf9f5;
+  box-shadow: 0 8rpx 28rpx rgba(61,57,41,.07), inset 0 0 0 8rpx rgba(255,255,255,.58);
+  box-sizing: border-box;
 }
-.table-center { position: absolute; left: 50%; top: 50%; width: 180rpx; min-height: 126rpx; transform: translate(-50%, -50%); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 12rpx; box-shadow: 0 4rpx 16rpx rgba(61,57,41,.08); }
-.table-center .round-info { font-size: 32rpx; font-weight: 700; color: #c96442; }
-.table-center .sub-info { font-size: 22rpx; color: #8a8470; margin-top: 6rpx; }
-.player-card { position: absolute; left: 50%; top: 50%; width: 220rpx; min-height: 112rpx; margin-left: -110rpx; margin-top: -56rpx; box-sizing: border-box; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 20rpx; padding: 12rpx 8rpx; text-align: center; box-shadow: 0 3rpx 12rpx rgba(61,57,41,.05); transition: transform .42s ease, border-color .2s ease, background-color .2s ease; }
-.player-card.seat-dong { transform: translate3d(0, 188rpx, 0); }
-.player-card.seat-nan { transform: translate3d(214rpx, 0, 0); }
-.player-card.seat-xi { transform: translate3d(0, -188rpx, 0); }
-.player-card.seat-bei { transform: translate3d(-214rpx, 0, 0); }
-.player-card.dealer { border-color: #c96442; border-width: 3rpx; }
-.player-card.riichi { background: #fdf6f2; }
-.player-card .seat-label { font-size: 22rpx; color: #c96442; font-weight: 500; }
-.player-card .name { font-size: 28rpx; margin: 6rpx 0; color: #3d3929; }
-.player-card .points { font-size: 34rpx; font-weight: 700; color: #3d3929; }
-.player-card .delta { font-size: 22rpx; height: 28rpx; color: #5a7a4a; }
+.table-corner { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 2rpx; min-width: 96rpx; color: #918a78; line-height: 1.25; pointer-events: none; }
+.corner-tl { top: 20rpx; left: 22rpx; align-items: flex-start; }
+.corner-tr { top: 20rpx; right: 22rpx; align-items: flex-end; }
+.corner-bl { bottom: 20rpx; left: 22rpx; align-items: flex-start; }
+.corner-br { right: 22rpx; bottom: 20rpx; align-items: flex-end; }
+.corner-label { font-size: 17rpx; letter-spacing: 2rpx; }
+.corner-value { color: #5f594a; font-size: 22rpx; font-weight: 700; font-variant-numeric: tabular-nums; }
+.table-center { position: absolute; z-index: 3; left: 50%; top: calc(50% + 20rpx); width: 172rpx; height: 140rpx; min-height: 0; transform: translate3d(-50%, -50%, 0); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,.96); border: 2rpx solid #dcd6ca; border-radius: 18rpx; padding: 10rpx; box-shadow: 0 0 18rpx rgba(61,57,41,.09); }
+.center-kicker { color: #aaa28e; font-size: 15rpx; line-height: 1.2; letter-spacing: 3rpx; }
+.table-center .round-info { color: #c46645; font-size: 29rpx; font-weight: 700; line-height: 1.25; }
+.table-center .sub-info { max-width: 100%; margin-top: 3rpx; overflow: hidden; color: #746e5c; font-size: 17rpx; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.center-rule { margin-top: 3rpx; padding: 2rpx 8rpx; border-radius: 8rpx; background: #f1eee5; color: #847d6c; font-size: 14rpx; line-height: 1.2; }
+.player-card { position: absolute; z-index: 4; left: 50%; top: 50%; width: 196rpx; min-height: 98rpx; margin-left: -98rpx; margin-top: -49rpx; box-sizing: border-box; background: rgba(255,255,255,.94); border: 2rpx solid #ddd8cd; border-radius: 16rpx; padding: 11rpx 12rpx; text-align: center; box-shadow: 0 4rpx 14rpx rgba(61,57,41,.07); transition: transform .42s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.player-card.seat-dong { transform: translate3d(0, 174rpx, 0); }
+.player-card.seat-nan { transform: translate3d(220rpx, 0, 0); }
+.player-card.seat-xi { transform: translate3d(0, -174rpx, 0); }
+.player-card.seat-bei { transform: translate3d(-220rpx, 0, 0); }
+.player-card.dealer { border-color: #c46645; box-shadow: 0 5rpx 16rpx rgba(196,102,69,.13), inset 0 4rpx 0 #c46645; }
+.player-card.riichi { border-color: #d9a493; background: #fff9f6; }
+.player-card .seat-label { color: #9a927f; font-size: 18rpx; font-weight: 600; letter-spacing: 1rpx; }
+.player-card .name { max-width: 100%; margin: 4rpx 0 2rpx; overflow: hidden; color: #4b4638; font-size: 24rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.player-card .points { color: #2f2c24; font-size: 34rpx; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .5rpx; }
+.player-card .delta { color: #5a7a4a; font-size: 20rpx; height: 26rpx; }
 .player-card .delta.minus { color: #c96442; }
-.player-card .riichi-mark { position: absolute; top: 8rpx; right: 10rpx; font-size: 20rpx; color: #c96442; }
+.player-card .riichi-mark { position: absolute; top: 8rpx; right: 9rpx; padding: 2rpx 8rpx; border-radius: 8rpx; background: #c46645; color: #fff; font-size: 15rpx; }
 
 /* 工具栏 */
 .toolbar { display: flex; gap: 14rpx; margin-top: 20rpx; }
