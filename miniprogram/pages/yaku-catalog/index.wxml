@@ -1,15 +1,5 @@
 <!-- pages/yaku-catalog/index.wxml — 役种图鉴 -->
 <wxs module="utils">
-  var TILE_FILES = {
-    '1m':'Man1','2m':'Man2','3m':'Man3','4m':'Man4','5m':'Man5','6m':'Man6','7m':'Man7','8m':'Man8','9m':'Man9',
-    '1p':'Pin1','2p':'Pin2','3p':'Pin3','4p':'Pin4','5p':'Pin5','6p':'Pin6','7p':'Pin7','8p':'Pin8','9p':'Pin9',
-    '1s':'Sou1','2s':'Sou2','3s':'Sou3','4s':'Sou4','5s':'Sou5','6s':'Sou6','7s':'Sou7','8s':'Sou8','9s':'Sou9',
-    '1z':'Ton','2z':'Nan','3z':'Shaa','4z':'Pei','5z':'Haku','6z':'Hatsu','7z':'Chun'
-  };
-  module.exports.tileSrc = function(id) {
-    var file = TILE_FILES[id];
-    return file ? '/assets/tiles/' + file + '.svg' : '/assets/tiles/Blank.svg';
-  };
   module.exports.truncate = function(text, len) {
     if (!text) return '';
     return text.length > len ? text.slice(0, len) + '…' : text;
@@ -24,10 +14,6 @@
     if (yaku.hanOpen === null) return '门前' + yaku.hanClosed + '翻 · 副露不可';
     if (yaku.hanClosed === yaku.hanOpen) return yaku.hanClosed + '翻';
     return '门前' + yaku.hanClosed + '翻 · 副露' + yaku.hanOpen + '翻';
-  };
-  module.exports.getExampleTile = function(example) {
-    if (!example || !example.length || !example[0]) return [];
-    return example[0].filter(function(t) { return t; });
   };
 </wxs>
 
@@ -95,14 +81,20 @@
     </view>
 
     <!-- 牌例 -->
-    <view class="detail-section" wx:if="{{detailYaku.example && detailYaku.example.length > 0 && utils.getExampleTile(detailYaku.example).length > 0}}">
+    <view class="detail-section" wx:if="{{detailYaku.example && detailYaku.example.length > 0 && exampleHand.length > 0}}">
       <view class="detail-section-title">牌例</view>
       <view class="example-row">
         <image
-          wx:for="{{utils.getExampleTile(detailYaku.example)}}" wx:key="*this" wx:for-item="tid"
-          src="{{utils.tileSrc(tid)}}"
+          wx:for="{{exampleHand}}" wx:key="index"
+          src="{{item.src}}"
           mode="aspectFit"
-          class="example-tile {{tid === '5z' ? 'haku-tile' : ''}}"
+          class="example-tile {{item.id === '5z' ? 'haku-tile' : ''}}"
+        />
+        <image
+          wx:if="{{exampleWin}}"
+          src="{{exampleWin.src}}"
+          mode="aspectFit"
+          class="example-tile example-win-tile {{exampleWin.isBlank ? 'example-tile-blank' : ''}} {{exampleWin.id === '5z' ? 'haku-tile' : ''}}"
         />
       </view>
     </view>

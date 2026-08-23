@@ -1,5 +1,5 @@
 // pages/yaku-catalog/index.js — 役种图鉴
-const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan } = require('../../utils/yaku-data');
+const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan, getYakuExample } = require('../../utils/yaku-data');
 const { tileSrc } = require('../../utils/shared');
 
 const CATEGORIES = [
@@ -26,7 +26,8 @@ Page({
     list: [],
     detailYaku: null,
     detailHanLabel: '',
-    exampleTiles: [],
+    exampleHand: [],
+    exampleWin: null,
   },
 
   onLoad() {
@@ -44,14 +45,16 @@ Page({
     const yaku = getYakuById(id);
     if (!yaku) return;
     const detailHanLabel = formatYakuHan(yaku);
-    const exampleTiles = (yaku.example && yaku.example.length > 0)
-      ? yaku.example[0].filter(Boolean).map(tileSrc)
-      : [];
-    this.setData({ detailYaku: yaku, detailHanLabel, exampleTiles });
+    const ex = getYakuExample(yaku);
+    const exampleHand = ex.hand.map(tid => ({ id: tid, src: tileSrc(tid) }));
+    let exampleWin = null;
+    if (ex.win) exampleWin = { id: ex.win, src: tileSrc(ex.win), isBlank: false };
+    else if (ex.hand.length) exampleWin = { id: '', src: tileSrc(''), isBlank: true };
+    this.setData({ detailYaku: yaku, detailHanLabel, exampleHand, exampleWin });
   },
 
   closeDetail() {
-    this.setData({ detailYaku: null, exampleTiles: [] });
+    this.setData({ detailYaku: null, exampleHand: [], exampleWin: null });
   },
 
   stopPropagation() {}, // prevent overlay click-through
