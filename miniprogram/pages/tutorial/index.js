@@ -1,6 +1,10 @@
 // pages/tutorial/index.js — 日麻计分器 · 教学馆
 const Shared = require('../../utils/shared');
-const { MAHJONG_TUTORIAL } = require('../../utils/tutorial-data');
+const {
+  MAHJONG_TUTORIAL,
+  getTutorialQuestion,
+  getTrainingTopic,
+} = require('../../utils/tutorial-data');
 
 const PROGRESS_KEY = 'mj_tutorial_progress_v1';
 
@@ -24,8 +28,15 @@ Page({
     showLesson: false,
     activeLesson: null,
     activeLessonIndex: 0,
+    activeLessonLearned: false,
+    lessonCheckAnswer: -1,
+    lessonCheckSubmitted: false,
+    lessonCheckCorrect: false,
+    lessonCheckExplanation: '',
 
-    // quiz
+    // themed training
+    trainingTopics: [],
+    activeTraining: null,
     showQuiz: false,
     quizQuestions: [],
     quizIndex: 0,
@@ -54,6 +65,8 @@ Page({
     // pre-process lesson tileGroups to include full image paths
     const lessons = rawLessons.map(lesson => ({
       ...lesson,
+      learned: false,
+      check: getTutorialQuestion(lesson.checkQuestionId),
       tileGroups: (lesson.tileGroups || []).map(group => {
         const tiles = group.tiles || [];
         const win = group.win || '';
@@ -70,11 +83,13 @@ Page({
         };
       }),
     }));
+    const trainingTopics = (MAHJONG_TUTORIAL.trainingTopics || [])
+      .map(topic => getTrainingTopic(topic.id))
+      .filter(Boolean);
     this.setData({
       lessons,
+      trainingTopics,
       totalLessons: lessons.length,
-      quizQuestions: MAHJONG_TUTORIAL.quiz || [],
-      quizAnswers: new Array(MAHJONG_TUTORIAL.quiz.length).fill(-1),
     });
     // loadProgress 在 onShow 中调用，此处不重复
   },
@@ -85,10 +100,16 @@ Page({
       progress = wx.getStorageSync(PROGRESS_KEY) || [];
     } catch (e) {}
     if (!Array.isArray(progress)) progress = [];
+    const lessonIds = new Set((MAHJONG_TUTORIAL.lessons || []).map(lesson => lesson.id));
+    progress = [...new Set(progress.filter(id => lessonIds.has(id)))];
     const completedCount = progress.length;
     const totalLessons = this.data.totalLessons || MAHJONG_TUTORIAL.lessons.length;
     const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-    this.setData({ progress, completedCount, progressPercent });
+    const lessons = this.data.lessons.map(lesson => ({
+      ...lesson,
+      learned: progress.includes(lesson.id),
+    }));
+    this.setData({ progress, lessons, completedCount, progressPercent });
   },
 
   // ===== 课程 =====
@@ -101,33 +122,86 @@ Page({
       showLesson: true,
       activeLesson: lesson,
       activeLessonIndex: index,
+      activeLessonLearned: lesson.learned,
+      lessonCheckAnswer: -1,
+      lessonCheckSubmitted: false,
+      lessonCheckCorrect: false,
+      lessonCheckExplanation: '',
     });
   },
 
   closeLesson() {
-    this.setData({ showLesson: false, activeLesson: null });
+    this.setData({
+      showLesson: false,
+      activeLesson: null,
+      activeLessonLearned: false,
+      lessonCheckAnswer: -1,
+      lessonCheckSubmitted: false,
+      lessonCheckCorrect: false,
+      lessonCheckExplanation: '',
+    });
   },
 
-  completeLesson() {
+  selectLessonCheckOption(e) {
+    if (this.data.lessonCheckSubmitted) return;
+    this.setData({ lessonCheckAnswer: Number(e.currentTarget.dataset.answer) });
+  },
+
+  submitLessonCheck() {
     const lesson = this.data.activeLesson;
-    if (!lesson) return;
-    let progress = this.data.progress.slice();
-    if (!progress.includes(lesson.id)) {
-      progress.push(lesson.id);
-      try { wx.setStorageSync(PROGRESS_KEY, progress); } catch (e) {}
+    const question = lesson && lesson.check;
+    if (!question || this.data.lessonCheckAnswer < 0) {
+      wx.showToast({ title: '请先选择一个答案', icon: 'none' });
+      return;
     }
+
+    const correct = this.data.lessonCheckAnswer === question.answer;
+    this.setData({
+      lessonCheckSubmitted: true,
+      lessonCheckCorrect: correct,
+      lessonCheckExplanation: question.explanation,
+    });
+    if (!correct) return;
+
+    const progress = this.data.progress.slice();
+    if (!progress.includes(lesson.id)) progress.push(lesson.id);
+    try { wx.setStorageSync(PROGRESS_KEY, progress); } catch (e) {}
     const completedCount = progress.length;
     const progressPercent = this.data.totalLessons > 0
       ? Math.round((completedCount / this.data.totalLessons) * 100)
       : 0;
-    this.setData({ progress, completedCount, progressPercent, showLesson: false, activeLesson: null });
-    wx.showToast({ title: '已学完本节 ✓', icon: 'success', duration: 1500 });
+    const lessons = this.data.lessons.map(item => (
+      item.id === lesson.id ? { ...item, learned: true } : item
+    ));
+    this.setData({
+      progress,
+      lessons,
+      completedCount,
+      progressPercent,
+      activeLesson: { ...lesson, learned: true },
+      activeLessonLearned: true,
+    });
+    wx.showToast({ title: '本章已学会 ✓', icon: 'success', duration: 1500 });
   },
 
-  // ===== 测验 =====
-  openQuiz() {
+  retryLessonCheck() {
     this.setData({
+      lessonCheckAnswer: -1,
+      lessonCheckSubmitted: false,
+      lessonCheckCorrect: false,
+      lessonCheckExplanation: '',
+    });
+  },
+
+  // ===== 专项训练 =====
+  openTraining(e) {
+    const id = e.currentTarget.dataset.id;
+    const training = this.data.trainingTopics.find(topic => topic.id === id);
+    if (!training) return;
+    this.setData({
+      activeTraining: training,
       showQuiz: true,
+      quizQuestions: training.questions,
       quizIndex: 0,
       quizAnswer: -1,
       quizSubmitted: false,
@@ -136,13 +210,15 @@ Page({
       quizScore: 0,
       showQuizResult: false,
       quizResultText: '',
-      quizAnswers: new Array(this.data.quizQuestions.length).fill(-1),
+      quizAnswers: new Array(training.questions.length).fill(-1),
     });
   },
 
   closeQuiz() {
     this.setData({
       showQuiz: false,
+      activeTraining: null,
+      quizQuestions: [],
       quizIndex: 0,
       quizAnswer: -1,
       quizSubmitted: false,
@@ -171,7 +247,6 @@ Page({
     const answers = this.data.quizAnswers.slice();
     answers[this.data.quizIndex] = this.data.quizAnswer;
 
-    const detail = { id: q.id, correct, answer: q.answer, explanation: q.explanation };
     const score = correct ? this.data.quizScore + 1 : this.data.quizScore;
 
     this.setData({
@@ -203,13 +278,13 @@ Page({
     const score = this.data.quizScore;
     let text = '';
     if (score === total) {
-      text = '🎉 满分通过！你对日麻基础已经有非常好的理解！';
+      text = '🎉 满分完成！这个主题已经掌握得很扎实。';
     } else if (score >= total * 0.7) {
-      text = '👍 不错！你对大部分基础概念已经掌握，建议再回顾一下错题。';
+      text = '👍 大部分都答对了，再回顾错题就能掌握这个主题。';
     } else if (score >= total * 0.4) {
-      text = '📖 还可以再加强。建议从头学一遍课程内容，打好基础。';
+      text = '📖 已经理解了一部分，建议回看对应章节后再练一次。';
     } else {
-      text = '🌱 刚刚开始很正常！跟着教学馆课程一节一节学下去，很快就能上手。';
+      text = '🌱 先别着急，回到课程逐章完成小测，再来挑战这个主题。';
     }
 
     this.setData({

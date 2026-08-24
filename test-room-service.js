@@ -5,9 +5,14 @@ Config.cloudEnvId = 'test-env';
 let lastCall = null;
 let watchQuery = null;
 let watcherClosed = false;
+let uploadOptions = null;
 
 global.wx = {
   cloud: {
+    async uploadFile(options) {
+      uploadOptions = options;
+      return { fileID: 'cloud://test-env/room-avatars/openid-self/avatar.png' };
+    },
     async callFunction(options) {
       lastCall = options;
       if (options.data.action === 'identity') return { result: { openId: 'openid-self' } };
@@ -53,6 +58,24 @@ const RoomService = require('./miniprogram/utils/room-service');
   assert.equal(preview.roomCode, 'ABC234');
   assert.equal(lastCall.data.roomCode, 'ABC234');
 
+  const avatarFileId = await RoomService.uploadAvatar('C:\\temp\\avatar.png');
+  assert.equal(avatarFileId, 'cloud://test-env/room-avatars/openid-self/avatar.png');
+  assert.equal(uploadOptions.filePath, 'C:\\temp\\avatar.png');
+  assert(uploadOptions.cloudPath.includes('room-avatars/openid-self/avatar-'));
+  assert(uploadOptions.cloudPath.endsWith('.png'));
+
+  await RoomService.updateProfile('abc234', 7, avatarFileId);
+  assert.equal(lastCall.data.action, 'updateProfile');
+  assert.equal(lastCall.data.roomCode, 'ABC234');
+  assert.equal(lastCall.data.expectedVersion, 7);
+  assert.equal(lastCall.data.avatarFileId, avatarFileId);
+
+  await RoomService.moveSeat('abc234', 9, 2);
+  assert.equal(lastCall.data.action, 'moveSeat');
+  assert.equal(lastCall.data.roomCode, 'ABC234');
+  assert.equal(lastCall.data.expectedVersion, 9);
+  assert.equal(lastCall.data.seatIndex, 2);
+
   let watchedRoom = null;
   await RoomService.watch('abc234', {
     onChange(room) { watchedRoom = room; }
@@ -70,7 +93,7 @@ const RoomService = require('./miniprogram/utils/room-service');
   assert.equal(parsed.code, 'VERSION_CONFLICT');
   assert(parsed.message.includes('状态已更新'));
 
-  console.log('room service tests: 13 assertions passed');
+  console.log('room service tests passed');
 })().catch(err => {
   console.error(err);
   process.exitCode = 1;

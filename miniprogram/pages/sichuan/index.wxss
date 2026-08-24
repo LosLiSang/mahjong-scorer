@@ -1,6 +1,57 @@
 /* pages/sichuan/index.wxss — 川麻积分样式 */
 @import "/utils/common.wxss";
 
+/* ── 联机房间 ── */
+.room-banner { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-bottom: 20rpx; padding: 20rpx 24rpx; border: 2rpx solid #ded8c8; border-radius: 20rpx; background: #fffdf7; }
+.room-banner.active { border-color: #8fa07e; background: #f1f6ec; }
+.room-banner.offline { border-color: #c8a68f; background: #fff7f0; }
+.room-banner-main { display: flex; flex-direction: column; gap: 5rpx; min-width: 0; }
+.room-banner-title { color: #3d3929; font-size: 28rpx; font-weight: 700; letter-spacing: 1rpx; }
+.room-banner-status { color: #8a8470; font-size: 21rpx; }
+.room-banner-action { color: #c96442; font-size: 24rpx; white-space: nowrap; }
+.room-write-warning { margin: 18rpx 0; padding: 16rpx 20rpx; border-radius: 14rpx; background: #fff0e8; color: #9b593f; font-size: 22rpx; text-align: center; }
+.room-config-hint { margin-bottom: 22rpx; padding: 20rpx; border-radius: 16rpx; background: #fff3df; color: #815f31; font-size: 23rpx; line-height: 1.7; }
+.code-text { font-family: monospace; color: #9b4c31; }
+.room-mode-tabs { margin-bottom: 20rpx; }
+.room-privacy-hint { margin-top: 10rpx; color: #98917d; font-size: 21rpx; line-height: 1.6; }
+.room-seat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10rpx; margin-top: 10rpx; }
+.room-seat-option { display: flex; flex-direction: column; align-items: center; gap: 6rpx; min-width: 0; padding: 18rpx 8rpx; border: 2rpx solid #dfd9ca; border-radius: 16rpx; background: #fff; color: #706a58; font-size: 21rpx; }
+.room-seat-option.active { border-color: #c96442; background: #fff1e9; color: #9a442b; box-shadow: inset 0 0 0 2rpx rgba(201,100,66,.12); }
+.room-seat-option.occupied { opacity: .55; background: #ece9e0; }
+.room-seat-option.occupied.active { border-color: #dfd9ca; box-shadow: none; }
+.room-seat-wind { font-size: 30rpx; font-weight: 700; }
+.room-primary { width: 100%; margin-top: 28rpx; }
+.room-close { width: 100%; margin-top: 18rpx; }
+.room-code-row { display: flex; align-items: stretch; gap: 12rpx; }
+.room-code-row .room-code-input { flex: 1; min-width: 0; letter-spacing: 8rpx; text-transform: uppercase; font-family: monospace !important; font-size: 28rpx; }
+.room-code-row button { width: 150rpx; margin: 0; }
+.room-preview-title { margin-top: 24rpx; color: #5f5947; font-size: 24rpx; font-weight: 700; }
+.room-full-hint { margin-top: 14rpx; padding: 14rpx 16rpx; border-radius: 12rpx; background: #fff3df; color: #8a6439; font-size: 21rpx; line-height: 1.6; }
+.room-current-status { margin-bottom: 18rpx; padding: 18rpx 20rpx; border-radius: 16rpx; background: #eef5e8; color: #536349; font-size: 22rpx; line-height: 1.7; }
+.room-current-status.ended { background: #ece9e0; color: #77705f; }
+.room-code-card { display: flex; align-items: baseline; justify-content: center; gap: 16rpx; margin-bottom: 16rpx; padding: 24rpx; border: 2rpx dashed #c96442; border-radius: 18rpx; background: #fffaf5; }
+.room-code-label, .room-code-copy { color: #918a77; font-size: 20rpx; }
+.room-code-value { color: #c96442; font-family: monospace; font-size: 40rpx; font-weight: 700; letter-spacing: 7rpx; }
+.room-member-list { border: 2rpx solid #e2dccd; border-radius: 16rpx; overflow: hidden; background: #fff; }
+.room-member-row { display: flex; align-items: center; justify-content: space-between; min-height: 76rpx; padding: 10rpx 18rpx; border-bottom: 2rpx solid #eee9dd; font-size: 24rpx; }
+.room-member-row:last-child { border-bottom: 0; }
+.room-member-seat { display: inline-flex; align-items: center; justify-content: center; width: 42rpx; height: 42rpx; margin-right: 14rpx; border-radius: 50%; background: #f1ede2; color: #c96442; font-weight: 700; }
+.room-me-mark { margin-left: 10rpx; padding: 3rpx 10rpx; border-radius: 12rpx; background: #e8f2df; color: #567145; font-size: 18rpx; }
+.room-empty-mark { color: #aaa28f; font-size: 21rpx; }
+.room-release-btn { width: auto !important; min-height: 0; margin: 0; padding: 8rpx 14rpx; border: 0; border-radius: 12rpx; background: #eee9df; color: #8a6658; font-size: 20rpx; line-height: 1.3; }
+.room-release-btn::after { border: 0; }
+.room-move-btn { width: auto !important; min-height: 0; margin: 0; padding: 8rpx 14rpx; border: 0; border-radius: 12rpx; background: #e8f2df; color: #567145; font-size: 20rpx; line-height: 1.3; }
+.room-move-btn::after { border: 0; }
+.room-move-actions { display: flex; gap: 14rpx; width: 100%; margin-top: 12rpx; }
+.room-move-actions .btn { flex: 1; min-width: 0; }
+.room-last-action { margin-top: 18rpx; padding: 16rpx 18rpx; border-radius: 14rpx; background: #f6f3eb; color: #77705f; font-size: 22rpx; }
+.room-panel-close { position: sticky; top: -18rpx; }
+.room-actions { margin-top: 24rpx; flex-direction: column; }
+.room-management-row { display: flex; gap: 14rpx; width: 100%; }
+.room-management-row .btn { flex: 1; min-width: 0; }
+.room-panel-dismiss { width: 100%; margin: 0; }
+.setup-room-hint { margin: -10rpx 0 16rpx; padding: 14rpx 16rpx; border-radius: 12rpx; background: #f1f5ee; color: #536349; }
+
 /* ── 牌桌微调 ── */
 .sichuan-board { border-color: #d8d1c3; }
 .sichuan-center { border-color: #d8d1c3; background: rgba(255,255,255,.96); }
@@ -12,18 +63,23 @@
 .sichuan-player .name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .sichuan-points { font-size: 34rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* ── 缺门徽章 ── */
+/* ── 定缺标记：收进玩家卡片右上角，避免压住牌桌线和卡片边框 ── */
 .missing-badge {
   position: absolute;
-  left: 50%;
-  bottom: -15rpx;
-  transform: translateX(-50%);
-  padding: 3rpx 13rpx;
-  border-radius: 9rpx;
-  font-size: 17rpx;
-  font-weight: 600;
+  top: 8rpx;
+  right: 8rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 2rpx;
+  padding: 3rpx 8rpx;
+  border-radius: 99rpx;
+  font-size: 15rpx;
+  font-weight: 700;
+  line-height: 1.2;
   white-space: nowrap;
 }
+.missing-prefix { opacity: .72; font-size: 13rpx; }
+.missing-suit { font-size: 17rpx; }
 .missing-m {
   background: #e8f0e0;
   color: #4a6e3a;
@@ -47,27 +103,37 @@
   gap: 14rpx;
   margin-top: 20rpx;
 }
+.sichuan-score-actions { gap: 8rpx; }
+.sichuan-score-actions .btn { min-width: 0; padding: 18rpx 6rpx; border-radius: 14rpx; font-size: 24rpx; white-space: nowrap; }
+.table-setup-hint { margin-top: -4rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
+.sichuan-actions .toolbar { margin-top: 0; gap: 8rpx; }
+.sichuan-actions .toolbar .btn { padding: 12rpx 16rpx; border-radius: 13rpx; font-size: 21rpx; }
 
 /* ── 胡牌弹窗番型按钮 ── */
 .sch-fan-btn {
   min-width: 0;
   width: 100%;
-  font-size: 24rpx;
-  min-height: 72rpx;
-  padding: 12rpx 14rpx;
+  min-height: 56rpx;
+  padding: 8rpx 10rpx;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
+  gap: 6rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.25;
   white-space: nowrap;
 }
-.fan-chip-grid { display: grid; grid-template-columns: 1fr; gap: 10rpx; }
+.fan-chip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8rpx; }
 .fan-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.fan-value { flex-shrink: 0; font-size: 20rpx; opacity: .72; }
-.fan-help { margin: -4rpx 0 14rpx; color: #a09a87; font-size: 21rpx; }
+.fan-value { flex-shrink: 0; font-size: 18rpx; opacity: .72; }
+.fan-help { margin: -4rpx 0 12rpx; color: #a09a87; font-size: 20rpx; }
+.player-select-row { flex-wrap: nowrap; gap: 8rpx; }
+.player-select-row .seg-btn { min-width: 0; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 20rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.root-options { flex-wrap: nowrap; }
-.root-options .seg-btn { min-width: 0; flex: 1; padding-left: 4rpx; padding-right: 4rpx; white-space: nowrap; }
+.root-options { flex-wrap: nowrap; gap: 8rpx; }
+.root-options .seg-btn { min-width: 0; flex: 1; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; white-space: nowrap; }
 
 /* ── 底分/封顶行 ── */
 .sichuan-opts-row {
@@ -87,58 +153,59 @@
 .sichuan-result .points {
   color: #c96442;
 }
-.sichuan-win-modal, .history-modal { max-height: 92vh; }
-.setup-modal { max-height: 88vh; overflow-y: auto; }
+.sichuan-win-modal, .history-modal, .penalty-modal { max-height: 92vh; }
+.setup-modal { max-width: 560rpx; height: auto; max-height: none; overflow: visible; }
+.modal .btn { padding: 17rpx 20rpx; border-radius: 14rpx; font-size: 24rpx; }
+.modal-actions { gap: 10rpx; margin-top: 20rpx; padding-bottom: calc(14rpx + env(safe-area-inset-bottom)); }
 .settlement-preview { font-size: 24rpx; color: #8a8470; margin: 10rpx 0; line-height: 1.6; text-align: center; word-break: keep-all; }
 
 /* ── 输入框 ── */
+/* ── 罚分规则 ── */
+.penalty-type-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8rpx; }
+.penalty-type-btn { min-width: 0; padding: 12rpx 8rpx; border-radius: 12rpx; font-size: 21rpx; }
+.penalty-rule-card { margin-top: 14rpx; padding: 18rpx 20rpx; border-radius: 16rpx; background: #f3f0e7; border: 2rpx solid #e3ddcf; }
+.penalty-rule-title { color: #c96442; font-size: 22rpx; font-weight: 700; margin-top: 10rpx; }
+.penalty-rule-title:first-child { margin-top: 0; }
+.penalty-rule-text { margin-top: 5rpx; color: #686250; font-size: 22rpx; line-height: 1.65; }
+.penalty-rule-note { margin-top: 12rpx; color: #9a927f; font-size: 19rpx; line-height: 1.5; }
+
 .sichuan-input {
   width: 100%;
-  height: 88rpx;
-  min-height: 88rpx;
-  line-height: 88rpx;
-  padding: 0 20rpx;
+  height: 72rpx;
+  min-height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 18rpx;
   background: #fff;
   border: 2rpx solid #e8e5d8;
-  border-radius: 14rpx;
-  font-size: 32rpx;
+  border-radius: 12rpx;
+  font-family: SimSun, "宋体", STSong, "Songti SC", serif !important;
+  font-size: 27rpx;
   font-weight: 600;
   color: #3d3929;
   text-align: center;
   box-sizing: border-box;
 }
 
-/* ── 设置面板 ── */
-.setup-player-row {
+/* ── 单个玩家设置面板 ── */
+.setup-name-input,
+.sichuan-serif-input {
+  width: 100%;
+  height: 68rpx;
+  line-height: 68rpx;
+  padding: 0 16rpx;
   background: #fff;
   border: 2rpx solid #e8e5d8;
-  border-radius: 16rpx;
-  padding: 20rpx;
-  margin-bottom: 16rpx;
-}
-.setup-player-header {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-}
-.setup-seat {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #c96442;
-  min-width: 48rpx;
-}
-.setup-name-input {
-  flex: 1;
-  height: 72rpx;
-  line-height: 72rpx;
-  padding: 0 16rpx;
-  background: #faf8f2;
-  border: 2rpx solid #e8e5d8;
-  border-radius: 14rpx;
-  font-size: 28rpx;
+  border-radius: 12rpx;
+  font-family: SimSun, "宋体", STSong, "Songti SC", serif !important;
+  font-size: 26rpx;
   color: #3d3929;
   box-sizing: border-box;
 }
+.setup-name-input[disabled] { color: #746e5c; background: #f3f0e8; opacity: 1; }
+.setup-suit-options { gap: 8rpx; }
+.setup-suit-options .seg-btn { min-width: 0; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; }
+.setup-modal-actions { margin-top: 22rpx; }
+.setup-modal-actions .btn { padding: 15rpx 18rpx; font-size: 23rpx; }
 
 /* ── 番型示例 ── */
 .fan-example-overlay { z-index: 1300; }

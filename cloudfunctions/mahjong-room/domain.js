@@ -13,6 +13,10 @@ function playerCountFromMode(mode) {
   return Number(mode) === 3 || mode === 'sanma' ? 3 : 4;
 }
 
+function normalizeGameType(value) {
+  return value === 'sichuan' ? 'sichuan' : 'riichi';
+}
+
 function normalizeRoomCode(value) {
   return String(value || '').trim().toUpperCase().replace(/[^2-9A-HJ-NP-Z]/g, '').slice(0, ROOM_CODE_LENGTH);
 }
@@ -33,7 +37,25 @@ function sanitizeNickname(value) {
   return nickname;
 }
 
-function newGame(mode) {
+function sanitizeAvatarFileId(value) {
+  const fileId = String(value || '').trim().slice(0, 500);
+  return fileId.startsWith('cloud://') ? fileId : '';
+}
+
+function newGame(mode, gameType) {
+  const type = normalizeGameType(gameType);
+  if (type === 'sichuan') {
+    return {
+      version: 1,
+      players: Array.from({ length: 4 }, (_, index) => ({
+        name: `玩家${PLAYER_LABELS[index]}`,
+        score: 0,
+        missingSuit: ''
+      })),
+      history: []
+    };
+  }
+
   const count = playerCountFromMode(mode);
   const startPoints = count === 3 ? 35000 : 25000;
   return {
@@ -54,13 +76,16 @@ function newGame(mode) {
   };
 }
 
-function createSeats(game, ownerOpenId, ownerNickname, seatIndex) {
+function createSeats(game, ownerOpenId, ownerNickname, ownerAvatarFileId, seatIndex) {
   const index = Number(seatIndex);
-  if (!Number.isInteger(index) || index < 0 || index >= game.playerCount) throw new Error('INVALID_SEAT');
+  const playerCount = Number(game.playerCount) || (game.players || []).length;
+  if (!Number.isInteger(index) || index < 0 || index >= playerCount) throw new Error('INVALID_SEAT');
+  const avatarFileId = sanitizeAvatarFileId(ownerAvatarFileId);
   return game.players.map((player, playerIndex) => ({
     index: playerIndex,
     openId: playerIndex === index ? ownerOpenId : '',
     nickname: playerIndex === index ? ownerNickname : player.name,
+    avatarFileId: playerIndex === index ? avatarFileId : '',
     occupied: playerIndex === index
   }));
 }
@@ -74,11 +99,12 @@ function applySeatNames(game, seats) {
   return next;
 }
 
-function createRoomDocument({ code, mode, ownerOpenId, ownerNickname, seatIndex, now }) {
+function createRoomDocument({ code, mode, gameType, ownerOpenId, ownerNickname, ownerAvatarFileId, seatIndex, now }) {
   const createdAt = now instanceof Date ? now : new Date(now || Date.now());
   const nickname = sanitizeNickname(ownerNickname);
-  const game = newGame(mode);
-  const seats = createSeats(game, ownerOpenId, nickname, seatIndex);
+  const normalizedGameType = normalizeGameType(gameType);
+  const game = newGame(mode, normalizedGameType);
+  const seats = createSeats(game, ownerOpenId, nickname, ownerAvatarFileId, seatIndex);
   const createdAction = {
     id: `created-${createdAt.getTime()}`,
     type: 'create',
@@ -90,7 +116,8 @@ function createRoomDocument({ code, mode, ownerOpenId, ownerNickname, seatIndex,
   return {
     _id: normalizeRoomCode(code),
     status: 'active',
-    mode: game.mode,
+    mode: normalizedGameType === 'sichuan' ? 'yonma' : game.mode,
+    gameType: normalizedGameType,
     version: 0,
     hostOpenId: ownerOpenId,
     seats,
@@ -117,9 +144,10 @@ function isMember(room, openId) {
   return findSeatByOpenId(room, openId) >= 0;
 }
 
-function joinSeat(room, { openId, nickname, seatIndex }) {
+function joinSeat(room, { openId, nickname, avatarFileId, seatIndex }) {
   if (!room || room.status !== 'active') throw new Error('ROOM_NOT_ACTIVE');
   const cleanNickname = sanitizeNickname(nickname);
+  const cleanAvatarFileId = sanitizeAvatarFileId(avatarFileId);
   const existingIndex = findSeatByOpenId(room, openId);
   const targetIndex = existingIndex >= 0 ? existingIndex : Number(seatIndex);
   if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= room.seats.length) throw new Error('INVALID_SEAT');
@@ -133,7 +161,25 @@ function joinSeat(room, { openId, nickname, seatIndex }) {
   if (seat.occupied && seat.openId !== openId) throw new Error('SEAT_OCCUPIED');
   seat.openId = openId;
   seat.nickname = cleanNickname;
+  seat.avatarFileId = cleanAvatarFileId || seat.avatarFileId || '';
   seat.occupied = true;
+  next.game = applySeatNames(next.game, next.seats);
+  return next;
+}
+
+function updateSeatProfile(room, { openId, nickname, avatarFileId }) {
+  if (!room || room.status !== 'active') throw new Error('ROOM_NOT_ACTIVE');
+  const index = findSeatByOpenId(room, openId);
+  if (index < 0) throw new Error('NOT_ROOM_MEMBER');
+  const next = Object.assign({}, room, {
+    seats: clone(room.seats),
+    game: clone(room.game),
+    activity: (room.activity || []).slice()
+  });
+  const seat = next.seats[index];
+  if (nickname !== undefined) seat.nickname = sanitizeNickname(nickname);
+  const cleanAvatarFileId = sanitizeAvatarFileId(avatarFileId);
+  if (cleanAvatarFileId) seat.avatarFileId = cleanAvatarFileId;
   next.game = applySeatNames(next.game, next.seats);
   return next;
 }
@@ -154,9 +200,79 @@ function releaseSeat(room, seatIndex) {
     index,
     openId: '',
     nickname: `玩家${PLAYER_LABELS[index]}`,
+    avatarFileId: '',
     occupied: false
   };
   next.game = applySeatNames(next.game, next.seats);
+  return next;
+}
+
+function moveSeat(room, { openId, seatIndex }) {
+  if (!room || room.status !== 'active') throw new Error('ROOM_NOT_ACTIVE');
+  const source = findSeatByOpenId(room, openId);
+  if (source < 0) throw new Error('NOT_ROOM_MEMBER');
+  const target = Number(seatIndex);
+  if (!Number.isInteger(target) || target < 0 || target >= room.seats.length) throw new Error('INVALID_SEAT');
+  if (target === source) throw new Error('SEAT_EMPTY');
+  if (room.seats[target].occupied) throw new Error('SEAT_OCCUPIED');
+
+  const next = Object.assign({}, room, {
+    seats: clone(room.seats),
+    game: clone(room.game),
+    activity: (room.activity || []).slice()
+  });
+  const sourceSeat = next.seats[source];
+  next.seats[target] = {
+    index: target,
+    openId: sourceSeat.openId,
+    nickname: sourceSeat.nickname,
+    avatarFileId: sourceSeat.avatarFileId,
+    occupied: true
+  };
+  next.seats[source] = {
+    index: source,
+    openId: '',
+    nickname: `玩家${PLAYER_LABELS[source]}`,
+    avatarFileId: '',
+    occupied: false
+  };
+  // 分数跟着人走：把源座位的累计分数/状态搬到目标空座，
+  // 源空座保留目标座位原有点数池，保证总分守恒。
+  const temporary = next.game.players[source];
+  next.game.players[source] = next.game.players[target];
+  next.game.players[target] = temporary;
+  // 对局历史是按座位索引记录的账本，随对调重映射，保证累计分数与历史 delta 自洽。
+  next.game.history = (next.game.history || []).map(entry =>
+    normalizeGameType(room.gameType) === 'sichuan'
+      ? remapSichuanHistoryEntry(entry, source, target)
+      : remapRiichiHistoryEntry(entry, source, target)
+  );
+  next.game = applySeatNames(next.game, next.seats);
+  return next;
+}
+
+function remapPlayerIndex(index, source, target) {
+  if (index === source) return target;
+  if (index === target) return source;
+  return index;
+}
+
+function remapSichuanHistoryEntry(entry, source, target) {
+  const next = clone(entry);
+  next.receiver = remapPlayerIndex(next.receiver, source, target);
+  next.payers = (next.payers || []).map(index => remapPlayerIndex(index, source, target));
+  next.deltas = (next.deltas || []).slice();
+  const temporary = next.deltas[source];
+  next.deltas[source] = next.deltas[target];
+  next.deltas[target] = temporary;
+  return next;
+}
+
+function remapRiichiHistoryEntry(entry, source, target) {
+  const next = clone(entry);
+  next.winner = remapPlayerIndex(next.winner, source, target);
+  if (Number.isInteger(next.loser) && next.loser >= 0) next.loser = remapPlayerIndex(next.loser, source, target);
+  if (Array.isArray(next.tenpai)) next.tenpai = next.tenpai.map(index => remapPlayerIndex(index, source, target));
   return next;
 }
 
@@ -186,8 +302,39 @@ function normalizeHistoryEntry(entry) {
   return normalized;
 }
 
-function normalizeGame(game) {
+function normalizeSichuanHistoryEntry(entry) {
+  const source = entry || {};
+  const payers = Array.isArray(source.payers)
+    ? [...new Set(source.payers.map(Number).filter(Number.isInteger))].slice(0, 4)
+    : [];
+  const deltas = Array.isArray(source.deltas)
+    ? source.deltas.slice(0, 4).map(value => Number(value))
+    : [];
+  return {
+    type: ['win', 'gang', 'penalty', 'manual'].includes(source.type) ? source.type : 'manual',
+    receiver: Number(source.receiver),
+    payers,
+    amountPerPayer: Number(source.amountPerPayer),
+    label: String(source.label || '').slice(0, 80),
+    createdAt: Number(source.createdAt) || 0,
+    deltas
+  };
+}
+
+function normalizeGame(game, gameType) {
   const source = game || {};
+  if (normalizeGameType(gameType) === 'sichuan') {
+    return {
+      version: 1,
+      players: Array.isArray(source.players) ? source.players.slice(0, 4).map(player => ({
+        name: String(player && player.name || '').slice(0, 12),
+        score: Number(player && player.score),
+        missingSuit: ['m', 'p', 's'].includes(player && player.missingSuit) ? player.missingSuit : ''
+      })) : [],
+      history: Array.isArray(source.history) ? source.history.slice(0, 500).map(normalizeSichuanHistoryEntry) : []
+    };
+  }
+
   return {
     mode: source.mode,
     playerCount: Number(source.playerCount),
@@ -206,7 +353,36 @@ function normalizeGame(game) {
   };
 }
 
-function validateGame(game, roomMode) {
+function validateSichuanGame(game) {
+  if (!game || !Array.isArray(game.players) || game.players.length !== 4) throw new Error('INVALID_GAME_MODE');
+  if (!Array.isArray(game.history) || game.history.length > 500) throw new Error('INVALID_GAME');
+  let scoreTotal = 0;
+  game.players.forEach(player => {
+    if (
+      !player || typeof player.name !== 'string' || !Number.isInteger(player.score) ||
+      !['', 'm', 'p', 's'].includes(player.missingSuit)
+    ) throw new Error('INVALID_GAME');
+    scoreTotal += player.score;
+  });
+  if (scoreTotal !== 0) throw new Error('POINT_TOTAL_MISMATCH');
+
+  game.history.forEach(entry => {
+    if (
+      !entry || !['win', 'gang', 'penalty', 'manual'].includes(entry.type) ||
+      !Number.isInteger(entry.receiver) || entry.receiver < 0 || entry.receiver >= 4 ||
+      !Array.isArray(entry.payers) || !entry.payers.length ||
+      entry.payers.some(index => !Number.isInteger(index) || index < 0 || index >= 4 || index === entry.receiver) ||
+      !Number.isInteger(entry.amountPerPayer) || entry.amountPerPayer <= 0 ||
+      !Array.isArray(entry.deltas) || entry.deltas.length !== 4 ||
+      entry.deltas.some(value => !Number.isInteger(value)) ||
+      entry.deltas.reduce((sum, value) => sum + value, 0) !== 0
+    ) throw new Error('INVALID_GAME');
+  });
+  return true;
+}
+
+function validateGame(game, roomMode, gameType) {
+  if (normalizeGameType(gameType) === 'sichuan') return validateSichuanGame(game);
   if (!game || !Array.isArray(game.players)) throw new Error('INVALID_GAME');
   const count = playerCountFromMode(roomMode);
   if (game.playerCount !== count || game.players.length !== count) throw new Error('INVALID_GAME_MODE');
@@ -245,9 +421,11 @@ function publicRoomPreview(room) {
     roomCode: room._id,
     status: room.status,
     mode: room.mode,
+    gameType: normalizeGameType(room.gameType),
     seats: room.seats.map(seat => ({
       index: seat.index,
       nickname: seat.nickname,
+      avatarFileId: sanitizeAvatarFileId(seat.avatarFileId),
       occupied: !!seat.occupied
     })),
     createdAt: room.createdAt,
@@ -264,12 +442,14 @@ function roomView(room, openId) {
     roomCode: room._id,
     status: room.status,
     mode: room.mode,
+    gameType: normalizeGameType(room.gameType),
     version: room.version,
     isHost: room.hostOpenId === openId,
     mySeat,
     seats: room.seats.map(seat => ({
       index: seat.index,
       nickname: seat.nickname,
+      avatarFileId: sanitizeAvatarFileId(seat.avatarFileId),
       occupied: !!seat.occupied,
       isMe: seat.openId === openId
     })),
@@ -303,9 +483,11 @@ module.exports = {
   ROOM_RETENTION_MS,
   clone,
   playerCountFromMode,
+  normalizeGameType,
   normalizeRoomCode,
   generateRoomCode,
   sanitizeNickname,
+  sanitizeAvatarFileId,
   newGame,
   createSeats,
   applySeatNames,
@@ -314,7 +496,9 @@ module.exports = {
   findSeatByOpenId,
   isMember,
   joinSeat,
+  updateSeatProfile,
   releaseSeat,
+  moveSeat,
   normalizeGame,
   validateGame,
   publicRoomPreview,

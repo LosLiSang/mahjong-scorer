@@ -13,6 +13,20 @@ button::after { border: none; }
 .serif-input { font-family: "Noto Serif SC", "Songti SC", STSong, SimSun, Georgia, serif !important; }
 .setup-name-input.serif-input { flex: 1; min-width: 0; height: 72rpx; line-height: 72rpx; padding: 0 16rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; color: #3d3929; font-size: 28rpx; box-sizing: border-box; }
 
+/* 房间头像 */
+.room-profile-picker-row { display: flex; align-items: center; gap: 16rpx; margin-top: 16rpx; }
+.room-avatar-picker { flex: 0 0 auto; width: 92rpx !important; height: 92rpx; min-height: 0; margin: 0; padding: 0 !important; overflow: hidden; border: 2rpx solid #ddd7c8; border-radius: 50% !important; background: #f1eee5 !important; color: #8a8470 !important; line-height: 88rpx; }
+.room-avatar-picker::after { border: 0; }
+.room-avatar-picker.compact { width: 72rpx !important; height: 72rpx; line-height: 68rpx; }
+.room-avatar-picker-image { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.room-avatar-picker-placeholder { font-size: 20rpx; font-weight: 600; }
+.room-avatar-picker-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 5rpx; }
+.room-avatar-picker-title { color: #5f5947; font-size: 24rpx; font-weight: 700; }
+.room-avatar-picker-desc { color: #98917d; font-size: 20rpx; line-height: 1.5; }
+.room-current-avatar-row { display: flex; align-items: center; gap: 16rpx; margin: 0 0 18rpx; padding: 14rpx 16rpx; border-radius: 14rpx; background: #f6f3eb; color: #77705f; font-size: 21rpx; line-height: 1.5; }
+.room-player-avatar { position: absolute; z-index: 2; top: 8rpx; left: 8rpx; display: flex; align-items: center; justify-content: center; width: 34rpx; height: 34rpx; overflow: hidden; border: 2rpx solid rgba(255,255,255,.9); border-radius: 50%; background: #e9e4d8; color: #746e5c; font-size: 16rpx; font-weight: 700; box-shadow: 0 2rpx 6rpx rgba(61,57,41,.14); box-sizing: border-box; }
+.room-player-avatar-image { display: block; width: 100%; height: 100%; }
+
 /* 按钮 */
 .btn { background: #c96442; color: #fff; border: none; padding: 28rpx; border-radius: 18rpx; font-size: 30rpx; font-weight: 600; }
 .btn:active { opacity: 0.7; }

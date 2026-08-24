@@ -7,6 +7,7 @@ const RoomService = require('../../utils/room-service');
 const LOCAL_STORAGE_KEY = 'mj_game_v2';
 const ACTIVE_ROOM_KEY = 'mj_active_room_v1';
 const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
+const ROOM_AVATAR_KEY = 'mj_room_avatar_v1';
 
 const MELD_MODES = {
   shuntsu: [{ key:'closed', label:'门前' }, { key:'open', label:'副露' }],
@@ -27,11 +28,19 @@ const CONDITION_DEFS = [
 const FU_OPTIONS = [20,25,30,40,50,60,70,80,90,100,110];
 const HAN_OPTIONS = Array.from({ length: 13 }, (_, i) => ({ value: i + 1, label: `${i + 1}翻` }));
 
-function buildPlayerViews(game) {
+function buildPlayerViews(game, roomSeats) {
   const classMap = { '东': 'dong', '南': 'nan', '西': 'xi', '北': 'bei' };
   return game.players.map((player, index) => {
     const seat = Game.seatOf(game, index);
-    return Object.assign({}, player, { index, seat, seatClass: classMap[seat] });
+    const roomSeat = roomSeats && roomSeats[index];
+    const avatarText = String(roomSeat && roomSeat.nickname || player.name || '?').slice(0, 1);
+    return Object.assign({}, player, {
+      index,
+      seat,
+      seatClass: classMap[seat],
+      avatarFileId: roomSeat && roomSeat.avatarFileId || '',
+      avatarText
+    });
   });
 }
 
@@ -95,6 +104,8 @@ Page({
     roomPanelMode: 'create',
     roomMode: 4,
     roomNickname: '',
+    roomAvatarFileId: '',
+    roomAvatarUploading: false,
     roomSeatIndex: 0,
     roomSeatOptions: [],
     joinRoomCode: '',
@@ -103,7 +114,9 @@ Page({
     joinRoomFull: false,
     pendingSharedRoomCode: '',
     lastSeenRoomActionId: '',
-    roomActivityViews: []
+    roomActivityViews: [],
+    moveSeatChoosing: false,
+    moveSeatTarget: -1
   },
 
   onLoad(options) {
@@ -124,14 +137,17 @@ Page({
     this.initRoomNetworkState();
 
     let nickname = '';
+    let avatarFileId = '';
     let activeRoomCode = '';
     try {
       nickname = wx.getStorageSync(ROOM_NICKNAME_KEY) || '';
+      avatarFileId = wx.getStorageSync(ROOM_AVATAR_KEY) || '';
       activeRoomCode = wx.getStorageSync(ACTIVE_ROOM_KEY) || '';
     } catch (e) {}
     const sharedCode = RoomService.normalizeCode(options && options.room);
     this.setData({
       roomNickname: nickname,
+      roomAvatarFileId: avatarFileId,
       pendingSharedRoomCode: sharedCode,
       joinRoomCode: sharedCode || ''
     });
@@ -261,6 +277,35 @@ Page({
     try { wx.setStorageSync(ROOM_NICKNAME_KEY, roomNickname); } catch (err) {}
   },
 
+  async chooseRoomAvatar(e) {
+    const filePath = e && e.detail && e.detail.avatarUrl;
+    if (!filePath || this.data.roomAvatarUploading) return;
+    if (this.data.room && !this.data.roomWritable) {
+      return this.roomError(new Error('房间当前不可更新头像'));
+    }
+    if (this.data.room) this.updateRoomWritable({ roomBusy: true, roomAvatarUploading: true });
+    else this.setData({ roomAvatarUploading: true });
+    try {
+      const avatarFileId = await RoomService.uploadAvatar(filePath);
+      this.setData({ roomAvatarFileId: avatarFileId });
+      try { wx.setStorageSync(ROOM_AVATAR_KEY, avatarFileId); } catch (err) {}
+      if (this.data.room) {
+        const room = await RoomService.updateProfile(
+          this.data.room.roomCode,
+          this.data.room.version,
+          avatarFileId
+        );
+        this.applyRoom(room, false);
+      }
+      wx.showToast({ title: '头像已更新', icon: 'success' });
+    } catch (err) {
+      this.roomError(err);
+    } finally {
+      if (this.data.room) this.updateRoomWritable({ roomBusy: false, roomAvatarUploading: false });
+      else this.setData({ roomAvatarUploading: false });
+    }
+  },
+
   selectRoomSeat(e) {
     const index = Number(e.currentTarget.dataset.index);
     if (e.currentTarget.dataset.join) {
@@ -288,7 +333,8 @@ Page({
       const room = await RoomService.create({
         mode: this.data.roomMode,
         seatIndex: this.data.roomSeatIndex,
-        nickname: this.data.roomNickname
+        nickname: this.data.roomNickname,
+        avatarFileId: this.data.roomAvatarFileId
       });
       try { wx.setStorageSync(ACTIVE_ROOM_KEY, room.roomCode); } catch (e) {}
       this.applyRoom(room, false);
@@ -336,7 +382,8 @@ Page({
       const room = await RoomService.join({
         roomCode: this.data.joinPreview.roomCode,
         seatIndex: this.data.joinSeatIndex,
-        nickname: this.data.roomNickname
+        nickname: this.data.roomNickname,
+        avatarFileId: this.data.roomAvatarFileId
       });
       try { wx.setStorageSync(ACTIVE_ROOM_KEY, room.roomCode); } catch (e) {}
       this.applyRoom(room, false);
@@ -402,10 +449,16 @@ Page({
       timeText: this.formatRoomActionTime(item.createdAt),
       isMine: item.isMine
     }));
+    const mySeat = room.seats && room.seats[room.mySeat];
+    const roomAvatarFileId = mySeat && mySeat.avatarFileId || this.data.roomAvatarFileId;
+    if (roomAvatarFileId) {
+      try { wx.setStorageSync(ROOM_AVATAR_KEY, roomAvatarFileId); } catch (e) {}
+    }
     this.updateRoomWritable({
       room,
       game: room.game,
-      playerViews: buildPlayerViews(room.game),
+      playerViews: buildPlayerViews(room.game, room.seats),
+      roomAvatarFileId,
       roundName: rn[room.game.roundIndex] || `第${room.game.roundIndex + 1}局`,
       undoStack: [],
       roomActivityViews,
@@ -431,7 +484,9 @@ Page({
       joinRoomFull: false,
       pendingSharedRoomCode: '',
       lastSeenRoomActionId: '',
-      roomActivityViews: []
+      roomActivityViews: [],
+      moveSeatChoosing: false,
+      moveSeatTarget: -1
     });
     this.initGame(localGame);
     if (showToast !== false) wx.showToast({ title: '已返回本地计分', icon: 'none' });
@@ -457,6 +512,36 @@ Page({
     try {
       const room = await RoomService.releaseSeat(this.data.room.roomCode, this.data.room.version, seatIndex);
       this.applyRoom(room, false);
+    } catch (err) {
+      this.roomError(err);
+    } finally {
+      this.updateRoomWritable({ roomBusy: false });
+    }
+  },
+
+  toggleMoveSeat() {
+    if (!this.data.room || this.data.room.status !== 'active') return this.roomError(new Error('房间当前不可换座'));
+    const choosing = !this.data.moveSeatChoosing;
+    this.setData({ moveSeatChoosing: choosing, moveSeatTarget: -1 });
+  },
+
+  selectMoveSeatTarget(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    const seat = this.data.room && this.data.room.seats && this.data.room.seats[index];
+    if (!seat || seat.occupied || index === this.data.room.mySeat) return;
+    this.setData({ moveSeatTarget: index });
+  },
+
+  async confirmMoveSeat() {
+    if (!this.data.room || this.data.room.status !== 'active') return this.roomError(new Error('房间当前不可换座'));
+    const target = this.data.moveSeatTarget;
+    if (target < 0 || target === this.data.room.mySeat) return this.roomError(new Error('请选择空座'));
+    this.updateRoomWritable({ roomBusy: true });
+    try {
+      const room = await RoomService.moveSeat(this.data.room.roomCode, this.data.room.version, target);
+      this.applyRoom(room, false);
+      this.setData({ moveSeatChoosing: false, moveSeatTarget: -1 });
+      wx.showToast({ title: '已换座', icon: 'success' });
     } catch (err) {
       this.roomError(err);
     } finally {

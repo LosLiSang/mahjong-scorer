@@ -3,6 +3,34 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   Object.assign(root, api);
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
+  const SICHUAN_PENALTY_TYPES = [
+    {
+      id: 'huazhu', name: '查花猪', short: '花猪',
+      situation: '流局时手牌仍保留万、筒、索三门，没有完成定缺。',
+      rule: '花猪向所选的非花猪玩家逐一支付；成都常见玩法按封顶分处罚，具体金额以牌局约定为准。'
+    },
+    {
+      id: 'dajiao', name: '查大叫', short: '大叫',
+      situation: '流局查叫时，玩家没有听牌。',
+      rule: '未听牌者向所选的听牌玩家支付；常按听牌者当时可胡的最大牌型计算，可分玩家分别结算。'
+    },
+    {
+      id: 'tuishui', name: '退税', short: '退税',
+      situation: '流局后按规则需要退回本局已经收取的杠分。',
+      rule: '选择原杠分收取者为送分方、原付款者为收分方，按实际收过的杠分退回，不额外翻倍。'
+    },
+    {
+      id: 'zhahu', name: '诈和', short: '诈和',
+      situation: '误报或错误宣告胡牌。',
+      rule: '诈和者向所选玩家支付约定罚分；是否按封顶、是否继续牌局因地区规则不同。'
+    },
+    {
+      id: 'custom', name: '自定义', short: '自定义',
+      situation: '牌局约定的包赔、违规或其他转分。',
+      rule: '自行选择收分方、送分方和每位收分者获得的金额。'
+    },
+  ];
+
   const SICHUAN_FAN_TYPES = [
     { id: 'pinghu', name: '平胡', fan: 1, group: 'base', exampleTiles: ['1m','2m','3m','4m','5m','6m','2p','3p','4p','6s','7s','8s','5p','5p'], exampleText: '四组顺子加一对将牌。' },
     { id: 'duiduihu', name: '对对胡', fan: 2, group: 'base', exampleTiles: ['1m','1m','1m','2p','2p','2p','3s','3s','3s','7s','7s','7s','5p','5p'], exampleText: '四组刻子加一对将牌。' },
@@ -26,15 +54,19 @@
 
   function calculateSichuanFan(selectedIds = [], fanCap = 6, rootCount = 0) {
     const normalizedRootCount = Math.max(0, Math.min(4, Math.trunc(Number(rootCount) || 0)));
-    const selected = selectedIds
+    const resolved = [...new Set(selectedIds)]
       .filter(id => id !== 'gen')
       .map(id => SICHUAN_FAN_TYPES.find(type => type.id === id))
       .filter(Boolean);
+    const baseTypes = resolved.filter(type => type.group === 'base');
+    const baseType = baseTypes[baseTypes.length - 1] || SICHUAN_FAN_TYPES.find(type => type.id === 'pinghu');
+    const extraTypes = resolved.filter(type => type.group === 'extra');
+    const selected = [baseType].concat(extraTypes);
     const rawFan = selected.reduce((sum, type) => sum + type.fan, 0) + normalizedRootCount;
     const fan = Math.min(Number(fanCap) || 6, rawFan);
     const labels = selected.map(type => type.name);
     if (normalizedRootCount) labels.push(`根×${normalizedRootCount}`);
-    return { fan: Math.max(1, fan), label: labels.join(' + ') || '平胡', rootCount: normalizedRootCount };
+    return { fan: Math.max(1, fan), label: labels.join(' + '), rootCount: normalizedRootCount };
   }
 
   function setSichuanMissingSuit(game, playerIndex, suit) {
@@ -99,6 +131,7 @@
 
   return {
     SICHUAN_FAN_TYPES,
+    SICHUAN_PENALTY_TYPES,
     calculateSichuanFan,
     setSichuanMissingSuit,
     scoreFromFan,

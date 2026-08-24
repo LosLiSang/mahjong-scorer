@@ -10,6 +10,7 @@ const ERROR_MESSAGES = {
   ROOM_NOT_ACTIVE: '房间已经结束',
   ROOM_ENDED: '房间已经结束，只能查看记录',
   NICKNAME_REQUIRED: '请填写微信昵称',
+  AVATAR_UPLOAD_FAILED: '头像上传失败，请稍后重试',
   INVALID_SEAT: '请选择有效座位',
   SEAT_OCCUPIED: '该座位已被其他玩家占用',
   NOT_ROOM_MEMBER: '你已不在该房间中',
@@ -17,6 +18,7 @@ const ERROR_MESSAGES = {
   INVALID_COMMAND: '不支持的房间操作',
   INVALID_GAME: '对局数据不完整，请重新同步',
   INVALID_GAME_MODE: '房间人数模式不一致',
+  INVALID_GAME_TYPE: '房间计分类型不一致',
   POINT_TOTAL_MISMATCH: '点数总计异常，已拒绝同步',
   NOTHING_TO_UNDO: '没有可撤销的最新计分',
   HOST_ONLY: '只有房主可以执行此操作',
@@ -103,6 +105,37 @@ function command(options) {
   }));
 }
 
+async function uploadAvatar(filePath) {
+  if (!isConfigured()) {
+    const err = new Error('请先配置微信云开发环境');
+    err.code = 'CLOUD_NOT_CONFIGURED';
+    throw err;
+  }
+  if (!filePath) throw parseError({ message: 'AVATAR_UPLOAD_FAILED' });
+  const currentOpenId = await identity();
+  const safeOpenId = String(currentOpenId).replace(/[^a-zA-Z0-9_-]/g, '');
+  const match = String(filePath).match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+  const extension = match && /^(png|jpe?g|webp)$/i.test(match[1]) ? match[1].toLowerCase() : 'jpg';
+  try {
+    const result = await wx.cloud.uploadFile({
+      cloudPath: `room-avatars/${safeOpenId}/avatar-${Date.now()}.${extension}`,
+      filePath
+    });
+    if (!result || !result.fileID) throw new Error('AVATAR_UPLOAD_FAILED');
+    return result.fileID;
+  } catch (err) {
+    throw parseError({ message: `AVATAR_UPLOAD_FAILED ${err && err.message || ''}` });
+  }
+}
+
+function updateProfile(roomCode, expectedVersion, avatarFileId) {
+  return call('updateProfile', {
+    roomCode: normalizeCode(roomCode),
+    expectedVersion,
+    avatarFileId
+  });
+}
+
 function undo(roomCode, expectedVersion) {
   return call('undo', { roomCode: normalizeCode(roomCode), expectedVersion });
 }
@@ -113,6 +146,14 @@ function reset(roomCode, expectedVersion) {
 
 function releaseSeat(roomCode, expectedVersion, seatIndex) {
   return call('releaseSeat', {
+    roomCode: normalizeCode(roomCode),
+    expectedVersion,
+    seatIndex
+  });
+}
+
+function moveSeat(roomCode, expectedVersion, seatIndex) {
+  return call('moveSeat', {
     roomCode: normalizeCode(roomCode),
     expectedVersion,
     seatIndex
@@ -162,9 +203,12 @@ module.exports = {
   inspect,
   join,
   command,
+  uploadAvatar,
+  updateProfile,
   undo,
   reset,
   releaseSeat,
+  moveSeat,
   end,
   watch,
   stopWatch

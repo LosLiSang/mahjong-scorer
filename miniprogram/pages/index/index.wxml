@@ -40,6 +40,10 @@
     <view wx:for="{{playerViews}}" wx:key="index"
       class="player-card seat-{{item.seatClass}} {{item.index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}}"
       data-index="{{item.index}}" bindtap="onPlayerTap">
+      <view wx:if="{{room}}" class="room-player-avatar">
+        <image wx:if="{{item.avatarFileId}}" class="room-player-avatar-image" src="{{item.avatarFileId}}" mode="aspectFill" />
+        <text wx:else>{{item.avatarText}}</text>
+      </view>
       <view class="seat-label">{{item.seat}}{{item.index === game.dealerIndex ? ' · 亲' : ''}}</view>
       <view class="name">{{item.name}}</view>
       <view class="points">{{item.points}}</view>
@@ -86,7 +90,17 @@
 
       <view class="label">微信昵称</view>
       <input class="setup-name-input serif-input" type="nickname" value="{{roomNickname}}" bindinput="onRoomNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
-      <view class="room-privacy-hint">昵称需要你主动确认；OpenID 只用于认回座位，不会显示给其他玩家。</view>
+      <view class="room-profile-picker-row">
+        <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseRoomAvatar" loading="{{roomAvatarUploading}}" disabled="{{roomAvatarUploading}}">
+          <image wx:if="{{roomAvatarFileId}}" class="room-avatar-picker-image" src="{{roomAvatarFileId}}" mode="aspectFill" />
+          <text wx:else class="room-avatar-picker-placeholder">选头像</text>
+        </button>
+        <view class="room-avatar-picker-copy">
+          <text class="room-avatar-picker-title">房间头像（可选）</text>
+          <text class="room-avatar-picker-desc">由你主动选择，进入房间后显示在玩家卡片中</text>
+        </view>
+      </view>
+      <view class="room-privacy-hint">昵称和头像需要你主动确认；OpenID 只用于认回座位，不会显示给其他玩家。</view>
 
       <block wx:if="{{roomPanelMode === 'create'}}">
         <view class="label">人数模式</view>
@@ -130,6 +144,13 @@
         <view>{{room.mode === 'sanma' ? '三麻' : '四麻'}} · {{room.status === 'ended' ? '已结束，只读保留 30 天' : (roomConnected && roomOnline ? '实时同步中' : '等待重新连接')}}</view>
         <view>版本 {{room.version}} · 你的座位 {{seats[game.playerCount][room.mySeat]}}</view>
       </view>
+      <view wx:if="{{room.status === 'active'}}" class="room-current-avatar-row">
+        <button class="room-avatar-picker compact" open-type="chooseAvatar" bindchooseavatar="chooseRoomAvatar" loading="{{roomAvatarUploading}}" disabled="{{roomAvatarUploading || !roomWritable}}">
+          <image wx:if="{{roomAvatarFileId}}" class="room-avatar-picker-image" src="{{roomAvatarFileId}}" mode="aspectFill" />
+          <text wx:else class="room-avatar-picker-placeholder">选头像</text>
+        </button>
+        <text>点击头像可更换，并实时同步给房间成员</text>
+      </view>
 
       <view class="room-code-card" bindtap="copyRoomCode">
         <text class="room-code-label">房间码</text>
@@ -147,9 +168,24 @@
             <text wx:if="{{item.isMe}}" class="room-me-mark">我</text>
           </view>
           <button wx:if="{{room.isHost && item.occupied && !item.isMe && room.status === 'active'}}" class="room-release-btn" data-index="{{item.index}}" bindtap="releaseRoomSeat" disabled="{{roomBusy}}">释放</button>
+          <button wx:elif="{{item.isMe && room.status === 'active'}}" class="room-move-btn" bindtap="toggleMoveSeat" disabled="{{roomBusy || !roomWritable}}">换座</button>
           <text wx:elif="{{!item.occupied}}" class="room-empty-mark">空座</text>
         </view>
       </view>
+
+      <block wx:if="{{moveSeatChoosing && room.status === 'active'}}">
+        <view class="label">换座到空座</view>
+        <view class="room-seat-grid">
+          <view wx:for="{{room.seats}}" wx:key="index" class="room-seat-option {{item.occupied ? 'occupied' : ''}} {{moveSeatTarget === item.index ? 'active' : ''}}" data-index="{{item.index}}" bindtap="selectMoveSeatTarget">
+            <text class="room-seat-wind">{{seats[game.playerCount][item.index]}}</text>
+            <text>{{item.occupied ? item.nickname : '空座'}}</text>
+          </view>
+        </view>
+        <view class="room-move-actions">
+          <button class="btn btn-secondary btn-small" bindtap="toggleMoveSeat" disabled="{{roomBusy}}">取消</button>
+          <button class="btn btn-small" bindtap="confirmMoveSeat" disabled="{{roomBusy || moveSeatTarget < 0}}">换座到这里</button>
+        </view>
+      </block>
 
       <view wx:if="{{room.lastAction}}" class="room-last-action">最近：{{room.lastAction.summary}}</view>
 

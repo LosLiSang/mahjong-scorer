@@ -1,6 +1,6 @@
 // tutorial-data.js — 日麻入门教学内容与纯逻辑
 // 不依赖 DOM；浏览器与 Node 测试共用。
-// 每课含 points（要点）、terms（术语，term+def）、tileGroups（牌例，可带 win 胡牌张）、tip。
+// 每课含 points（要点）、terms（术语，term+def）、tileGroups（牌例，可带 win 胡牌张）、tip 与章末小测题号。
 
 const MAHJONG_TUTORIAL = {
   lessons: [
@@ -29,6 +29,7 @@ const MAHJONG_TUTORIAL = {
         { label: '字牌', tiles: ['1z','2z','3z','4z','5z','6z','7z'] },
       ],
       tip: '先记花色和数字，不必第一天背完所有役。',
+      checkQuestionId: 'q1',
     },
     {
       id: 'turn',
@@ -56,6 +57,7 @@ const MAHJONG_TUTORIAL = {
         { label: '组成杠子', tiles: ['1z','1z','1z','1z'] },
       ],
       tip: '新手不要看到能吃碰就立刻按。先问：副露后，我还剩什么役？',
+      checkQuestionId: 'q5',
     },
     {
       id: 'winning-shape',
@@ -84,6 +86,7 @@ const MAHJONG_TUTORIAL = {
         { label: '雀头', tiles: ['5m','5m'] },
       ],
       tip: '牌凑齐结构仍不一定能和——还必须至少有一个“役”。',
+      checkQuestionId: 'q2',
     },
     {
       id: 'yaku',
@@ -112,6 +115,7 @@ const MAHJONG_TUTORIAL = {
         { label: '断幺九示例', tiles: ['2m','3m','4m','2p','3p','4p','4s','5s','6s','6p','7p','8p','5s','5s'], win: '5s' },
       ],
       tip: '最实用的新手检查：我现在靠什么役和牌？答不出来，就先别急着副露。',
+      checkQuestionId: 'q3',
     },
     {
       id: 'waits',
@@ -141,6 +145,7 @@ const MAHJONG_TUTORIAL = {
         { label: '单骑：等雀头', tiles: ['6z'] },
       ],
       tip: '计分器要求指定“最终和牌张”，就是为了区分这些等待形。',
+      checkQuestionId: 'q4',
     },
     {
       id: 'scoring',
@@ -166,6 +171,7 @@ const MAHJONG_TUTORIAL = {
         { label: '例：3番40符', tiles: ['2m','3m','4m','4m','5m','6m','3p','4p','5p','7s','7s','7s','6p','6p'], win: '6p' },
       ],
       tip: '实战顺序：先确认有役 → 数番 → 算符 → 区分亲子与和牌方式。',
+      checkQuestionId: 'q16',
     },
     {
       id: 'fu-detail',
@@ -192,6 +198,7 @@ const MAHJONG_TUTORIAL = {
         { label: '幺九暗刻示例', tiles: ['1z','1z','1z'] },
       ],
       tip: '学完后打开下方“算分详解 → 符数”，那里有完整的 42→50 符计算过程。',
+      checkQuestionId: 'q17',
     },
     {
       id: 'limits',
@@ -215,6 +222,7 @@ const MAHJONG_TUTORIAL = {
         { label: '4番40符：达到满贯线', tiles: ['2m','3m','4m','4m','5m','6m','3p','4p','5p','7s','7s','7s','6p','6p'], win: '6p' },
       ],
       tip: '记档位边界，不要死背每一格点数表；亲子和荣和/自摸交给公式拆分。',
+      checkQuestionId: 'q18',
     },
     {
       id: 'strategy',
@@ -241,9 +249,10 @@ const MAHJONG_TUTORIAL = {
         { label: '孤张 / 边张（先打）', tiles: ['1m','9m','1s','4z'] },
       ],
       tip: '新手练牌从「断幺九 + 平和」起步最稳：牌型基础、讲解简单、能吃能碰不亏。',
+      checkQuestionId: 'q7',
     },
   ],
-  quiz: [
+  questions: [
     {
       id: 'q1',
       question: '下面哪一组能组成顺子？',
@@ -349,6 +358,64 @@ const MAHJONG_TUTORIAL = {
       answer: 1,
       explanation: '单一花色数牌 + 字牌就是混一色；若混入字牌便不是清一色。',
     },
+    {
+      id: 'q16',
+      question: '确认手牌可以和牌后，计算点数的正确顺序是什么？',
+      options: ['先算符，再找役', '先数番，再算符', '只看宝牌数量', '先区分亲家，再找役'],
+      answer: 1,
+      explanation: '先确认有役并把役与宝牌的番数相加，再计算符，最后区分亲子与和牌方式。',
+    },
+    {
+      id: 'q17',
+      question: '普通牌型合计得到 42 符，最终应按多少符计算？',
+      options: ['40 符', '42 符', '45 符', '50 符'],
+      answer: 3,
+      explanation: '普通牌型的符数要向上进位到十位，所以 42 符按 50 符计算。',
+    },
+    {
+      id: 'q18',
+      question: '一手牌合计 6 番，进入哪个点数档位？',
+      options: ['满贯', '跳满', '倍满', '三倍满'],
+      answer: 1,
+      explanation: '6～7 番是跳满；5 番是满贯，8～10 番是倍满。',
+    },
+    {
+      id: 'q19',
+      question: '东一局南家，起手有 34万、56筒和一张孤立的北风，通常优先打哪一类牌？',
+      options: ['34万连张', '56筒连张', '孤立的北风', '任意对子'],
+      answer: 2,
+      explanation: '中张连张容易发展成两面顺子；无役牌价值的孤张字牌通常更适合先打。',
+    },
+  ],
+  trainingTopics: [
+    {
+      id: 'basic-concepts',
+      icon: '🀄',
+      title: '牌与和牌基础',
+      description: '认牌、面子、雀头、役与副露',
+      questionIds: ['q1', 'q2', 'q3', 'q5'],
+    },
+    {
+      id: 'waits-scoring',
+      icon: '🧮',
+      title: '听牌与算分',
+      description: '听牌形、番符顺序与点数档位',
+      questionIds: ['q4', 'q6', 'q16', 'q17', 'q18'],
+    },
+    {
+      id: 'yaku-shapes',
+      icon: '🎴',
+      title: '役形判断',
+      description: '从完整手牌判断常见役种',
+      questionIds: ['q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15'],
+    },
+    {
+      id: 'opening-strategy',
+      icon: '🧭',
+      title: '开局决策',
+      description: '留好型、打孤张与新手役路线',
+      questionIds: ['q7', 'q8', 'q19'],
+    },
   ],
 };
 
@@ -356,8 +423,21 @@ function getTutorialLesson(id) {
   return MAHJONG_TUTORIAL.lessons.find(lesson => lesson.id === id) || null;
 }
 
-function gradeTutorialQuiz(answers) {
-  const details = MAHJONG_TUTORIAL.quiz.map((question, index) => ({
+function getTutorialQuestion(id) {
+  return MAHJONG_TUTORIAL.questions.find(question => question.id === id) || null;
+}
+
+function getTrainingTopic(id) {
+  const topic = MAHJONG_TUTORIAL.trainingTopics.find(item => item.id === id);
+  if (!topic) return null;
+  return {
+    ...topic,
+    questions: topic.questionIds.map(getTutorialQuestion).filter(Boolean),
+  };
+}
+
+function gradeTutorialQuestions(questions, answers) {
+  const details = questions.map((question, index) => ({
     id: question.id,
     correct: Number(answers[index]) === question.answer,
     answer: question.answer,
@@ -370,6 +450,18 @@ function gradeTutorialQuiz(answers) {
   };
 }
 
+function gradeTrainingTopic(topicId, answers) {
+  const topic = getTrainingTopic(topicId);
+  return topic ? gradeTutorialQuestions(topic.questions, answers) : null;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { MAHJONG_TUTORIAL, getTutorialLesson, gradeTutorialQuiz };
+  module.exports = {
+    MAHJONG_TUTORIAL,
+    getTutorialLesson,
+    getTutorialQuestion,
+    getTrainingTopic,
+    gradeTutorialQuestions,
+    gradeTrainingTopic,
+  };
 }

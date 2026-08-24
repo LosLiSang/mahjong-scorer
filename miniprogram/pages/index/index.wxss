@@ -40,6 +40,10 @@
 .room-empty-mark { color: #aaa28f; font-size: 21rpx; }
 .room-release-btn { width: auto !important; min-height: 0; margin: 0; padding: 8rpx 14rpx; border: 0; border-radius: 12rpx; background: #eee9df; color: #8a6658; font-size: 20rpx; line-height: 1.3; }
 .room-release-btn::after { border: 0; }
+.room-move-btn { width: auto !important; min-height: 0; margin: 0; padding: 8rpx 14rpx; border: 0; border-radius: 12rpx; background: #e8f2df; color: #567145; font-size: 20rpx; line-height: 1.3; }
+.room-move-btn::after { border: 0; }
+.room-move-actions { display: flex; gap: 14rpx; width: 100%; margin-top: 12rpx; }
+.room-move-actions .btn { flex: 1; min-width: 0; }
 .room-last-action { margin-top: 18rpx; padding: 16rpx 18rpx; border-radius: 14rpx; background: #f6f3eb; color: #77705f; font-size: 22rpx; }
 .room-panel-close { position: sticky; top: -18rpx; }
 .room-actions { margin-top: 24rpx; flex-direction: column; }

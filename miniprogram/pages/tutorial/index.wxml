@@ -9,7 +9,7 @@
       <view class="progress-bar">
         <view class="progress-fill" style="width: {{progressPercent}}%"></view>
       </view>
-      <view class="progress-text">已学 {{completedCount}} / {{totalLessons}} 节（{{progressPercent}}%）</view>
+      <view class="progress-text">已学会 {{completedCount}} / {{totalLessons}} 章（{{progressPercent}}%）</view>
     </view>
   </view>
 
@@ -24,26 +24,41 @@
       bindtap="openLesson"
     >
       <view class="lesson-card-inner">
-        <view class="lesson-number">第{{index + 1}}节</view>
+        <view class="lesson-number">第{{index + 1}}章</view>
         <view class="lesson-info">
-          <view class="lesson-card-title">{{item.title}}</view>
+          <view class="lesson-card-title-row">
+            <view class="lesson-card-title">{{item.title}}</view>
+            <view class="lesson-status-badge {{item.learned ? 'learned' : 'pending'}}">
+              {{item.learned ? '已学会' : '未学会'}}
+            </view>
+          </view>
           <view class="lesson-card-summary">{{item.summary}}</view>
+          <view class="lesson-card-status {{item.learned ? 'learned' : ''}}">
+            {{item.learned ? '本章小测已通过' : '学习课程并完成章末小测'}}
+          </view>
         </view>
       </view>
       <view class="lesson-arrow">›</view>
-      <view wx:if="{{progress.indexOf(item.id) >= 0}}" class="lesson-check">✓</view>
     </view>
   </view>
 
-  <!-- 入门测验 -->
-  <view class="section-title">📝 入门测验</view>
-  <view class="quiz-entry" bindtap="openQuiz">
-    <view class="quiz-entry-icon">✍️</view>
-    <view class="quiz-entry-info">
-      <view class="quiz-entry-title">{{quizQuestions.length}} 道基础选择题</view>
-      <view class="quiz-entry-desc">测测你对日麻基础的了解程度</view>
+  <!-- 专项训练 -->
+  <view class="section-title">🎯 专项训练</view>
+  <view class="training-list">
+    <view
+      wx:for="{{trainingTopics}}"
+      wx:key="id"
+      class="quiz-entry"
+      data-id="{{item.id}}"
+      bindtap="openTraining"
+    >
+      <view class="quiz-entry-icon">{{item.icon}}</view>
+      <view class="quiz-entry-info">
+        <view class="quiz-entry-title">{{item.title}}</view>
+        <view class="quiz-entry-desc">{{item.description}} · {{item.questions.length}} 题</view>
+      </view>
+      <view class="lesson-arrow">›</view>
     </view>
-    <view class="lesson-arrow">›</view>
   </view>
 
   <!-- 工具入口 -->
@@ -117,12 +132,41 @@
         <text class="tip-icon">💡</text>
         <text>{{activeLesson.tip}}</text>
       </view>
+
+      <view wx:if="{{activeLesson.check}}" class="lesson-check-card">
+        <view class="lesson-check-heading">
+          <view>
+            <view class="lesson-check-kicker">章末小测</view>
+            <view class="lesson-check-title">答对后标记本章已学会</view>
+          </view>
+          <view wx:if="{{activeLessonLearned}}" class="lesson-learned-badge">已学会 ✓</view>
+        </view>
+        <view class="lesson-check-question">{{activeLesson.check.question}}</view>
+        <view class="quiz-options lesson-check-options">
+          <view
+            wx:for="{{activeLesson.check.options}}"
+            wx:key="*this"
+            class="quiz-option {{lessonCheckAnswer === index ? 'selected' : ''}} {{lessonCheckSubmitted && index === activeLesson.check.answer ? 'correct' : ''}} {{lessonCheckSubmitted && lessonCheckAnswer === index && !lessonCheckCorrect ? 'wrong' : ''}}"
+            data-answer="{{index}}"
+            bindtap="selectLessonCheckOption"
+          >
+            <text class="option-letter">{{['A','B','C','D'][index]}}</text>
+            <text class="option-text">{{item}}</text>
+          </view>
+        </view>
+        <view wx:if="{{lessonCheckSubmitted}}" class="quiz-explanation lesson-check-explanation">
+          <view class="quiz-explanation-header {{lessonCheckCorrect ? 'correct' : 'wrong'}}">
+            {{lessonCheckCorrect ? '✅ 回答正确，本章已学会！' : '❌ 还差一点，再想想'}}
+          </view>
+          <view class="quiz-explanation-text">{{lessonCheckExplanation}}</view>
+          <button wx:if="{{!lessonCheckCorrect}}" class="btn btn-secondary" bindtap="retryLessonCheck">重新作答</button>
+        </view>
+        <view wx:if="{{!lessonCheckSubmitted}}" class="quiz-submit-area">
+          <button class="btn" bindtap="submitLessonCheck" disabled="{{lessonCheckAnswer < 0}}">确认答案</button>
+        </view>
+      </view>
       <view class="lesson-scroll-gap"></view>
     </scroll-view>
-
-    <view class="lesson-modal-actions">
-      <button class="btn" bindtap="completeLesson">学完这节 ✓</button>
-    </view>
   </view>
 </view>
 
@@ -130,6 +174,11 @@
 <view wx:if="{{showQuiz}}" class="overlay tab-safe-overlay">
   <view class="tutorial-modal quiz-modal">
     <view class="modal-close" bindtap="closeQuiz">✕</view>
+
+    <view class="quiz-topic-heading">
+      <view class="quiz-topic-title">{{activeTraining.title}}</view>
+      <view class="quiz-topic-desc">{{activeTraining.description}}</view>
+    </view>
 
     <block wx:if="{{!showQuizResult}}">
       <!-- 进度 -->
@@ -178,7 +227,7 @@
     <block wx:if="{{showQuizResult}}">
       <view class="quiz-result">
         <view class="quiz-result-score">{{quizScore}} / {{quizQuestions.length}}</view>
-        <view class="quiz-result-label">你的得分</view>
+        <view class="quiz-result-label">{{activeTraining.title}} · 本次得分</view>
         <view class="quiz-result-text">{{quizResultText}}</view>
       </view>
       <view class="lesson-modal-actions">

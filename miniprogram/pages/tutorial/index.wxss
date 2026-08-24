@@ -44,23 +44,27 @@
   border-radius: 50%; background: #f5eee7; color: #c96442; font-weight: 700; font-size: 22rpx;
 }
 .lesson-info { flex: 1; min-width: 0; overflow: hidden; }
+.lesson-card-title-row { display: flex; align-items: center; gap: 12rpx; min-width: 0; }
 .lesson-card-title {
-  font-size: 28rpx; font-weight: 700; color: #3d3929;
+  flex: 1; min-width: 0; font-size: 28rpx; font-weight: 700; color: #3d3929;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.lesson-status-badge {
+  flex: 0 0 auto; padding: 6rpx 12rpx; border-radius: 99rpx;
+  font-size: 19rpx; font-weight: 700; line-height: 1.2;
+}
+.lesson-status-badge.pending { color: #8a8470; background: #f1eee5; }
+.lesson-status-badge.learned { color: #4f6743; background: #e5f0df; }
 .lesson-card-summary {
-  font-size: 22rpx; color: #918a76; margin-top: 4rpx;
+  font-size: 22rpx; color: #918a76; margin-top: 6rpx;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.lesson-card-status { font-size: 20rpx; color: #aaa38e; margin-top: 8rpx; }
+.lesson-card-status.learned { color: #5a7a4a; font-weight: 600; }
 .lesson-arrow { color: #b8b299; font-size: 36rpx; }
-.lesson-check {
-  position: absolute; top: -6rpx; right: -6rpx;
-  width: 40rpx; height: 40rpx; border-radius: 50%;
-  background: #5a7a4a; color: #fff; font-size: 22rpx;
-  display: flex; align-items: center; justify-content: center;
-}
 
-/* ===== 测验入口 ===== */
+/* ===== 专项训练入口 ===== */
+.training-list { display: flex; flex-direction: column; gap: 14rpx; }
 .quiz-entry {
   background: #fff; border: 2rpx solid #e8e5d8;
   border-radius: 20rpx; padding: 24rpx;
@@ -130,6 +134,23 @@
   border-radius: 0 14rpx 14rpx 0; font-size: 22rpx; line-height: 1.65; margin-bottom: 8rpx;
 }
 .tip-icon { font-size: 24rpx; flex-shrink: 0; }
+
+/* 章末小测 */
+.lesson-check-card {
+  margin-top: 24rpx; padding: 22rpx; background: #fff;
+  border: 3rpx solid #d9e4d3; border-radius: 20rpx;
+}
+.lesson-check-heading { display: flex; justify-content: space-between; gap: 16rpx; align-items: flex-start; }
+.lesson-check-kicker { color: #5a7a4a; font-size: 22rpx; font-weight: 700; }
+.lesson-check-title { color: #8a8470; font-size: 21rpx; margin-top: 4rpx; }
+.lesson-learned-badge {
+  flex: 0 0 auto; padding: 8rpx 14rpx; border-radius: 99rpx;
+  background: #edf4e9; color: #4f6743; font-size: 20rpx; font-weight: 700;
+}
+.lesson-check-question { margin: 20rpx 0 16rpx; color: #3d3929; font-size: 27rpx; font-weight: 600; line-height: 1.55; }
+.lesson-check-options .quiz-option { padding: 16rpx 18rpx; font-size: 24rpx; }
+.lesson-check-explanation { padding: 18rpx 0 0; }
+
 /* 课程弹窗底部操作区：独立页脚条，避免压住滚动内容 */
 .lesson-modal-actions {
   flex: 0 0 auto; margin-top: 16rpx; padding: 18rpx 0 calc(12rpx + env(safe-area-inset-bottom));
@@ -140,8 +161,11 @@
 /* 课程弹窗关闭按钮改为右上角（flex 容器里 float 失效，用 align-self 归位） */
 .tutorial-modal .modal-close { align-self: flex-end; }
 
-/* ===== 测验 ===== */
+/* ===== 专项训练 ===== */
 .quiz-modal { max-height: 94vh; }
+.quiz-topic-heading { text-align: center; margin: 0 40rpx 18rpx; }
+.quiz-topic-title { color: #3d3929; font-size: 32rpx; font-weight: 700; }
+.quiz-topic-desc { color: #8a8470; font-size: 22rpx; margin-top: 6rpx; }
 .quiz-progress { text-align: center; margin-bottom: 20rpx; font-size: 24rpx; color: #8a8470; }
 .quiz-progress-bar {
   height: 10rpx; background: #e8e5d8; border-radius: 99rpx;
