@@ -116,29 +116,39 @@ function calcDrawPayments(tenpaiSet) {
 
 // ============ UI 渲染 ============
 function render() {
-  // 局数
+  // 局数（中心面板）
   document.getElementById('roundDisplay').textContent = ROUND_NAMES[game.roundIndex] + '局';
-  document.getElementById('subInfo').textContent = `本场 ${game.honba} · 供托 ${game.riichiSticks * 1000}`;
+  document.getElementById('subInfo').textContent = game.players[game.dealerIndex].name + ' 坐庄';
+  // 四角信息（小程序同款）
+  document.getElementById('boardHistoryCount').textContent = game.history.length + ' 局';
+  document.getElementById('boardHonba').textContent = game.honba;
+  document.getElementById('boardRiichiSticks').textContent = game.riichiSticks + ' 本';
 
-  // 玩家
+  // 玩家（十字牌桌四座位）
   const container = document.getElementById('playersContainer');
   container.innerHTML = '';
+  const seatClasses = ['dong', 'nan', 'xi', 'bei'];
   game.players.forEach((p, i) => {
     const isDealer = i === game.dealerIndex;
     const card = document.createElement('div');
-    card.className = 'player-card' + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
+    card.className = 'player-card seat-' + seatClasses[i] + (isDealer ? ' dealer' : '') + (p.riichi ? ' riichi' : '');
     card.innerHTML = `
-      <div class="seat">${SEATS[i]}${isDealer ? ' · 亲' : ''}</div>
+      <div class="seat-label">${SEATS[i]}${isDealer ? ' · 亲' : ''}</div>
       <div class="name">${p.name}</div>
       <div class="points" id="pts-${i}">${p.points}</div>
       <div class="delta" id="delta-${i}"></div>
-      ${p.riichi ? '<div class="riichi-mark">●</div>' : ''}
+      ${p.riichi ? '<div class="riichi-mark">立直</div>' : ''}
     `;
     container.appendChild(card);
   });
 
   saveGame();
 }
+
+// H5 适配：delta 浮在卡片底部，不占卡片高度（否则东家卡会溢出牌桌底边）
+const style = document.createElement('style');
+style.textContent = '.player-card .delta { position: absolute; left: 0; right: 0; bottom: 2px; height: auto; }';
+document.head.appendChild(style);
 
 function flashDelta(changes) {
   // changes: {idx: delta}

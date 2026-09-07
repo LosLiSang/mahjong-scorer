@@ -19,12 +19,18 @@
 <!-- ============ 日麻计分（原 H5 计分器，标记未改动） ============ -->
 <section class="view" id="view-scorer">
 
-<div class="status-bar">
-  <div class="round-info" id="roundDisplay">东一局</div>
-  <div class="sub-info" id="subInfo">本场 0 · 供托 0</div>
+<div class="table-board" id="mjBoard">
+  <div class="table-corner corner-tl"><span class="corner-label">模式</span><span class="corner-value">四麻</span></div>
+  <div class="table-corner corner-tr"><span class="corner-label">记录</span><span class="corner-value" id="boardHistoryCount">0 局</span></div>
+  <div class="table-corner corner-bl"><span class="corner-label">本场</span><span class="corner-value" id="boardHonba">0</span></div>
+  <div class="table-corner corner-br"><span class="corner-label">供托</span><span class="corner-value" id="boardRiichiSticks">0 本</span></div>
+  <div class="table-center">
+    <div class="center-kicker">当前局</div>
+    <div class="round-info" id="roundDisplay">东一局</div>
+    <div class="sub-info" id="subInfo">东家 坐庄</div>
+  </div>
+  <div id="playersContainer"></div>
 </div>
-
-<div class="players" id="playersContainer"></div>
 
 <div class="actions">
   <button class="btn" onclick="openWinModal()">和牌结算</button>
