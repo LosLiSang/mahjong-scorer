@@ -1,0 +1,21 @@
+/* css/common.css — 小程序 common.wxss 中教学类页面共用的部分(rpx→px) */
+.container { padding: 12px; padding-bottom: 60px; }
+
+.rights-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 14px; padding: 6px 8px;
+  border: 1px solid #ded8c8; border-radius: 7px;
+  background: rgba(250,249,243,.88);
+  color: #746e5c; font-size: 10px; line-height: 1.35;
+}
+.rights-owner { flex-shrink: 0; color: #c46645; font-weight: 700; white-space: nowrap; }
+.rights-contact { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+
+/* 工具入口卡片（教学馆导航用） */
+.nav-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.nav-card {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid #e8e5d8; border-radius: 10px;
+  padding: 12px 14px; color: #3d3929; text-decoration: none; font-size: 14px;
+}
+.nav-card:active { opacity: .7; }

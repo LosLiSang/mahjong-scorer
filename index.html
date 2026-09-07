@@ -6,6 +6,9 @@
 <title>麻将计分器</title>
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/shell.css">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/yaku-catalog.css">
+<link rel="stylesheet" href="css/scoring-guide.css">
 <link rel="stylesheet" href="css/vision.css">
 <link rel="stylesheet" href="css/settings.css">
 </head>
@@ -182,7 +185,36 @@
 
 <!-- ============ 教学馆（切片3迁移） ============ -->
 <section class="view" id="view-tutorial">
-  <div class="panel placeholder">教学馆 · 迁移中<br>小程序版内容（术语释义 / 开局策略 / 役形测验）将在切片3原样迁移</div>
+  <div class="container">
+    <div class="panel placeholder">教学馆 · 课程迁移中<br>以下工具已可用</div>
+    <div class="nav-cards">
+      <a class="nav-card" href="#/yaku-catalog"><span>📋</span><span>役种图鉴</span><span style="margin-left:auto;color:#c46645">›</span></a>
+      <a class="nav-card" href="#/scoring-guide"><span>🧮</span><span>算分详解</span><span style="margin-left:auto;color:#c46645">›</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 役种图鉴 ============ -->
+<section class="view" id="view-yaku-catalog">
+  <div class="container">
+    <div class="category-bar"><div class="category-chips" id="yakuChips"></div></div>
+    <div class="card-grid" id="yakuGrid"></div>
+    <div class="empty-state" id="yakuEmpty" style="display:none"><span class="empty-icon">🀄</span><span>该分类下暂无役种</span></div>
+    <div class="rights-banner" id="yakuRights"><span class="rights-owner">© 2026 Lisang</span><span class="rights-contact">权利与合作联系 · lisangcode@outlook.com</span></div>
+  </div>
+  <div class="overlay" id="yakuDetailOverlay">
+    <div class="detail-modal" id="yakuDetailBody"></div>
+  </div>
+</section>
+
+<!-- ============ 算分详解 ============ -->
+<section class="view" id="view-scoring-guide">
+  <div class="container">
+    <div class="seg-group tabs" id="sgTabs"></div>
+    <div id="sgBody"></div>
+    <div class="bottom-spacer"></div>
+    <div class="rights-banner" id="sgRights"><span class="rights-owner">© 2026 Lisang</span><span class="rights-contact">权利与合作联系 · lisangcode@outlook.com</span></div>
+  </div>
 </section>
 
 <!-- ============ 川麻积分（切片3迁移） ============ -->
@@ -260,6 +292,8 @@
 <script src="js/store/settings-store.js"></script>
 <script src="js/api/openai-client.js"></script>
 <script src="js/views/scorer.js"></script>
+<script src="js/views/yaku-catalog.js"></script>
+<script src="js/views/scoring-guide.js"></script>
 <script src="js/views/vision.js"></script>
 <script src="js/views/settings.js"></script>
 <script src="js/views/router.js"></script>

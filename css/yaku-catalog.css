@@ -1,0 +1,241 @@
+/* pages/yaku-catalog/index.wxss — 役种图鉴 */
+
+/* ===== 分类过滤栏 ===== */
+.category-bar {
+  white-space: nowrap;
+  padding-bottom: 4px;
+  margin: 0 -12px 10px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.category-chips {
+  display: inline-flex;
+  gap: 7px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #3d3929;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.chip.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 卡片网格 ===== */
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-bottom: 20px;
+}
+.yaku-card {
+  flex: 1 1 calc(50% - 4.5px);
+  min-width: 155px;
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 10px;
+  padding: 11px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 5px rgba(61,57,41,.04);
+}
+.yaku-card:active {
+  transform: scale(.97);
+  background: #fdfaf4;
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+.card-cond {
+  font-size: 11px;
+  color: #8a8470;
+  line-height: 1.5;
+  margin-bottom: 5px;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+.tag {
+  display: inline-block;
+  padding: 2px 7px;
+  background: #f5f4ee;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #8a8470;
+}
+
+/* ===== 空态 ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: #b8b299;
+  font-size: 13px;
+  gap: 7px;
+}
+.empty-icon {
+  font-size: 36px;
+}
+
+/* ===== 详情弹窗 ===== */
+.detail-modal {
+  width: 100%;
+  max-width: 340px;
+  max-height: 88vh;
+  background: #faf9f3;
+  border-radius: 15px;
+  padding: 18px;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: 0 9px 30px rgba(49,45,34,.24);
+}
+.detail-close {
+  position: sticky;
+  top: -9px;
+  z-index: 3;
+  float: right;
+  width: 30px;
+  height: 30px;
+  margin: -9px -8px 4px 8px;
+  border: 1px solid #ddd7c8;
+  border-radius: 50%;
+  background: rgba(250,249,243,.96);
+  color: #746e5c;
+  font-size: 18px;
+  line-height: 28px;
+  text-align: center;
+}
+
+/* ---- 详情标题 ---- */
+.detail-header {
+  text-align: center;
+  padding: 5px 0 10px;
+}
+.detail-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.detail-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3d3929;
+  line-height: 1.2;
+}
+
+/* ---- 详情分区 ---- */
+.detail-section {
+  margin-top: 14px;
+}
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c96442;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.detail-cond-text {
+  font-size: 14px;
+  color: #3d3929;
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 7px;
+  padding: 10px;
+  line-height: 1.7;
+}
+.detail-pitfall {
+  font-size: 13px;
+  color: #8a7070;
+  background: #fff8e8;
+  border: 1px solid #f0e8d0;
+  border-radius: 7px;
+  padding: 9px 11px;
+  line-height: 1.7;
+}
+.detail-tip {
+  font-size: 13px;
+  color: #5a7a4a;
+  background: #f4faf2;
+  border: 1px solid #d8e8d0;
+  border-radius: 7px;
+  padding: 9px 11px;
+  line-height: 1.7;
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+.detail-tags .tag {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* ---- 牌例区域 ---- */
+.example-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 7px;
+  padding: 7px 6px;
+  justify-content: center;
+  align-items: center;
+}
+.example-tile {
+  width: 17px;
+  height: 23px;
+  flex: 0 0 auto;
+  border-radius: 2.5px;
+  object-fit: contain;
+  box-shadow: 0 1px 3px rgba(61,57,41,.08);
+}
+/* 胡牌张单独隔开，雀魂风格 */
+.example-win-tile {
+  margin-left: 10px;
+  box-shadow: 0 1px 4px rgba(90,122,74,.22);
+}
+.example-tile-blank {
+  background: transparent;
+  border: 1px dashed #d8d3c5;
+  box-shadow: none;
+}
+
+/* ---- 底部留白 ---- */
+.pad-bottom {
+  height: calc(20px + env(safe-area-inset-bottom));
+}
+

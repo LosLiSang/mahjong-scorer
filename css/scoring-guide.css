@@ -1,0 +1,333 @@
+/* pages/scoring-guide/index.wxss — 算分详解样式 */
+
+/* ===== Tab 条 ===== */
+.tabs { margin-bottom: 14px; }
+.tabs .seg-btn { font-size: 14px; padding: 10px 7px; }
+
+.tab-content { padding-bottom: 20px; }
+
+/* ===== 引导文字 ===== */
+.guide-intro {
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.intro-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 7px;
+}
+.intro-text {
+  font-size: 13px;
+  color: #746e5c;
+  line-height: 1.8;
+}
+
+/* ===== 区块标题 ===== */
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3d3929;
+  margin: 18px 0 10px;
+}
+
+/* ===== 符数表 ===== */
+.fu-table {
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.fu-table-header {
+  display: flex;
+  background: #f5f4ee;
+  padding: 9px 10px;
+  border-bottom: 1px solid #e8e5d8;
+}
+.fu-table-header text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a8470;
+}
+.fu-table-row {
+  display: flex;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid #f0ece0;
+  align-items: flex-start;
+}
+.fu-table-row:last-child { border-bottom: none; }
+.fu-col-name {
+  width: 65px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #3d3929;
+  font-weight: 600;
+}
+.fu-col-value {
+  width: 60px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #c96442;
+  font-weight: 700;
+  text-align: center;
+}
+.fu-col-detail {
+  flex: 1;
+  font-size: 11px;
+  color: #8a8470;
+  line-height: 1.6;
+}
+
+/* ===== 符计算示例 ===== */
+.fu-example {
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  padding: 14px;
+}
+.example-desc {
+  font-size: 12px;
+  color: #746e5c;
+  line-height: 1.8;
+  display: block;
+  margin-bottom: 10px;
+}
+.example-steps {
+  background: #fdfaf5;
+  border-radius: 7px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.example-step {
+  display: flex;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 0.5px dashed #e8e5d8;
+}
+.example-step:last-child { border-bottom: none; }
+.step-label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #3d3929;
+  font-weight: 500;
+}
+.step-fu {
+  width: 50px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #c96442;
+  font-weight: 700;
+  text-align: center;
+}
+.step-note {
+  flex: 1;
+  font-size: 11px;
+  color: #8a8470;
+}
+.example-total {
+  background: #f0ebdf;
+  border-radius: 7px;
+  padding: 12px;
+  text-align: center;
+}
+.total-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3d3929;
+  margin-bottom: 4px;
+}
+.total-raw {
+  display: block;
+  font-size: 11px;
+  color: #746e5c;
+  margin-bottom: 3px;
+}
+.total-rounded {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #3d3929;
+}
+.total-rounded .highlight {
+  color: #c96442;
+  font-size: 17px;
+}
+
+/* ===== 计算器 ===== */
+.calculator {
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  padding: 14px;
+}
+.picker-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f4ee;
+  border: 1px solid #e8e5d8;
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #3d3929;
+  margin-bottom: 4px;
+}
+.picker-arrow { font-size: 16px; color: #c96442; }
+
+.toggle-row {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 10px;
+  background: #f5f4ee;
+  border: 1px solid #e8e5d8;
+  border-radius: 7px;
+  text-align: center;
+  font-size: 13px;
+  color: #3d3929;
+  transition: all 0.15s;
+}
+.toggle-btn.active {
+  background: #c96442;
+  border-color: #c96442;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 计算结果 ===== */
+.calc-result { margin-top: 14px; }
+.calc-head {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.calc-condition {
+  font-size: 12px;
+  color: #8a8470;
+}
+.calc-mangan-badge {
+  background: #c96442;
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.calc-detail { margin-top: 6px; }
+.calc-base {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d3929;
+  margin-bottom: 4px;
+}
+.calc-formula {
+  display: block;
+  font-size: 11px;
+  color: #746e5c;
+  margin-bottom: 2px;
+}
+.calc-breakdown {
+  display: block;
+  font-size: 11px;
+  color: #5a7a4a;
+}
+.calc-expand {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 0.5px dashed #e8e5d8;
+}
+.expand-title {
+  display: block;
+  font-size: 11px;
+  color: #8a8470;
+  margin-bottom: 4px;
+}
+.expand-text {
+  display: block;
+  font-size: 11px;
+  color: #746e5c;
+  font-family: monospace;
+  line-height: 1.8;
+}
+
+/* ===== 满贯卡片 ===== */
+.mangan-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.mangan-card {
+  background: #fff;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.mangan-card-head {
+  background: linear-gradient(135deg, #c96442, #a84e32);
+  padding: 9px 12px;
+}
+.mangan-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.mangan-card-body { padding: 10px 12px; }
+.mangan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 0.5px solid #f5f4ee;
+}
+.mangan-row:last-child { border-bottom: none; }
+.mangan-key {
+  font-size: 12px;
+  color: #8a8470;
+}
+.mangan-val {
+  font-size: 12px;
+  color: #3d3929;
+  font-weight: 500;
+}
+.mangan-val.base {
+  color: #c96442;
+  font-weight: 700;
+}
+.mangan-val.dealer {
+  color: #c96442;
+  font-weight: 600;
+}
+
+/* ===== 满贯提示 ===== */
+.mangan-tip {
+  margin-top: 14px;
+  background: #fffef7;
+  border: 1px solid #e8e5d8;
+  border-radius: 9px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+.tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.tip-text {
+  font-size: 12px;
+  color: #746e5c;
+  line-height: 1.8;
+}
+
+/* ===== 底栏留白 ===== */
+.bottom-spacer { height: 50px; }
+

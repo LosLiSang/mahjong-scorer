@@ -2,7 +2,7 @@
 // 只切换 section 可见性；各视图的 DOM 与事件在各自脚本加载时初始化一次。
 (function () {
 'use strict';
-  const ROUTES = ['scorer', 'tutorial', 'sichuan', 'vision', 'settings'];
+  const ROUTES = ['scorer', 'tutorial', 'sichuan', 'vision', 'settings', 'yaku-catalog', 'scoring-guide'];
   const TAB_ROUTES = ['scorer', 'tutorial', 'sichuan', 'settings']; // tab 栏顺序
 
   function currentRoute() {
