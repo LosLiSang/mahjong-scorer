@@ -1,0 +1,28 @@
+/* css/vision.css — 拍照识图视图 */
+.vision-capture { display: flex; gap: 8px; margin-bottom: 4px; }
+.vision-capture-btn { flex: 1; text-align: center; display: block; line-height: 1.2; }
+
+.vision-preview img {
+  width: 100%; max-height: 260px; object-fit: contain;
+  background: #f5f4ee; border: 1px solid #e8e5d8;
+  border-radius: 8px; margin-bottom: 8px;
+}
+
+.vision-status { min-height: 20px; font-size: 13px; color: #8a8470; margin: 8px 0; line-height: 1.6; }
+.vision-status.ok { color: #5a7a4a; }
+.vision-status.error { color: #c0392b; }
+
+/* 识别结果复用计分器的 tile-key / count-badge 样式 */
+.vision-chip { max-width: 42px; }
+#visionTiles { margin-bottom: 10px; }
+
+.vision-diff { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.9; }
+.vision-diff .diff-ok { color: #5a7a4a; font-weight: 600; }
+.vision-diff .diff-error { color: #c0392b; }
+
+.vision-stats { margin-top: 14px; font-size: 12px; color: #8a8470; line-height: 1.8; }
+.vision-stats table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.vision-stats th, .vision-stats td {
+  border-top: 1px solid #eee9da; padding: 5px 4px;
+  text-align: left; font-weight: normal;
+}
