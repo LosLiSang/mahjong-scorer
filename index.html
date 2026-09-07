@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/yaku-catalog.css">
 <link rel="stylesheet" href="css/scoring-guide.css">
 <link rel="stylesheet" href="css/tutorial.css">
+<link rel="stylesheet" href="css/sichuan.css">
 <link rel="stylesheet" href="css/vision.css">
 <link rel="stylesheet" href="css/settings.css">
 </head>
@@ -239,7 +240,29 @@
 
 <!-- ============ 川麻积分（切片3迁移） ============ -->
 <section class="view" id="view-sichuan">
-  <div class="panel placeholder">川麻积分 · 迁移中<br>小程序版内容（定缺 / 查大叫 / 查花猪 / 退税 / 诈和）将在切片3原样迁移</div>
+  <div class="container">
+    <div class="table-board sichuan-board" id="scBoard"></div>
+    <div class="sichuan-actions">
+      <div class="btn-row sichuan-score-actions">
+        <button class="btn" id="scOpenWin" type="button">胡牌积分</button>
+        <button class="btn btn-secondary" id="scOpenGang" type="button">杠分</button>
+        <button class="btn btn-secondary" id="scOpenPenalty" type="button">罚分</button>
+      </div>
+      <div class="table-setup-hint">点击东、南、西、北任一玩家卡片修改该玩家信息</div>
+      <div class="toolbar">
+        <button class="btn btn-danger btn-small" id="scUndo" type="button">撤销</button>
+        <button class="btn btn-danger btn-small" id="scHistory" type="button">记录</button>
+        <button class="btn btn-danger btn-small" id="scReset" type="button">重置</button>
+      </div>
+    </div>
+    <div class="rights-banner"><span class="rights-owner">© 2026 Lisang</span><span class="rights-contact">权利与合作联系 · lisangcode@outlook.com</span></div>
+  </div>
+  <div class="overlay" id="scWinOverlay"><div class="modal sichuan-win-modal" id="scWinBody"></div></div>
+  <div class="overlay" id="scFanExampleOverlay"><div class="modal compact-modal fan-example-modal" id="scFanExampleBody"></div></div>
+  <div class="overlay" id="scGangOverlay"><div class="modal compact-modal" id="scGangBody"></div></div>
+  <div class="overlay" id="scPenaltyOverlay"><div class="modal penalty-modal" id="scPenaltyBody"></div></div>
+  <div class="overlay" id="scSetupOverlay"><div class="modal compact-modal setup-modal" id="scSetupBody"></div></div>
+  <div class="overlay" id="scHistoryOverlay"><div class="modal" id="scHistoryBody"></div></div>
 </section>
 
 <!-- ============ 拍照识牌 ============ -->
@@ -314,6 +337,7 @@
 <script src="js/views/scorer.js"></script>
 <script src="js/views/yaku-catalog.js"></script>
 <script src="js/views/tutorial.js"></script>
+<script src="js/views/sichuan.js"></script>
 <script src="js/views/scoring-guide.js"></script>
 <script src="js/views/vision.js"></script>
 <script src="js/views/settings.js"></script>
