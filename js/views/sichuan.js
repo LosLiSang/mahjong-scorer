@@ -89,7 +89,6 @@
             : '')
           + '</div>';
       }).join('');
-    $('scHistoryCount').textContent = '记录（' + game.history.length + '）';
   }
 
   // ============ 胡牌弹窗 ============

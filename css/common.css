@@ -21,31 +21,50 @@
 .nav-card:active { opacity: .7; }
 
 /* ===== 牌桌/玩家卡/弹窗公共件(自 common.wxss 抽取, rpx→px) ===== */
-.compact-modal { max-width: 270px; height: auto; }
-.modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 14px; color: #3d3929; }
-.modal-close { position: sticky; top: -9px; z-index: 3; float: right; width: 30px; height: 30px; margin: -9px -8px 4px 8px; border: 1px solid #ddd7c8; border-radius: 50%; background: rgba(250,249,243,.96); color: #746e5c; font-size: 20px; line-height: 28px; text-align: center; }
-.modal-actions { display: flex; gap: 7px; margin-top: 14px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-.modal-actions .btn { flex: 1; }
-label, .label { display: block; font-size: 12px; color: #8a8470; margin: 12px 0 5px; font-weight: 500; }
-.label-row { display: flex; justify-content: space-between; font-size: 12px; color: #8a8470; margin: 9px 0 4px; }
-.haku-tile { background: #fffef9; border: 1px solid #8f8a7c; border-radius: 3px; box-sizing: border-box; box-shadow: 0 1px 2px rgba(50,45,32,.18); }
-.table-corner { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 1px; min-width: 48px; color: #918a78; line-height: 1.25; pointer-events: none; }
-.corner-label { font-size: 8.5px; letter-spacing: 1px; }
-.corner-value { color: #5f594a; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.table-center { position: absolute; z-index: 3; left: 50%; top: calc(50% + 10px); width: 86px; height: 70px; min-height: 0; transform: translate3d(-50%, -50%, 0); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,.96); border: 1px solid #dcd6ca; border-radius: 9px; padding: 5px; box-shadow: 0 0 9px rgba(61,57,41,.09); }
-.center-kicker { color: #aaa28e; font-size: 7.5px; line-height: 1.2; letter-spacing: 1.5px; }
-.table-center .round-info { color: #c46645; font-size: 14.5px; font-weight: 700; line-height: 1.25; }
-.table-center .sub-info { max-width: 100%; margin-top: 1.5px; overflow: hidden; color: #746e5c; font-size: 8.5px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-.player-card { position: absolute; z-index: 4; left: 50%; top: 50%; width: 98px; min-height: 49px; margin-left: -49px; margin-top: -24.5px; box-sizing: border-box; background: rgba(255,255,255,.94); border: 1px solid #ddd8cd; border-radius: 8px; padding: 5.5px 6px; text-align: center; box-shadow: 0 2px 7px rgba(61,57,41,.07); transition: transform .42s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
-.player-card.seat-dong { transform: translate3d(0, 87px, 0); }
-.player-card.seat-nan { transform: translate3d(110px, 0, 0); }
-.player-card.seat-xi { transform: translate3d(0, -87px, 0); }
-.player-card.seat-bei { transform: translate3d(-110px, 0, 0); }
-.player-card.dealer { border-color: #c46645; box-shadow: 0 2.5px 8px rgba(196,102,69,.13), inset 0 2px 0 #c46645; }
-.player-card.riichi { border-color: #d9a493; background: #fff9f6; }
-.player-card .seat-label { color: #9a927f; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
-.player-card .name { max-width: 100%; margin: 2px 0 1px; overflow: hidden; color: #4b4638; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.player-card .points { color: #2f2c24; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .2.5px; }
-.player-card .delta { color: #5a7a4a; font-size: 10px; height: 13px; }
-.player-card .delta.minus { color: #c96442; }
-.player-card .riichi-mark { position: absolute; top: 4px; right: 4.5px; padding: 1px 4px; border-radius: 4px; background: #c46645; color: #fff; font-size: 7.5px; }
+.compact-modal {max-width: 270px; height: auto; }
+.modal-title {font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 14px; color: #3d3929; }
+.modal-close {position: sticky; top: -9px; z-index: 3; float: right; width: 30px; height: 30px; margin: -9px -8px 4px 8px; border: 1px solid #ddd7c8; border-radius: 50%; background: rgba(250,249,243,.96); color: #746e5c; font-size: 20px; line-height: 28px; text-align: center; }
+.modal-actions {display: flex; gap: 7px; margin-top: 14px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+.modal-actions .btn {flex: 1; }
+label, .label {display: block; font-size: 12px; color: #8a8470; margin: 12px 0 5px; font-weight: 500; }
+.haku-tile {background: #fffef9; border: 1px solid #8f8a7c; border-radius: 3px; box-sizing: border-box; box-shadow: 0 1px 2px rgba(50,45,32,.18); }
+.table-board {position: relative;
+  height: 280px;
+  margin-bottom: 13px;
+  padding: 7px;
+  border: 1px solid #d9d4c8;
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), #e8e3d9 calc(50% - 0.5px), #e8e3d9 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(transparent calc(50% - 0.5px), #e8e3d9 calc(50% - 0.5px), #e8e3d9 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    #faf9f5;
+  box-shadow: 0 4px 14px rgba(61,57,41,.07), inset 0 0 0 4px rgba(255,255,255,.58);
+  box-sizing: border-box; }
+.table-corner {position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 1px; min-width: 48px; color: #918a78; line-height: 1.25; pointer-events: none; }
+.corner-label {font-size: 8.5px; letter-spacing: 1px; }
+.corner-value {color: #5f594a; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.table-center {position: absolute; z-index: 3; left: 50%; top: calc(50% + 10px); width: 86px; height: 70px; min-height: 0; transform: translate3d(-50%, -50%, 0); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(255,255,255,.96); border: 1px solid #dcd6ca; border-radius: 9px; padding: 5px; box-shadow: 0 0 9px rgba(61,57,41,.09); }
+.center-kicker {color: #aaa28e; font-size: 7.5px; line-height: 1.2; letter-spacing: 1.5px; }
+.table-center .round-info {color: #c46645; font-size: 14.5px; font-weight: 700; line-height: 1.25; }
+.table-center .sub-info {max-width: 100%; margin-top: 1.5px; overflow: hidden; color: #746e5c; font-size: 8.5px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.player-card {position: absolute; z-index: 4; left: 50%; top: 50%; width: 98px; min-height: 49px; margin-left: -49px; margin-top: -24.5px; box-sizing: border-box; background: rgba(255,255,255,.94); border: 1px solid #ddd8cd; border-radius: 8px; padding: 5.5px 6px; text-align: center; box-shadow: 0 2px 7px rgba(61,57,41,.07); transition: transform .42s ease, border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.player-card.seat-dong {transform: translate3d(0, 87px, 0); }
+.player-card.seat-nan {transform: translate3d(110px, 0, 0); }
+.player-card.seat-xi {transform: translate3d(0, -87px, 0); }
+.player-card.seat-bei {transform: translate3d(-110px, 0, 0); }
+.player-card.dealer {border-color: #c46645; box-shadow: 0 2.5px 8px rgba(196,102,69,.13), inset 0 2px 0 #c46645; }
+.player-card.riichi {border-color: #d9a493; background: #fff9f6; }
+.player-card .seat-label {color: #9a927f; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
+.player-card .name {max-width: 100%; margin: 2px 0 1px; overflow: hidden; color: #4b4638; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.player-card .points {color: #2f2c24; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.25px; }
+.player-card .delta {color: #5a7a4a; font-size: 10px; height: 13px; }
+.player-card .delta.minus {color: #c96442; }
+.player-card .riichi-mark {position: absolute; top: 4px; right: 4.5px; padding: 1px 4px; border-radius: 4px; background: #c46645; color: #fff; font-size: 7.5px; }
+
+/* 表单/弹窗小标题(common.wxss 中无 .label,H5 按整体风格补齐) */
+.label { display: block; font-size: 12px; color: #8a8470; margin: 12px 0 4px; font-weight: 500; }
+/* 四角定位(common.wxss 96-99, rpx→px) */
+.corner-tl { top: 10px; left: 11px; align-items: flex-start; }
+.corner-tr { top: 10px; right: 11px; align-items: flex-end; }
+.corner-bl { bottom: 10px; left: 11px; align-items: flex-start; }
+.corner-br { right: 11px; bottom: 11px; align-items: flex-end; }

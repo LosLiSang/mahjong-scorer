@@ -5,9 +5,10 @@
 ## 亮点
 
 - **日麻整场计分**：四家整场点数、本场与供托管理，自动计算役、番、符与最终支付。
-- **川麻积分**（小程序端）：定缺、查花猪、查大叫、退税、诈和等川麻罚分与积分规则。
-- **教学馆**（小程序端）：术语释义、开局策略攻略、役形判断等玩法学习内容。
 - **拍照识牌**（H5）：一张手牌照片自动识别全部牌张，可纠错后一键填入，替代手动点选。
+- **川麻积分**：定缺、查花猪、查大叫、退税、诈和等川麻罚分与积分规则。
+- **教学馆**：术语释义、开局策略攻略、役形判断等玩法学习内容。
+- **役种图鉴 / 算分详解**：全部役种条件与牌例；符数、点数、满贯档位拆解与交互计算器。
 - **实时联机房间**（小程序端）：房间码/分享加入，多人实时同步，带版本冲突保护。
 - **纯前端可跑**：H5 版无后端依赖，可本地直接打开或任意静态托管部署。
 
@@ -15,22 +16,23 @@
 
 | 前端 | 入口 | 说明 |
 | --- | --- | --- |
-| H5 | `index.html` | 多文件静态应用：底部 tab 导航（日麻计分/教学馆/川麻积分/设置）+ hash 路由，含拍照识牌 |
+| H5 | `index.html` | 多文件静态应用：底部 tab 导航（日麻计分/教学馆/川麻积分/设置）+ hash 路由，含拍照识牌与全部教学工具 |
 | 微信小程序 | `miniprogram/` | 完整小程序，含日麻、川麻、教学馆、役种图鉴、算分详解等页面 |
 
-两套前端共用同一套计分核心逻辑与 SVG 牌图。H5 的教学馆与川麻页为迁移占位（切片3 迁移中）。
+两套前端共用同一套计分核心逻辑与 SVG 牌图。H5 联机房间暂未提供（小程序走 wx.cloud，H5 待接 Supabase，见调研文档）。
 
 ### H5 目录结构
 
 ```
 index.html               # 壳：视图容器 + 底部 tab + 脚本加载序
-css/                     # theme(计分器原样式) / shell / vision / settings
+css/                     # theme(计分器原样式) / shell / common / tutorial / yaku-catalog / scoring-guide / sichuan / vision / settings
 js/core/mahjong-logic.js # 计分核心（与 miniprogram/utils/mahjong-logic.js 字节一致，test-logic.js 有防漂移断言）
 js/core/tiles.js         # 牌定义 / SVG 映射 / 牌码解析
-js/core/vision-result.js  # 识图纯逻辑：JSON 提取、牌码校验、多重集合比对、准确率
+js/core/vision-result.js # 识图纯逻辑：JSON 提取、牌码校验、多重集合比对、准确率
+js/data/                 # 教学/川麻数据（与小程序 utils 字节级副本，test-h5-data.js 防漂移）
 js/api/openai-client.js  # OpenAI 兼容 chat/completions 视觉调用（仅传输层）
 js/store/settings-store.js # API 配置持久化（localStorage，仅存本机）
-js/views/                # scorer / vision / settings / router
+js/views/                # router / scorer / tutorial / yaku-catalog / scoring-guide / sichuan / vision / settings
 tiles/                   # H5 牌图 SVG
 ```
 
@@ -119,6 +121,7 @@ python3 -m http.server 8080
 ```bash
 node test-logic.js          # 日麻计分核心（含与小程序副本的字节一致性断言）
 node test-h5-vision.js      # 拍照识图纯逻辑（JSON 解析/牌码校验/比对/准确率/设置存储）
+node test-h5-data.js        # 教学数据层（与小程序副本字节一致 + 结构校验）
 node test-miniprogram.js    # 小程序与川麻计分
 node test-room-domain.js    # 联机房间领域逻辑
 node test-room-service.js   # 联机房间服务
