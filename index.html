@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/yaku-catalog.css">
 <link rel="stylesheet" href="css/scoring-guide.css">
+<link rel="stylesheet" href="css/tutorial.css">
 <link rel="stylesheet" href="css/vision.css">
 <link rel="stylesheet" href="css/settings.css">
 </head>
@@ -186,11 +187,30 @@
 <!-- ============ 教学馆（切片3迁移） ============ -->
 <section class="view" id="view-tutorial">
   <div class="container">
-    <div class="panel placeholder">教学馆 · 课程迁移中<br>以下工具已可用</div>
+    <div class="hero">
+      <div class="hero-title">从认牌到看懂点数</div>
+      <div class="hero-sub">系统学习日麻基础，新手也能快速上手计分</div>
+      <div class="progress-section">
+        <div class="progress-bar"><div class="progress-fill" id="tuProgressFill"></div></div>
+        <div class="progress-text" id="tuProgressText"></div>
+      </div>
+    </div>
+    <div class="section-title">📚 课程</div>
+    <div class="lesson-list" id="tuLessonList"></div>
+    <div class="section-title">🎯 专项训练</div>
+    <div class="training-list" id="tuTrainingList"></div>
+    <div class="section-title">🧭 工具</div>
     <div class="nav-cards">
       <a class="nav-card" href="#/yaku-catalog"><span>📋</span><span>役种图鉴</span><span style="margin-left:auto;color:#c46645">›</span></a>
       <a class="nav-card" href="#/scoring-guide"><span>🧮</span><span>算分详解</span><span style="margin-left:auto;color:#c46645">›</span></a>
     </div>
+    <div class="rights-banner"><span class="rights-owner">© 2026 Lisang</span><span class="rights-contact">权利与合作联系 · lisangcode@outlook.com</span></div>
+  </div>
+  <div class="overlay tab-safe-overlay" id="tuLessonOverlay">
+    <div class="tutorial-modal" id="tuLessonBody"></div>
+  </div>
+  <div class="overlay tab-safe-overlay" id="tuQuizOverlay">
+    <div class="tutorial-modal quiz-modal" id="tuQuizBody"></div>
   </div>
 </section>
 
@@ -293,6 +313,7 @@
 <script src="js/api/openai-client.js"></script>
 <script src="js/views/scorer.js"></script>
 <script src="js/views/yaku-catalog.js"></script>
+<script src="js/views/tutorial.js"></script>
 <script src="js/views/scoring-guide.js"></script>
 <script src="js/views/vision.js"></script>
 <script src="js/views/settings.js"></script>
