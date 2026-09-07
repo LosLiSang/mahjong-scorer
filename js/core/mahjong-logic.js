@@ -641,6 +641,7 @@ function checkPinfu(decomp, params, counts) {
 // }
 function evaluateHand(params) {
   const { tiles } = params;
+  if (!tiles || !Array.isArray(tiles)) return { valid: false, error: '请提供有效牌张列表' };
   // 有效牌数：14（无杠）/ 15（1杠）/ 16（2杠）/ 17（3杠）/ 18（4杠）
   // 杠子信息通过 openMentsus(type=kantsu) 和 closedKantsus 传入
   // 计算杠子数量来决定合法牌数
@@ -820,6 +821,7 @@ function addBonusYaku(yaku, params) {
   let extra = 0;
   if (params.doraCount) extra += params.doraCount;
   if (params.akadoraCount) extra += params.akadoraCount;
+  if (params.northCount) extra += params.northCount;
   if (params.isRiichi || params.isDoubleRiichi) {
     // 里宝牌（不在此处理，外层算入 doraCount）
   }

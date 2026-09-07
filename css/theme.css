@@ -1,0 +1,84 @@
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", Georgia, serif; background: #f5f4ee; color: #3d3929; min-height: 100vh; padding: 12px; max-width: 480px; margin: 0 auto; }
+
+/* 顶部状态栏 */
+.status-bar { background: #fff; border: 1px solid #e8e5d8; border-radius: 12px; padding: 14px; margin-bottom: 12px; text-align: center; }
+.status-bar .round-info { font-size: 18px; font-weight: 600; color: #c96442; }
+.status-bar .sub-info { font-size: 13px; color: #8a8470; margin-top: 4px; }
+
+/* 玩家卡片 */
+.players { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.player-card { background: #fff; border: 1px solid #e8e5d8; border-radius: 12px; padding: 12px; text-align: center; position: relative; transition: all .2s; }
+.player-card.dealer { border: 2px solid #c96442; }
+.player-card.riichi { background: #fdf6f2; }
+.player-card .seat { font-size: 12px; color: #c96442; font-weight: 500; }
+.player-card .name { font-size: 15px; margin: 4px 0; color: #3d3929; }
+.player-card .points { font-size: 22px; font-weight: 600; color: #3d3929; }
+.player-card .delta { font-size: 13px; height: 16px; color: #5a7a4a; }
+.player-card .delta.minus { color: #c96442; }
+.player-card .riichi-mark { position: absolute; top: 4px; right: 6px; font-size: 11px; color: #c96442; }
+
+/* 按钮 */
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.btn { background: #c96442; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: opacity .2s; }
+.btn:active { opacity: 0.7; }
+.btn-secondary { background: #e8e5d8; color: #3d3929; }
+.btn-danger { background: #8a8470; }
+.btn-small { padding: 8px 12px; font-size: 13px; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+
+/* 弹窗 */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(60, 55, 40, 0.4); z-index: 100; justify-content: center; align-items: flex-end; }
+.overlay.active { display: flex; }
+.modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+.modal h3 { text-align: center; margin-bottom: 16px; color: #3d3929; font-weight: 600; }
+.modal label { display: block; font-size: 13px; color: #8a8470; margin: 12px 0 6px; font-weight: 500; }
+.modal select, .modal input { width: 100%; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; font-size: 16px; }
+.seg-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-btn { flex: 1; min-width: 60px; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; text-align: center; cursor: pointer; font-size: 14px; }
+.seg-btn.active { background: #c96442; border-color: #c96442; color: #fff; }
+.result-box { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 14px; margin: 14px 0; text-align: center; }
+.result-box .points { font-size: 28px; font-weight: 600; color: #5a7a4a; }
+.result-box .detail { font-size: 13px; color: #8a8470; margin-top: 6px; }
+.result-box .breakdown { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.6; }
+
+/* 历史 */
+.history-list { margin-top: 12px; }
+.history-item { background: #fff; border: 1px solid #e8e5d8; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 12px; color: #8a8470; }
+.history-item .who { color: #c96442; font-weight: 600; }
+
+/* 工具栏 */
+.toolbar { display: flex; gap: 8px; margin-top: 12px; }
+.toolbar .btn { flex: 1; }
+
+/* 选牌器 */
+.hand-area { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 10px; min-height: 56px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.hand-area .empty-hint { color: #b8b299; font-size: 13px; width: 100%; text-align: center; }
+.hand-tile-img { width: 34px; height: 46px; cursor: pointer; border-radius: 4px; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+.hand-tile-img:active { transform: scale(0.9); }
+.hand-tile-img.win-tile { outline: 3px solid #5a7a4a; outline-offset: 2px; }
+.win-tile-picker { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px; background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; min-height: 48px; }
+.win-tile-option { width: 30px; height: 41px; border: 2px solid transparent; border-radius: 5px; cursor: pointer; background: transparent; padding: 0; }
+.win-tile-option img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.win-tile-option.active { border-color: #5a7a4a; box-shadow: 0 0 0 2px rgba(90,122,74,.16); }
+.win-tile-hint { color: #b8b299; font-size: 12px; width: 100%; text-align: center; align-self: center; }
+.tile-keyboard { display: flex; flex-direction: column; gap: 6px; }
+.tile-row { display: flex; gap: 4px; justify-content: center; }
+.tile-key { background: #fff; border: 1px solid #e8e5d8; border-radius: 6px; flex: 1; max-width: 42px; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.tile-key img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+/* 白板本身没有图案，浅色界面中为牌体补上清晰轮廓 */
+img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.9), 0 1px 2px rgba(61,57,41,.18); }
+.tile-key .count-badge { position: absolute; top: -2px; right: -2px; background: #c96442; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 1; }
+.tile-key.disabled { opacity: 0.3; pointer-events: none; }
+.tile-key:active { transform: scale(0.92); }
+.hand-info { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #8a8470; margin-bottom: 6px; font-weight: 500; }
+
+/* 分组编辑 */
+.mentsu-group { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; padding: 8px; margin-bottom: 6px; }
+.mentsu-group .mentsu-tiles { display: flex; gap: 2px; flex: 1; min-width: 0; }
+.mentsu-group .mentsu-tiles img { width: 26px; height: 35px; }
+.mentsu-group .mentsu-type { display: flex; flex-direction: column; gap: 2px; }
+.mentsu-group .type-btn { font-size: 10px; padding: 4px 6px; background: #f5f4ee; border: 1px solid #e8e5d8; border-radius: 4px; color: #8a8470; cursor: pointer; white-space: nowrap; }
+.mentsu-group .type-btn.active { background: #c96442; color: #fff; border-color: #c96442; }
+.mentsu-group .pair-label { font-size: 11px; color: #c96442; font-weight: 600; padding: 2px 6px; }

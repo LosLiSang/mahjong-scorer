@@ -1,9 +1,18 @@
-// test-logic.js — 验证 mahjong-logic.js 的核心逻辑
+// test-logic.js — 验证 js/core/mahjong-logic.js 的核心逻辑
 // 用法: node test-logic.js
 
+const fs = require('fs');
 const {
   countTiles, decompose, calcBasePoint, evaluateHand, isYaochuu,
-} = require('./mahjong-logic');
+} = require('./js/core/mahjong-logic');
+
+// H5 核心与小程序核心必须字节一致（防双副本漂移）
+const h5Core = fs.readFileSync(__dirname + '/js/core/mahjong-logic.js', 'utf8');
+const miniCore = fs.readFileSync(__dirname + '/miniprogram/utils/mahjong-logic.js', 'utf8');
+if (h5Core !== miniCore) {
+  console.error('漂移: js/core/mahjong-logic.js 与 miniprogram/utils/mahjong-logic.js 不一致，必须同步');
+  process.exit(1);
+}
 
 let pass = 0, fail = 0;
 

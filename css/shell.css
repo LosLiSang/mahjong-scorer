@@ -1,0 +1,31 @@
+// css/shell.css — 应用壳：视图切换、底部 tab 栏、通用面板（新增部分，不影响计分器原样式）
+body { padding-bottom: 66px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.tab-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: #faf9f3; border-top: 1px solid #e8e5d8;
+  display: flex; z-index: 50;
+}
+.tab-item {
+  flex: 1; text-align: center; padding: 13px 0 11px;
+  font-size: 12px; color: #8a8470; text-decoration: none;
+  font-family: inherit;
+}
+.tab-item.active { color: #c96442; font-weight: 600; }
+
+.panel {
+  background: #fff; border: 1px solid #e8e5d8; border-radius: 12px;
+  padding: 14px; margin-bottom: 12px;
+}
+.panel h2 { font-size: 16px; color: #3d3929; margin-bottom: 8px; }
+.panel-hint { font-size: 12px; color: #8a8470; line-height: 1.7; margin-bottom: 10px; }
+.panel-warn {
+  font-size: 12px; color: #a3641f; background: #fdf6ec;
+  border: 1px solid #f0e2c8; border-radius: 8px;
+  padding: 8px 10px; margin-top: 10px; line-height: 1.8;
+}
+.placeholder { text-align: center; color: #8a8470; padding: 48px 14px; line-height: 2.2; }
