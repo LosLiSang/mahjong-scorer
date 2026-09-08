@@ -16,6 +16,21 @@
 .vision-chip { max-width: 42px; }
 #visionTiles { margin-bottom: 10px; }
 
+/* 和牌弹窗内的识图入口：细描边胶囊，不压标题行 */
+.vision-entry-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid #c96442;
+  border-radius: 999px;
+  color: #c96442;
+  font-size: 12px; line-height: 1.5; font-family: inherit;
+  cursor: pointer;
+}
+.vision-entry-btn:active { background: #fdf6f2; }
+.vision-entry-btn svg { flex: 0 0 auto; }
+.hand-info-right { display: inline-flex; align-items: center; gap: 8px; }
+
 .vision-diff { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.9; }
 .vision-diff .diff-ok { color: #5a7a4a; font-weight: 600; }
 .vision-diff .diff-error { color: #c0392b; }

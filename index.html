@@ -62,8 +62,11 @@
       <div class="seg-group" id="loserSelect"></div>
     </div>
     <div class="hand-info">
-      <span>手牌（选牌）<button type="button" class="btn btn-secondary btn-small" onclick="gotoVision()" style="margin-left:8px;padding:4px 10px;font-size:12px">📷 拍照识牌</button></span>
-      <span id="handCount">0 张</span>
+      <span>手牌（选牌）</span>
+      <span class="hand-info-right">
+        <button type="button" class="vision-entry-btn" onclick="gotoVision()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>拍照识牌</button>
+        <span id="handCount">0 张</span>
+      </span>
     </div>
     <div id="autoJudgeHint" style="font-size:12px;text-align:center;margin-bottom:6px;color:#888">选好牌和最终和牌张后，点击“分析牌型”</div>
     <div class="hand-area" id="handArea">
