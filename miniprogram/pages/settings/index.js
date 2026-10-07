@@ -1,6 +1,5 @@
 // pages/settings/index.js — 设置
 
-const Config = require('../../config');
 const RoomService = require('../../utils/room-service');
 const Theme = require('../../utils/theme');
 
@@ -16,8 +15,8 @@ Page({
     nickname: '',
     avatarFileId: '',
     avatarUploading: false,
-    cloudEnvId: Config.cloudEnvId || '',
-    roomFunctionName: Config.roomFunctionName || 'mahjong-room',
+    // 只给用户看「能不能联机」，不展示云环境 ID、函数名等部署信息
+    roomAvailable: RoomService.isConfigured(),
     activeRiichiRoom: '',
     activeSichuanRoom: '',
     themeStyle: '',
