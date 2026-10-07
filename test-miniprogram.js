@@ -356,7 +356,7 @@ assert.equal(missingQuiz.length, 0, '役形判断专项应包含全部判断题�
     { progress: ['tiles', 'turn', 'winning-shape'], next: 'yaku', current: 'yaku', recommended: ['basic-concepts'] },
     { progress: ['tiles', 'yaku'], next: 'turn', current: 'intro', recommended: [] },
     { progress: TutorialData.MAHJONG_TUTORIAL.lessons.map(l => l.id), next: null, current: null,
-      recommended: ['basic-concepts', 'waits-scoring', 'yaku-shapes', 'opening-strategy'] },
+      recommended: TutorialData.MAHJONG_TUTORIAL.trainingTopics.map(t => t.id) },
   ];
   cases.forEach(c => {
     const home = TutorialData.buildTutorialHome(c.progress);
@@ -364,12 +364,12 @@ assert.equal(missingQuiz.length, 0, '役形判断专项应包含全部判断题�
     const cur = home.stages.find(stage => stage.current);
     assert.equal(cur ? cur.id : null, c.current, '当前阶段');
     assert.deepEqual(home.recommendedTrainings.map(t => t.id), c.recommended, '推荐训练');
-    assert.equal(home.trainings.length, 4, '训练全部可做，始终列出');
+    assert.equal(home.trainings.length, TutorialData.MAHJONG_TUTORIAL.trainingTopics.length, '训练全部可做，始终列出');
   });
   const stagedIds = TutorialData.MAHJONG_TUTORIAL.stages.flatMap(stage => stage.lessonIds);
   assert.deepEqual(stagedIds, TutorialData.MAHJONG_TUTORIAL.lessons.map(l => l.id), '阶段应按顺序覆盖全部章节且不重复');
   const fresh = TutorialData.buildTutorialHome([]);
-  assert.equal(fresh.trainings.find(t => t.id === 'yaku-shapes').hint, '建议先学完第 4–5 章');
+  assert.equal(fresh.trainings.find(t => t.id === 'yaku-shapes').hint, '建议先学完第 4–8 章');
 }
 assert(!/入门测验/.test(tutorialMarkup), '页面不应再显示单一的入门测验入口');
 const perfectYakuAnswers = yakuTraining.questions.map(question => question.answer);
