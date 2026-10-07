@@ -110,7 +110,7 @@
   width: 100%;
   max-width: 680rpx;
   max-height: 88vh;
-  background: #faf9f3;
+  background: var(--surface, #faf9f3);
   border-radius: 30rpx;
   padding: 36rpx;
   box-sizing: border-box;
@@ -162,7 +162,7 @@
 .detail-section-title {
   font-size: 24rpx;
   font-weight: 700;
-  color: #c96442;
+  color: var(--accent, #c96442);
   margin-bottom: 12rpx;
   letter-spacing: 1rpx;
 }

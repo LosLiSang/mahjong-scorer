@@ -3,11 +3,18 @@ const Shared = require('../../utils/shared');
 const Logic = require('../../utils/mahjong-logic');
 const Game = require('../../utils/game-engine');
 const RoomService = require('../../utils/room-service');
+const Theme = require('../../utils/theme');
 
 const LOCAL_STORAGE_KEY = 'mj_game_v2';
 const ACTIVE_ROOM_KEY = 'mj_active_room_v1';
 const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
 const ROOM_AVATAR_KEY = 'mj_room_avatar_v1';
+
+const ROUND_WINDS = ['东', '南', '西'];
+
+function roundWindOf(game) {
+  return ROUND_WINDS[Math.floor((game.roundIndex || 0) / 4) % 3];
+}
 
 const MELD_MODES = {
   shuntsu: [{ key:'closed', label:'门前' }, { key:'open', label:'副露' }],
@@ -30,6 +37,7 @@ const HAN_OPTIONS = Array.from({ length: 13 }, (_, i) => ({ value: i + 1, label:
 
 function buildPlayerViews(game, roomSeats) {
   const classMap = { '东': 'dong', '南': 'nan', '西': 'xi', '北': 'bei' };
+  const ranks = Shared.rankPlayers(game.players.map(player => player.points));
   return game.players.map((player, index) => {
     const seat = Game.seatOf(game, index);
     const roomSeat = roomSeats && roomSeats[index];
@@ -38,6 +46,7 @@ function buildPlayerViews(game, roomSeats) {
       index,
       seat,
       seatClass: classMap[seat],
+      rank: ranks[index],
       avatarFileId: roomSeat && roomSeat.avatarFileId || '',
       avatarText
     });
@@ -71,6 +80,8 @@ Page({
     game: Game.newGame(4),
     playerViews: buildPlayerViews(Game.newGame(4)),
     roundName: '',
+    roundWind: '东',
+    themeStyle: '',
     // win modal
     showWin: false, winStep: 1,
     hand: [], handDisplay: [], handHistory: [], win: null,
@@ -162,7 +173,9 @@ Page({
 
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
-    if (tabBar) tabBar.setData({ selected: 0 });
+    const theme = Theme.current();
+    this.setData({ themeStyle: theme.pageStyle });
+    if (tabBar) tabBar.setData({ selected: 0, themeStyle: theme.tabBarStyle });
     if (this.data.room && this.data.room.roomCode && this.data.roomConfigured) {
       this.startRoomWatch(this.data.room.roomCode).catch(err => this.roomError(err));
       return;
@@ -189,6 +202,7 @@ Page({
       game,
       playerViews: buildPlayerViews(game),
       roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`,
+      roundWind: roundWindOf(game),
       undoStack: []
     });
     this.saveGame(game);
@@ -460,6 +474,7 @@ Page({
       playerViews: buildPlayerViews(room.game, room.seats),
       roomAvatarFileId,
       roundName: rn[room.game.roundIndex] || `第${room.game.roundIndex + 1}局`,
+      roundWind: roundWindOf(room.game),
       undoStack: [],
       roomActivityViews,
       lastSeenRoomActionId: action && action.id || previousActionId
@@ -626,7 +641,7 @@ Page({
     if (!stack.length) { wx.showToast({ title: '没有可撤销操作', icon: 'none' }); return; }
     const game = stack.pop();
     const rn = Game.roundNames(game);
-    this.setData({ undoStack: stack, game, playerViews: buildPlayerViews(game), roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局` });
+    this.setData({ undoStack: stack, game, playerViews: buildPlayerViews(game), roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`, roundWind: roundWindOf(game) });
     this.saveGame(game);
   },
 
@@ -1086,7 +1101,7 @@ Page({
 
     this.snapshot();
     const rn = Game.roundNames(next);
-    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showWin: false, analysisStage: 0 });
+    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, roundWind: roundWindOf(next), showWin: false, analysisStage: 0 });
     this.saveGame(next);
     wx.showToast({ title: `+${payment.total}点`, icon: 'success' });
   },
@@ -1150,7 +1165,7 @@ Page({
     }
     this.snapshot();
     const rn = Game.roundNames(next);
-    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, showDraw: false });
+    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, roundWind: roundWindOf(next), showDraw: false });
     this.saveGame(next);
   },
 

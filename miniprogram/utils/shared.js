@@ -69,8 +69,14 @@ function emptyConditions() {
   return { isIppatsu:false, isLastTileTsumo:false, isLastTileRon:false, isRobbingKan:false, isWinFromDeadWall:false };
 }
 
+// 按分数计算名次（同分同名次：1,1,3,4）
+function rankPlayers(scores) {
+  const sorted = [...scores].sort((a, b) => b - a);
+  return scores.map(value => sorted.indexOf(value) + 1);
+}
+
 module.exports = {
   TILE_DEFS, TILE_FILES, ALL_TILES, TILE_NAME_MAP,
   tileSrc, tileDisplay, tileShortName,
-  compareTile, nextDora, clone, unique, emptyConditions
+  compareTile, nextDora, clone, unique, emptyConditions, rankPlayers
 };

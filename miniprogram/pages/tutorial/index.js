@@ -1,5 +1,6 @@
 // pages/tutorial/index.js — 日麻计分器 · 教学馆
 const Shared = require('../../utils/shared');
+const Theme = require('../../utils/theme');
 const {
   MAHJONG_TUTORIAL,
   getTutorialQuestion,
@@ -56,7 +57,9 @@ Page({
 
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
-    if (tabBar) tabBar.setData({ selected: 1 });
+    const theme = Theme.current();
+    this.setData({ themeStyle: theme.pageStyle });
+    if (tabBar) tabBar.setData({ selected: 2, themeStyle: theme.tabBarStyle });
     this.loadProgress();
   },
 

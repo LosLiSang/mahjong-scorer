@@ -1,12 +1,18 @@
 // pages/sichuan/index.js — 川麻积分
 const {
-  SICHUAN_FAN_TYPES, SICHUAN_PENALTY_TYPES, calculateSichuanFan, scoreFromFan,
+  SICHUAN_FAN_TYPES, SICHUAN_PENALTY_TYPES, SICHUAN_PLAY_MODES, SICHUAN_GANG_KINDS,
+  SICHUAN_BASE_SCORE_OPTIONS, SICHUAN_FAN_CAP_OPTIONS,
+  calculateSichuanFan, scoreFromFan, calculateGang, findGangKind,
+  normalizeSichuanRules, sichuanPlayModeName,
   createSichuanGame, createTransferEntry, applySichuanEntry,
   undoSichuanEntry, setSichuanMissingSuit
 } = require('../../utils/sichuan-score');
-const { clone, tileSrc } = require('../../utils/shared');
+const { clone, tileSrc, rankPlayers } = require('../../utils/shared');
 const RoomService = require('../../utils/room-service');
 const SichuanRoom = require('../../utils/sichuan-room');
+const Theme = require('../../utils/theme');
+
+const ENTRY_TYPE_LABELS = { win: '胡牌', gang: '杠分', penalty: '罚分', manual: '转分', custom: '转分' };
 
 const STORAGE_KEY = 'mj_sichuan_v1';
 const ACTIVE_ROOM_KEY = 'mj_sichuan_active_room_v1';
@@ -14,8 +20,18 @@ const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
 const ROOM_AVATAR_KEY = 'mj_room_avatar_v1';
 const SEATS = ['东', '南', '西', '北'];
 const SUIT_LABELS = { m: '缺万', p: '缺筒', s: '缺索' };
-const FAN_CAP_OPTIONS = [3, 4, 5, 6];
-const BASE_SCORE_OPTIONS = [1, 2, 5, 10];
+const FAN_CAP_OPTIONS = SICHUAN_FAN_CAP_OPTIONS;
+const BASE_SCORE_OPTIONS = SICHUAN_BASE_SCORE_OPTIONS;
+
+// 旧存档 / 旧房间可能没有 rules，统一补齐
+function withRules(game) {
+  if (!game) return game;
+  return Object.assign({}, game, { rules: normalizeSichuanRules(game.rules) });
+}
+
+function firstOther(index) {
+  return index === 0 ? 1 : 0;
+}
 const BASE_FAN_IDS = new Set(SICHUAN_FAN_TYPES.filter(type => type.group === 'base').map(type => type.id));
 
 function buildFanGroups(selectedIds = []) {
@@ -57,10 +73,19 @@ Page({
     winFanPreview: null,
     fanCapOptions: FAN_CAP_OPTIONS,
     baseScoreOptions: BASE_SCORE_OPTIONS,
+    playModes: SICHUAN_PLAY_MODES,
+    // 对局规则
+    rulesModeName: sichuanPlayModeName('xuezhan'),
+    showRules: false,
+    rulesDraft: normalizeSichuanRules(),
+    rulesEditable: true,
     // Gang modal (杠分)
     showGang: false,
+    gangKinds: SICHUAN_GANG_KINDS,
     gangReceiver: 0,
-    gangAmount: '',
+    gangKind: 'ming',
+    gangDiscarder: 1,
+    gangPreview: null,
     // Penalty modal (罚分)
     showPenalty: false,
     penaltyPayer: 0,
@@ -105,7 +130,13 @@ Page({
     lastSeenRoomActionId: '',
     roomActivityViews: [],
     moveSeatChoosing: false,
-    moveSeatTarget: -1
+    moveSeatTarget: -1,
+    themeStyle: '',
+    ranks: [1, 2, 3, 4],
+    lastAmount: '',
+    lastDetail: '暂无记录',
+    stateText: '待开局',
+    centerMain: '待开局',
   },
 
   onLoad(options) {
@@ -114,7 +145,7 @@ Page({
     if (!game || !game.players || game.players.length !== 4) {
       game = createSichuanGame(['玩家一', '玩家二', '玩家三', '玩家四']);
     }
-    this.initGame(game);
+    this.initGame(withRules(game));
     this.initRoomNetworkState();
 
     let nickname = '';
@@ -144,7 +175,9 @@ Page({
 
   onShow() {
     const tabBar = this.getTabBar && this.getTabBar();
-    if (tabBar) tabBar.setData({ selected: 2 });
+    const theme = Theme.current();
+    this.setData({ themeStyle: theme.pageStyle });
+    if (tabBar) tabBar.setData({ selected: 1, themeStyle: theme.tabBarStyle });
     if (this.data.room && this.data.room.roomCode && this.data.roomConfigured) {
       this.startRoomWatch(this.data.room.roomCode).catch(err => this.roomError(err));
       return;
@@ -165,13 +198,43 @@ Page({
   },
 
   initGame(game) {
+    this.updateBoardMeta(game);
     this.setData({ game });
     this.saveGame(game);
   },
 
   saveGame(game) {
+    this.updateBoardMeta(game);
     if (this.data.room) return;
     try { wx.setStorageSync(STORAGE_KEY, game); } catch (e) {}
+  },
+
+  // 牌桌四角与中央的派生信息（最近一笔 / 状态 / 领先 / 顺位）
+  updateBoardMeta(game) {
+    if (!game || !game.players) return;
+    const history = game.history || [];
+    const ranks = rankPlayers(game.players.map(player => player.score));
+    const last = history[history.length - 1];
+    let lastAmount = '—';
+    let lastDetail = '暂无记录';
+    if (last) {
+      const receiver = game.players[last.receiver];
+      const amount = last.deltas && last.deltas[last.receiver] ? last.deltas[last.receiver] : last.amountPerPayer;
+      lastAmount = (amount >= 0 ? '+' : '') + amount;
+      lastDetail = `${receiver ? receiver.name : '?'} · ${ENTRY_TYPE_LABELS[last.type] || last.label || '转分'}`;
+    }
+    const rules = normalizeSichuanRules(game.rules);
+    const huCount = history.filter(entry => entry.type === 'win').length;
+    // 血战到底：胡 3 家终局；血流成河：可以一直胡，不自动终局
+    const ended = rules.mode === 'xuezhan' && huCount >= 3;
+    const stateText = history.length === 0
+      ? '待开局'
+      : (ended ? '终局' : (rules.mode === 'xueliu' ? `已胡 ${huCount} 次` : `已胡 ${huCount} 家`));
+    const centerMain = history.length === 0 ? '待开局' : (ended ? '终局' : '进行中');
+    this.setData({
+      ranks, lastAmount, lastDetail, stateText, centerMain,
+      rulesModeName: sichuanPlayModeName(rules.mode)
+    });
   },
 
   // ─── Realtime room ───────────────────────────────────
@@ -436,12 +499,13 @@ Page({
     }
     this.updateRoomWritable({
       room,
-      game: room.game,
+      game: withRules(room.game),
       roomSeatViews,
       roomAvatarFileId,
       roomActivityViews,
       lastSeenRoomActionId: action && action.id || previousActionId
     });
+    this.updateBoardMeta(room.game);
     if (notify && action && action.id !== previousActionId && previousActionId && !action.isMine) {
       wx.showToast({ title: action.summary || `${action.operatorNickname} 更新了房间`, icon: 'none' });
     }
@@ -453,6 +517,7 @@ Page({
     let localGame;
     try { localGame = wx.getStorageSync(STORAGE_KEY); } catch (e) {}
     if (!localGame || !localGame.players) localGame = createSichuanGame();
+    localGame = withRules(localGame);
     this.setData({
       room: null,
       roomConnected: false,
@@ -576,10 +641,51 @@ Page({
     };
   },
 
+  // ─── 对局规则（玩法 / 底分 / 封顶）──────────────────────
+
+  openRules() {
+    const rulesEditable = !this.data.room || !!(this.data.room.isHost && this.data.room.status === 'active');
+    this.setData({
+      showRules: true,
+      rulesEditable,
+      rulesDraft: normalizeSichuanRules(this.data.game.rules)
+    });
+  },
+
+  closeRules() {
+    this.setData({ showRules: false });
+  },
+
+  setRuleOption(e) {
+    if (!this.data.rulesEditable) return;
+    const { key, value } = e.currentTarget.dataset;
+    const draft = Object.assign({}, this.data.rulesDraft, { [key]: key === 'mode' ? value : Number(value) });
+    this.setData({ rulesDraft: normalizeSichuanRules(draft) });
+  },
+
+  async confirmRules() {
+    if (!this.data.rulesEditable) return this.closeRules();
+    const next = clone(this.data.game);
+    next.rules = normalizeSichuanRules(this.data.rulesDraft);
+    const summary = `${sichuanPlayModeName(next.rules.mode)} · 底分 ${next.rules.baseScore} · 封顶 ${next.rules.fanCap} 番`;
+    if (this.data.room) {
+      try {
+        await this.submitRoomGame(next, 'sichuan-rules', `房主修改规则：${summary}`);
+        this.setData({ showRules: false });
+      } catch (err) {
+        this.roomError(err);
+      }
+      return;
+    }
+    this.setData({ game: next, showRules: false });
+    this.saveGame(next);
+  },
+
   // ─── Win modal ────────────────────────────────────────
 
   openWin() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
+    const rules = normalizeSichuanRules(this.data.game.rules);
     this.setData({
       showWin: true,
       winReceiver: 0,
@@ -587,11 +693,12 @@ Page({
       winPayerCount: 0,
       winFanIds: ['pinghu'],
       winRootCount: 0,
-      winFanCap: 6,
-      winBaseScore: 1,
+      winFanCap: rules.fanCap,
+      winBaseScore: rules.baseScore,
       winFanPreview: null,
       fanGroups: buildFanGroups(['pinghu'])
     });
+    this.previewWin();
   },
 
   closeWin() {
@@ -654,18 +761,6 @@ Page({
     this.previewWin();
   },
 
-  setWinFanCap(e) {
-    const v = Number(e.currentTarget.dataset.value);
-    this.setData({ winFanCap: v });
-    this.previewWin();
-  },
-
-  setWinBaseScore(e) {
-    const v = Number(e.currentTarget.dataset.value);
-    this.setData({ winBaseScore: v });
-    this.previewWin();
-  },
-
   previewWin() {
     const { winFanIds, winRootCount, winFanCap, winBaseScore } = this.data;
     const result = calculateSichuanFan(winFanIds, winFanCap, winRootCount);
@@ -720,7 +815,8 @@ Page({
 
   openGang() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
-    this.setData({ showGang: true, gangReceiver: 0, gangAmount: '' });
+    this.setData({ showGang: true, gangReceiver: 0, gangKind: 'ming', gangDiscarder: 1 });
+    this.previewGang();
   },
 
   closeGang() {
@@ -728,35 +824,74 @@ Page({
   },
 
   selectGangReceiver(e) {
-    this.setData({ gangReceiver: Number(e.currentTarget.dataset.index) });
+    const gangReceiver = Number(e.currentTarget.dataset.index);
+    const patch = { gangReceiver };
+    if (this.data.gangDiscarder === gangReceiver) patch.gangDiscarder = firstOther(gangReceiver);
+    this.setData(patch);
+    this.previewGang();
   },
 
-  onGangAmountInput(e) {
-    this.setData({ gangAmount: e.detail.value });
+  selectGangKind(e) {
+    this.setData({ gangKind: e.currentTarget.dataset.kind });
+    this.previewGang();
+  },
+
+  selectGangDiscarder(e) {
+    const index = Number(e.currentTarget.dataset.index);
+    if (index === this.data.gangReceiver) return;
+    this.setData({ gangDiscarder: index });
+    this.previewGang();
+  },
+
+  previewGang() {
+    const { game, gangKind, gangReceiver, gangDiscarder } = this.data;
+    const rules = normalizeSichuanRules(game.rules);
+    const result = calculateGang({
+      kind: gangKind,
+      receiver: gangReceiver,
+      discarder: gangDiscarder,
+      baseScore: rules.baseScore
+    });
+    if (!result) return this.setData({ gangPreview: null });
+    const kind = findGangKind(gangKind);
+    const payerText = kind.payerMode === 'single'
+      ? `收自 ${SEATS[result.payers[0]]} ${result.amountPerPayer} 分`
+      : `${result.amountPerPayer} 分/人 × ${result.payers.length} 人`;
+    this.setData({
+      gangPreview: Object.assign({}, result, {
+        desc: kind.desc,
+        text: `${SEATS[gangReceiver]} ${kind.name} · ${payerText}，共 ${result.total} 分`
+      })
+    });
   },
 
   async confirmGang() {
-    const { game, gangReceiver, gangAmount } = this.data;
-    const amount = Math.max(0, Number(gangAmount) || 0);
-    if (amount <= 0) {
-      wx.showToast({ title: '请输入有效金额', icon: 'none' });
+    const { game, gangReceiver, gangKind, gangDiscarder } = this.data;
+    const rules = normalizeSichuanRules(game.rules);
+    const result = calculateGang({ kind: gangKind, receiver: gangReceiver, discarder: gangDiscarder, baseScore: rules.baseScore });
+    if (!result) {
+      wx.showToast({ title: gangKind === 'ming' ? '请选择放杠者' : '请选择杠类型', icon: 'none' });
       return;
     }
-    const payers = game.players.map((_, i) => i).filter(i => i !== gangReceiver);
+    const label = result.kind === 'ming'
+      ? `${result.kindName} · 收自 ${SEATS[result.payers[0]]} ${result.amountPerPayer}分`
+      : `${result.kindName} · ${result.amountPerPayer}分/人`;
     const entry = createTransferEntry({
       type: 'gang',
+      gangKind: result.kind,
       receiver: gangReceiver,
-      payers,
-      amountPerPayer: amount,
-      label: `杠分 · ${amount}分/人`
+      payers: result.payers,
+      amountPerPayer: result.amountPerPayer,
+      label
     });
     const next = clone(game);
     applySichuanEntry(next, entry);
+    const toast = `${SEATS[gangReceiver]} ${result.kindName} +${result.total}分`;
     if (this.data.room) {
       try {
-        await this.submitRoomGame(next, 'sichuan-gang', `${game.players[gangReceiver].name} 收取杠分`);
+        await this.submitRoomGame(next, 'sichuan-gang', `${game.players[gangReceiver].name} ${result.kindName}`);
         this.setData({ showGang: false });
-        wx.showToast({ title: `${SEATS[gangReceiver]} +${amount * payers.length}分`, icon: 'success' });
+        wx.showToast({ title: toast, icon: 'success' });
       } catch (err) {
         this.roomError(err);
       }
@@ -764,7 +899,7 @@ Page({
     }
     this.setData({ game: next, showGang: false });
     this.saveGame(next);
-    wx.showToast({ title: `${SEATS[gangReceiver]} +${amount * payers.length}分`, icon: 'success' });
+    wx.showToast({ title: toast, icon: 'success' });
   },
 
   // ─── Penalty modal (罚分) ─────────────────────────────
@@ -923,7 +1058,12 @@ Page({
       const total = (entry.deltas || []).filter(d => d > 0).reduce((s, d) => s + d, 0);
       let label = '';
       if (entry.type === 'win') label = `${r} 胡牌 [${entry.label}] · ${a}分/人 · 收自 ${payers}`;
-      else if (entry.type === 'gang') label = `${r} 杠分 · ${a}分/人 · 收自 ${payers}`;
+      else if (entry.type === 'gang') {
+        const kind = findGangKind(entry.gangKind);
+        if (kind && kind.payerMode === 'single') label = `${r} ${kind.name} · 收自 ${payers} ${a}分`;
+        else if (kind) label = `${r} ${kind.name} · ${a}分/人 · 收自 ${payers}`;
+        else label = `${r} 杠分 · ${a}分/人 · 收自 ${payers}`;
+      }
       else if (entry.type === 'penalty') label = `${r} 收罚分 · ${a}分 · 来自 ${payers}`;
       else label = `${r} · ${a}分/人 · ${payers}`;
       return {
@@ -992,7 +1132,8 @@ Page({
           }
           return;
         }
-        const game = createSichuanGame();
+        // 重置清空分数与记录，但保留本局约定的规则
+        const game = createSichuanGame(undefined, 0, this.data.game.rules);
         this.initGame(game);
       }
     });

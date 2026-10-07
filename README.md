@@ -14,15 +14,18 @@
 - 多张表宝牌与裏宝牌指示牌
 - 自动计算役、番、符与最终支付
 
-## H5 使用
+## H5 使用（React 版）
 
-这是纯静态项目，直接用浏览器打开 `index.html`，或通过任意静态 HTTP 服务器部署。
+H5 已迁移到 React + TypeScript（`apps/web/`），与小程序共享同一份计分核心和牌图。
 
 ```bash
-python3 -m http.server 8080
+cd apps/web
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # 产物在 apps/web/dist/，纯静态可部署
 ```
 
-访问 `http://localhost:8080`。
+根目录旧版单文件 `index.html` 在新版本完成部署切换前保留可用。
 
 ## 微信小程序
 
@@ -32,11 +35,13 @@ python3 -m http.server 8080
 2. 将 `project.config.json` 中的测试 AppID 替换为自己的小程序 AppID。
 3. 点击编译即可运行。
 
-小程序与 H5 共用同一套 `mahjong-logic.js` 计分核心，牌图保存在 `miniprogram/assets/tiles/`。
+H5 与小程序共用唯一一份计分核心 `miniprogram/utils/mahjong-logic.js`（带 UMD 兼容导出，可直接 `<script>` 引入），牌图也只有一份，保存在 `miniprogram/assets/tiles/`。
 
 ### 实时房间
 
 实时房间仅在微信小程序日麻计分页提供，使用微信云开发。未配置云环境时保持纯本地模式，不影响原有功能。
+
+房间核心领域逻辑抽在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-room-core.js`。
 
 部署步骤、集合权限和真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
 

@@ -1,0 +1,19 @@
+/* pages/settings/index.wxss — 设置 */
+@import "/utils/common.wxss";
+
+.settings-card { background: #fffdf7; border: 2rpx solid #ded8c8; border-radius: 20rpx; padding: 24rpx; margin-bottom: 20rpx; }
+.settings-title { color: #3d3929; font-size: 28rpx; font-weight: 700; letter-spacing: 1rpx; }
+.settings-desc { margin-top: 6rpx; color: #8a8470; font-size: 21rpx; line-height: 1.6; }
+.profile-row { display: flex; align-items: center; gap: 20rpx; margin-top: 18rpx; }
+.profile-fields { flex: 1; min-width: 0; }
+.field-label { margin-bottom: 8rpx; color: #8a8470; font-size: 24rpx; }
+.field-hint { margin-top: 10rpx; color: #98917d; font-size: 20rpx; line-height: 1.5; }
+.kv-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; padding: 10rpx 0; font-size: 24rpx; }
+.kv-key { flex-shrink: 0; color: #8a8470; }
+.kv-value { color: #3d3929; text-align: right; word-break: break-all; }
+.kv-value.warn { color: #9b593f; }
+.kv-value.link { color: var(--accent, #c96442); }
+.swatch-row { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 10rpx; }
+.swatch { padding: 12rpx 20rpx; border-radius: 12rpx; border: 2rpx solid #e8e5d8; color: #fff; font-size: 22rpx; }
+.swatch.active { box-shadow: 0 0 0 4rpx rgba(61,57,41,.25); border-color: #3d3929; }
+.swatch-bg { color: #3d3929; }

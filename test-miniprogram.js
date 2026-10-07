@@ -96,7 +96,8 @@ assert.equal((pageMarkup.match(/class="table-corner corner-/g) || []).length, 4,
 const sichuanBoardMarkup = fs.readFileSync('./miniprogram/pages/sichuan/index.wxml', 'utf8');
 assert.equal((sichuanBoardMarkup.match(/class="table-corner corner-/g) || []).length, 4, '川麻牌桌四角应各有一个功能状态');
 assert(/\.table-corner\s*\{/.test(commonStyle), '共享牌桌样式应定义极简四角状态组件');
-assert(/\.table-center\s*\{[^}]*top\s*:\s*calc\(50%\s*\+\s*20rpx\)[^}]*width\s*:\s*172rpx[^}]*height\s*:\s*140rpx[^}]*translate3d\(-50%,\s*-50%,\s*0\)/s.test(commonStyle), '共享中心状态框应使用固定尺寸并做视觉居中校正');
+assert(/\.table-center\s*\{[^}]*top\s*:\s*50%[^}]*width\s*:\s*182rpx[^}]*translate\(-50%,\s*-50%\)/s.test(commonStyle), '共享中心状态框应固定宽度并做正中定位');
+assert(/\.player-card\.seat-dong\s*\{[^}]*bottom\s*:\s*18rpx[^}]*translateX\(-50%\)/s.test(commonStyle), '玩家卡片应锚定牌桌四边而非悬在中央周围');
 assert(/class="room-management-row"[\s\S]*bindtap="leaveRoom"[\s\S]*<\/view>\s*<button class="btn room-panel-dismiss" bindtap="closeRoomPanel">关闭<\/button>/.test(pageMarkup), '房间管理操作应分组排列，关闭按钮应独占一行');
 assert(/showLesson[^>]*class="[^"]*tab-safe-overlay/.test(tutorialMarkup), '教学课程弹窗应使用 tabBar 安全遮罩');
 assert(
@@ -313,7 +314,48 @@ assert.equal(selectedBaseFans.length, 1, '番型网格中只能有一个基础�
 const guardedFan = SichuanScore.calculateSichuanFan(['qingyise', 'duiduihu', 'zimo'], 6, 0);
 assert.equal(guardedFan.fan, 3, '计分逻辑层应只采用最后一个基础番型，再叠加额外番型');
 assert(!guardedFan.label.includes('清一色'), '被替换的基础番型不能出现在计分标签中');
+// 杠分：明杠只收放杠者、暗杠/加杠收其余各家；金额由对局底分推导（#3）
+const gangCases = [
+  { kind: 'ming', base: 1, discarder: 2, payers: [2], amount: 2 },
+  { kind: 'an', base: 1, payers: [1, 2, 3], amount: 2 },
+  { kind: 'bu', base: 5, payers: [1, 2, 3], amount: 5 },
+];
+gangCases.forEach(c => {
+  const r = SichuanScore.calculateGang({ kind: c.kind, receiver: 0, discarder: c.discarder, baseScore: c.base });
+  assert.deepEqual(r.payers, c.payers, c.kind + ' 付款者');
+  assert.equal(r.amountPerPayer, c.amount, c.kind + ' 每人金额');
+});
+assert.equal(SichuanScore.calculateGang({ kind: 'ming', receiver: 0, discarder: 0 }), null, '明杠放杠者不能是杠牌者自己');
+assert.equal(SichuanScore.calculateGang({ kind: 'xx', receiver: 0 }), null, '未知杠类型应拒绝');
+assert.deepEqual(SichuanScore.normalizeSichuanRules({ mode: 'bad', baseScore: 3, fanCap: 9 }), SichuanScore.DEFAULT_SICHUAN_RULES, '非法规则应回落默认');
 sichuanPage.closeWin();
+// 对局级规则：修改后胡牌弹窗默认读取（#4）
+sichuanPage.openRules();
+sichuanPage.setRuleOption({ currentTarget: { dataset: { key: 'baseScore', value: '2' } } });
+sichuanPage.setRuleOption({ currentTarget: { dataset: { key: 'fanCap', value: '4' } } });
+sichuanPage.setRuleOption({ currentTarget: { dataset: { key: 'mode', value: 'xueliu' } } });
+sichuanPage.confirmRules();
+assert.deepEqual(sichuanPage.data.game.rules, { mode: 'xueliu', baseScore: 2, fanCap: 4 });
+assert.equal(sichuanPage.data.rulesModeName, '血流成河');
+sichuanPage.openWin();
+assert.equal(sichuanPage.data.winBaseScore, 2, '胡牌弹窗应读取对局底分');
+assert.equal(sichuanPage.data.winFanCap, 4, '胡牌弹窗应读取对局封顶');
+sichuanPage.closeWin();
+sichuanPage.openGang();
+sichuanPage.selectGangReceiver({ currentTarget: { dataset: { index: 1 } } });
+assert.equal(sichuanPage.data.gangDiscarder, 0, '杠牌者与放杠者冲突时应自动换人');
+sichuanPage.selectGangDiscarder({ currentTarget: { dataset: { index: 3 } } });
+sichuanPage.confirmGang();
+assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [0, 4, 0, -4], '明杠只向放杠者收 2×底分');
+assert.equal(sichuanPage.data.game.history[0].gangKind, 'ming');
+sichuanPage.openGang();
+sichuanPage.selectGangKind({ currentTarget: { dataset: { kind: 'bu' } } });
+sichuanPage.confirmGang();
+assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [6, 2, -2, -6], '加杠向其余各家各收 1×底分');
+sichuanPage.undo(); sichuanPage.undo();
+assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [0, 0, 0, 0]);
+sichuanPage.openHistory();
+sichuanPage.closeHistory();
 sichuanPage.openPenalty();
 sichuanPage.selectPenaltyPayer({ currentTarget: { dataset: { index: 2 } } });
 assert.deepEqual(sichuanPage.data.penaltyReceivers, [true, true, false, true], '切换送分方后默认由其余三家收分');

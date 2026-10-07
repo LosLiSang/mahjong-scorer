@@ -1,5 +1,6 @@
 <!-- pages/scoring-guide/index.wxml — 算分详解 -->
-<view class="container">
+<view class="page-root" style="{{themeStyle}}">
+  <view class="container">
   <!-- ===== Tab 切换 ===== -->
   <view class="seg-group tabs">
     <view
@@ -182,4 +183,5 @@
     <text class="rights-owner">© 2026 Lisang</text>
     <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
   </view>
+</view>
 </view>

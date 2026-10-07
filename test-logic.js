@@ -3,7 +3,7 @@
 
 const {
   countTiles, decompose, calcBasePoint, evaluateHand, isYaochuu,
-} = require('./mahjong-logic');
+} = require('./miniprogram/utils/mahjong-logic');
 
 let pass = 0, fail = 0;
 

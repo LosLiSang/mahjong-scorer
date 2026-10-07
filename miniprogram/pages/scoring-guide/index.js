@@ -2,6 +2,7 @@
 const SD = require('../../utils/scoring-guide-data');
 const Logic = require('../../utils/mahjong-logic');
 const Game = require('../../utils/game-engine');
+const Theme = require('../../utils/theme');
 
 const ceil100 = Game.ceil100;
 
@@ -61,6 +62,7 @@ Page({
 
   onLoad() {
     this.setData({
+      themeStyle: Theme.current().pageStyle,
       fuExported: SD.FU_REFERENCE,
       limitExported: SD.LIMIT_REFERENCE,
       fuExample: FU_EXAMPLE

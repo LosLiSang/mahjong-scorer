@@ -1,5 +1,17 @@
 const assert = require('assert');
-const Room = require('./cloudfunctions/mahjong-room/domain');
+const fs = require('fs');
+const path = require('path');
+
+// 防漂移：云函数目录里的 domain.js 必须与 packages/room-core 真源一致（先跑 node scripts/sync-room-core.js）。
+const canonical = path.join(__dirname, 'packages', 'room-core', 'domain.js');
+const synced = path.join(__dirname, 'cloudfunctions', 'mahjong-room', 'domain.js');
+assert.equal(
+  fs.readFileSync(canonical, 'utf8'),
+  fs.readFileSync(synced, 'utf8'),
+  'room-core 领域文件已漂移：请改 packages/room-core/domain.js 后运行 node scripts/sync-room-core.js'
+);
+
+const Room = require('./packages/room-core');
 
 const generated = Room.generateRoomCode(() => 0);
 assert.equal(generated, '222222');
@@ -143,6 +155,19 @@ assert(Room.validateGame(normalizedSichuan, sichuan.mode, 'sichuan'));
 const invalidSichuan = JSON.parse(JSON.stringify(normalizedSichuan));
 invalidSichuan.players[0].score += 1;
 assert.throws(() => Room.validateGame(invalidSichuan, 'yonma', 'sichuan'), /POINT_TOTAL_MISMATCH/);
+assert.deepEqual(normalizedSichuan.rules, { mode: 'xuezhan', baseScore: 1, fanCap: 6 }, '旧川麻房间应补齐默认规则');
+const ruledSichuan = Room.normalizeGame(Object.assign({}, sichuan.game, { rules: { mode: 'xueliu', baseScore: 5, fanCap: 4, extra: 1 } }), 'sichuan');
+assert.deepEqual(ruledSichuan.rules, { mode: 'xueliu', baseScore: 5, fanCap: 4 });
+assert.equal(Room.newGame('yonma', 'sichuan', ruledSichuan).rules.baseScore, 5, '重置房间应保留规则');
+const gangGame = JSON.parse(JSON.stringify(normalizedSichuan));
+gangGame.players[2].score += 2; gangGame.players[3].score -= 2;
+gangGame.history.push({ type: 'gang', gangKind: 'ming', receiver: 2, payers: [3], amountPerPayer: 2, label: '明杠', createdAt: 1, deltas: [0, 0, 2, -2] });
+const normalizedGang = Room.normalizeGame(gangGame, 'sichuan');
+assert.equal(normalizedGang.history[1].gangKind, 'ming', 'gangKind 应保留');
+assert(Room.validateGame(normalizedGang, 'yonma', 'sichuan'));
+const badGang = JSON.parse(JSON.stringify(normalizedGang));
+badGang.history[1].payers = [0, 3];
+assert.throws(() => Room.validateGame(badGang, 'yonma', 'sichuan'), /INVALID_GAME/, '明杠只能有一个付款者');
 assert.equal(Room.publicRoomPreview(sichuan).gameType, 'sichuan');
 assert.equal(Room.roomView(sichuan, 'sichuan-owner').gameType, 'sichuan');
 

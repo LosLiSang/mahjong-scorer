@@ -1,0 +1,92 @@
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", Georgia, serif;
+  background: #f5f4ee;
+  color: #3d3929;
+}
+#root { min-height: 100vh; }
+.app-main { max-width: 480px; margin: 0 auto; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
+
+/* 底部 tab 栏 */
+.tab-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  display: flex;
+  background: rgba(250, 248, 242, .98);
+  box-shadow: 0 -4px 20px rgba(61, 57, 41, .08);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 0 7px;
+  color: #8a8470;
+  text-decoration: none;
+  font-size: 12px;
+}
+.tab-item .tab-mark {
+  width: 34px; height: 34px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+}
+.tab-item.selected { color: #c46645; }
+.tab-item.selected .tab-mark { color: #fff; background: #c46645; border-color: #c46645; }
+
+/* 页脚 */
+.app-footer { max-width: 480px; margin: 0 auto; padding: 0 12px 76px; text-align: center; font-size: 11px; color: #a39b82; }
+.app-footer a { color: #a39b82; }
+
+/* 通用按钮 */
+.btn { background: #c96442; color: #fff; border: none; padding: 10px 14px; border-radius: 9px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity .2s; font-family: inherit; line-height: 1.4; }
+.btn:active { opacity: 0.7; }
+.btn-secondary { background: #e8e5d8; color: #3d3929; }
+.btn-danger { background: #8a8470; }
+.btn-small { padding: 10px 12px; font-size: 14px; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+.toolbar { display: flex; gap: 8px; margin-top: 12px; }
+.toolbar .btn { flex: 1; }
+.actions { display: flex; flex-direction: column; gap: 8px; }
+
+/* 弹窗 */
+.overlay { position: fixed; inset: 0; background: rgba(60, 55, 40, 0.4); z-index: 100; display: flex; justify-content: center; align-items: flex-end; }
+.modal { background: #faf9f3; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px; max-height: 92vh; overflow-y: auto; position: relative; }
+.modal h3 { text-align: center; margin-bottom: 16px; color: #3d3929; font-weight: 600; }
+.modal label { display: block; font-size: 13px; color: #8a8470; margin: 12px 0 6px; font-weight: 500; }
+.modal input, .modal select { width: 100%; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; font-size: 16px; font-family: inherit; }
+.modal-close { position: absolute; top: 12px; right: 14px; width: 28px; height: 28px; border-radius: 50%; background: #f1ede2; color: #746e5c; font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; z-index: 2; }
+
+/* 分段选择 */
+.seg-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-btn { flex: 1; min-width: 60px; padding: 10px; background: #fff; border: 1px solid #e8e5d8; border-radius: 8px; color: #3d3929; text-align: center; cursor: pointer; font-size: 14px; }
+.seg-btn.active { background: #c96442; border-color: #c96442; color: #fff; }
+.result-box { background: #fff; border: 1px solid #e8e5d8; border-radius: 10px; padding: 14px; margin: 14px 0; text-align: center; }
+.result-box .points { font-size: 28px; font-weight: 600; color: #5a7a4a; }
+.result-box .detail { font-size: 13px; color: #8a8470; margin-top: 6px; }
+.result-box .breakdown { font-size: 12px; color: #8a8470; margin-top: 8px; line-height: 1.6; white-space: pre-line; }
+
+/* 历史 */
+.history-list { margin-top: 12px; }
+.history-item { background: #fff; border: 1px solid #e8e5d8; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 12px; color: #8a8470; }
+.history-item .who { color: #c96442; font-weight: 600; }
+
+/* 占位页 */
+.placeholder-card {
+  background: #fffdf7;
+  border: 1px solid #ded8c8;
+  border-radius: 16px;
+  padding: 32px 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+.placeholder-card .icon { font-size: 40px; margin-bottom: 12px; }
+.placeholder-card h2 { font-size: 18px; color: #3d3929; margin-bottom: 8px; }
+.placeholder-card p { font-size: 13px; color: #8a8470; line-height: 1.8; }
+.placeholder-card ul { list-style: none; margin-top: 12px; font-size: 13px; color: #5f5947; line-height: 2; }

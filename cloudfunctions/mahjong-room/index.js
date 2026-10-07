@@ -9,7 +9,7 @@ const db = cloud.database();
 const ROOMS = 'rooms';
 const VIEWS = 'room_views';
 const EVENTS = 'room_events';
-const GAME_COMMANDS = new Set(['win', 'draw', 'riichi', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup']);
+const GAME_COMMANDS = new Set(['win', 'draw', 'riichi', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup', 'sichuan-rules']);
 let collectionsReady = null;
 
 function error(code) {
@@ -272,6 +272,14 @@ async function submitGame(event, openId) {
     let nextGame = Domain.normalizeGame(event.nextGame, room.gameType);
     nextGame = Domain.applySeatNames(nextGame, room.seats);
     Domain.validateGame(nextGame, room.mode, room.gameType);
+    if (roomGameType === 'sichuan') {
+      // 对局规则只能由房主通过 sichuan-rules 修改；其他命令一律沿用房间现有规则
+      if (type === 'sichuan-rules') {
+        if (room.hostOpenId !== openId) error('HOST_ONLY');
+      } else {
+        nextGame.rules = Domain.normalizeSichuanRules(room.game && room.game.rules);
+      }
+    }
 
     const now = new Date();
     const nickname = operatorNickname(room, openId);
@@ -375,7 +383,7 @@ async function resetGame(event, openId) {
     const nextVersion = room.version + 1;
     const id = eventId(code, nextVersion, 'reset');
     const beforeGame = Domain.clone(room.game);
-    room.game = Domain.applySeatNames(Domain.newGame(room.mode, room.gameType), room.seats);
+    room.game = Domain.applySeatNames(Domain.newGame(room.mode, room.gameType, room.game), room.seats);
     room.version = nextVersion;
     room.updatedAt = now;
     room.lastGameEventId = id;
