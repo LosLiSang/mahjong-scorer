@@ -57,19 +57,19 @@
 
   <!-- 操作按钮 -->
   <view wx:if="{{room && !roomWritable && room.status === 'active'}}" class="room-write-warning">{{roomOnline ? '正在连接房间，暂时不能提交操作' : '网络已断开，离线操作不会提交'}}</view>
-  <view class="actions">
+  <view class="actions score-actions">
     <view class="btn-row">
       <button class="btn" bindtap="openWin" disabled="{{room && !roomWritable}}">和牌结算</button>
       <button class="btn btn-secondary" bindtap="openRiichi" disabled="{{room && !roomWritable}}">立直</button>
       <button class="btn btn-secondary" bindtap="openDraw" disabled="{{room && !roomWritable}}">流局</button>
     </view>
-    <view class="table-setup-hint">{{room ? '点击任一玩家卡片打开房间面板' : '点击任一玩家卡片修改人数与玩家姓名'}}</view>
     <view class="toolbar">
       <button class="btn btn-danger btn-small" bindtap="undo" disabled="{{room && !roomWritable}}">撤销</button>
       <button class="btn btn-danger btn-small" bindtap="showHistory">记录</button>
       <button class="btn btn-danger btn-small" bindtap="openPlayerSetup">{{room ? '房间' : '设置'}}</button>
       <button class="btn btn-danger btn-small" bindtap="resetGame" disabled="{{room && (!roomWritable || !room.isHost)}}">重置</button>
     </view>
+    <view class="table-setup-hint">{{room ? '点击任一玩家卡片打开房间面板' : '点击任一玩家卡片修改人数与玩家姓名'}}</view>
   </view>
   <view class="footer-spacer"></view>
   <view class="rights-banner" bindtap="copyContact">

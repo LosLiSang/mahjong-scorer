@@ -119,8 +119,13 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 .rank-mark { position: absolute; right: 9rpx; bottom: 6rpx; padding: 1rpx 8rpx; border-radius: 8rpx; background: #f1ede2; color: #746e5c; font-size: 15rpx; font-weight: 600; line-height: 1.4; }
 .rank-mark.rank-first { background: var(--accent, #c46645); color: #fff; }
 
+/* 计分页操作区（日麻 / 川麻共用）：主按钮行、工具栏行等距排列，提示在最下方 */
+.score-actions { display: flex; flex-direction: column; gap: 14rpx; }
+.score-actions .btn-row { gap: 14rpx; }
+.score-actions .btn { white-space: nowrap; }
+.score-actions .toolbar { margin-top: 0; }
+.table-setup-hint { margin-top: -2rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
+
 /* 工具栏 */
-/* 主按钮与工具栏之间的玩家卡片操作提示（日麻 / 川麻共用） */
-.table-setup-hint { margin-top: -4rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
 .toolbar { display: flex; gap: 14rpx; margin-top: 20rpx; }
 .toolbar .btn { flex: 1; }

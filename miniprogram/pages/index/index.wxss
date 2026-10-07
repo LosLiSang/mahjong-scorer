@@ -52,8 +52,6 @@
 .room-panel-dismiss { width: 100%; margin: 0; }
 .modal-actions { padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
 
-.actions { display: flex; flex-direction: column; gap: 14rpx; }
-
 /* 和牌面板 */
 .win-modal { max-height: 92vh; }
 

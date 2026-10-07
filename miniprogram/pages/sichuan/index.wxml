@@ -60,18 +60,18 @@
 
   <!-- ═══ 操作按钮 ═══ -->
   <view wx:if="{{room && !roomWritable && room.status === 'active'}}" class="room-write-warning">{{roomOnline ? '正在连接房间，暂时不能提交操作' : '网络已断开，离线操作不会提交'}}</view>
-  <view class="sichuan-actions">
+  <view class="sichuan-actions score-actions">
     <view class="btn-row sichuan-score-actions">
       <button class="btn" bindtap="openWin" disabled="{{room && !roomWritable}}">胡牌积分</button>
       <button class="btn btn-secondary" bindtap="openGang" disabled="{{room && !roomWritable}}">杠分</button>
       <button class="btn btn-secondary" bindtap="openPenalty" disabled="{{room && !roomWritable}}">罚分</button>
     </view>
-    <view class="table-setup-hint">点击东、南、西、北任一玩家卡片修改该玩家信息</view>
     <view class="toolbar">
       <button class="btn btn-danger btn-small" bindtap="undo" disabled="{{room && !roomWritable}}">撤销</button>
       <button class="btn btn-danger btn-small" bindtap="openHistory">记录</button>
       <button class="btn btn-danger btn-small" bindtap="resetGame" disabled="{{room && (!roomWritable || !room.isHost)}}">重置</button>
     </view>
+    <view class="table-setup-hint">点击东、南、西、北任一玩家卡片修改该玩家信息</view>
   </view>
   <view class="footer-spacer"></view>
   <view class="rights-banner" bindtap="copyContact">
