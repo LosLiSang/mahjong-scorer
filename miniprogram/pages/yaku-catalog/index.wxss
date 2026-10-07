@@ -30,57 +30,32 @@
   font-weight: 600;
 }
 
-/* ===== 卡片网格 ===== */
-.card-grid {
+/* ===== 役种卡片：单列宽卡片 ===== */
+.card-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18rpx;
+  flex-direction: column;
+  gap: 14rpx;
   padding-bottom: 40rpx;
 }
 .yaku-card {
-  flex: 1 1 calc(50% - 9rpx);
-  min-width: 310rpx;
   background: #fff;
   border: 2rpx solid #e8e5d8;
   border-radius: 20rpx;
-  padding: 22rpx;
-  position: relative;
-  overflow: hidden;
+  padding: 20rpx 22rpx 18rpx;
   box-shadow: 0 2rpx 10rpx rgba(61,57,41,.04);
 }
-.yaku-card:active {
-  transform: scale(.97);
-  background: #fdfaf4;
-}
+.yaku-card:active { background: #fdfaf4; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.card-name { min-width: 0; overflow: hidden; color: #3d3929; font-size: 30rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.card-badge { flex: 0 0 auto; padding: 4rpx 14rpx; border-radius: 10rpx; color: #fff; font-size: 20rpx; font-weight: 600; white-space: nowrap; }
+.card-cond { margin-top: 6rpx; color: #8a8470; font-size: 22rpx; line-height: 1.5; }
+/* 牌例：14 张一行，胡牌张隔开；按卡片宽度等比缩放 */
+.card-tiles { display: flex; align-items: center; gap: 3rpx; margin-top: 14rpx; padding: 12rpx 10rpx; border-radius: 12rpx; background: #ece7da; }
+.card-tile { flex: 1 1 0; min-width: 0; max-width: 44rpx; height: 58rpx; padding: 2rpx 1rpx; border: 1rpx solid #d6d0c0; border-radius: 5rpx; background: #fffef9; box-shadow: 0 2rpx 3rpx rgba(50,45,32,.16); box-sizing: border-box; }
+.card-win-tile { margin-left: 14rpx; }
+.card-tile-blank { display: flex; align-items: center; justify-content: center; border: 2rpx dashed #b9b19c; background: transparent; box-shadow: none; color: #9a927f; font-size: 18rpx; }
+.card-no-example { margin-top: 12rpx; padding: 14rpx 16rpx; border-radius: 12rpx; background: #f5f2e9; color: #aaa28f; font-size: 21rpx; }
 
-.card-badge {
-  display: inline-block;
-  padding: 6rpx 16rpx;
-  border-radius: 10rpx;
-  color: #fff;
-  font-size: 22rpx;
-  font-weight: 600;
-  margin-bottom: 14rpx;
-}
-.card-name {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #3d3929;
-  margin-bottom: 8rpx;
-  line-height: 1.2;
-}
-.card-cond {
-  font-size: 22rpx;
-  color: #8a8470;
-  line-height: 1.5;
-  margin-bottom: 10rpx;
-}
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 6rpx;
-}
 .tag {
   display: inline-block;
   padding: 4rpx 14rpx;

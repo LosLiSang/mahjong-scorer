@@ -329,6 +329,26 @@ function getYakuExample(yaku) {
   return { hand, win };
 }
 
+// 列表卡片视图：番数标签 + 拆好的牌例（手牌 / 和牌张）。tileSrc 由调用方注入，保持纯函数。
+function buildYakuCards(list, tileSrc) {
+  return (list || []).map(yaku => {
+    const ex = getYakuExample(yaku);
+    const hasExample = ex.hand.length > 0;
+    return {
+      id: yaku.id,
+      name: yaku.name,
+      category: yaku.category,
+      hanLabel: formatYakuHan(yaku),
+      condition: yaku.condition,
+      hasExample,
+      handTiles: ex.hand.map((id, index) => ({ key: `${id}-${index}`, id, src: tileSrc(id), isHaku: id === '5z' })),
+      winTile: !hasExample ? null : (ex.win
+        ? { id: ex.win, src: tileSrc(ex.win), isHaku: ex.win === '5z', isBlank: false }
+        : { id: '', src: '', isHaku: false, isBlank: true }),
+    };
+  });
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { YAKU_CATALOG, CATEGORY_LABELS, filterYakuCatalog, getYakuById, formatYakuHan, getYakuExample };
+  module.exports = { YAKU_CATALOG, CATEGORY_LABELS, filterYakuCatalog, getYakuById, formatYakuHan, getYakuExample, buildYakuCards };
 }

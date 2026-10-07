@@ -180,6 +180,26 @@ let yakuProblems = [];
 });
 assert.equal(yakuProblems.length, 0, '役种牌例数据应完整（14 张或 13 张等待形 + 胡牌张）：' + yakuProblems.join('；'));
 
+// 役种图鉴列表卡片直接展示牌例：普通役 13 + 胡牌张；等待形役满胡牌张留空；无牌形的役不出牌例
+{
+  const cards = YakuData.buildYakuCards(YakuData.YAKU_CATALOG, id => '/tiles/' + id);
+  assert.equal(cards.length, YakuData.YAKU_CATALOG.length);
+  const byId = id => cards.find(card => card.id === id);
+  const cases = [
+    { id: 'pinfu', hand: 13, blank: false, hasExample: true },
+    { id: 'kokushi-13', hand: 13, blank: true, hasExample: true },
+    { id: 'tenhou', hand: 0, blank: null, hasExample: false },
+  ];
+  cases.forEach(c => {
+    const card = byId(c.id);
+    assert(card, c.id);
+    assert.equal(card.hasExample, c.hasExample, c.id + ' 是否显示牌例');
+    assert.equal(card.handTiles.length, c.hand, c.id + ' 手牌张数');
+    assert.equal(card.winTile ? card.winTile.isBlank : null, c.blank, c.id + ' 胡牌张');
+  });
+  assert.equal(byId('riichi').hanLabel, '门前1翻 · 副露不可', '卡片直接带番数标签');
+}
+
 // 教学馆每课都应提供术语与章末小测，答对小测才标记学会
 let lessonProblems = [];
 (TutorialData.MAHJONG_TUTORIAL.lessons || []).forEach(l => {

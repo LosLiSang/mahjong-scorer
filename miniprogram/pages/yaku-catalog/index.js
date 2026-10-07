@@ -1,6 +1,6 @@
 // pages/yaku-catalog/index.js — 役种图鉴
 const Theme = require('../../utils/theme');
-const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan, getYakuExample } = require('../../utils/yaku-data');
+const { YAKU_CATALOG, filterYakuCatalog, getYakuById, formatYakuHan, getYakuExample, buildYakuCards } = require('../../utils/yaku-data');
 const { tileSrc } = require('../../utils/shared');
 
 const CATEGORIES = [
@@ -32,12 +32,12 @@ Page({
   },
 
   onLoad() {
-    this.setData({ list: YAKU_CATALOG, themeStyle: Theme.current().pageStyle });
+    this.setData({ list: buildYakuCards(YAKU_CATALOG, tileSrc), themeStyle: Theme.current().pageStyle });
   },
 
   onCategoryTap(e) {
     const key = e.currentTarget.dataset.key;
-    const list = key === 'all' ? YAKU_CATALOG : filterYakuCatalog({ category: key });
+    const list = buildYakuCards(key === 'all' ? YAKU_CATALOG : filterYakuCatalog({ category: key }), tileSrc);
     this.setData({ activeCategory: key, list });
   },
 

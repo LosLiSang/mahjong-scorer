@@ -1,9 +1,5 @@
 <!-- pages/yaku-catalog/index.wxml — 役种图鉴 -->
 <wxs module="utils">
-  module.exports.truncate = function(text, len) {
-    if (!text) return '';
-    return text.length > len ? text.slice(0, len) + '…' : text;
-  };
   module.exports.getBadgeColor = function(cat) {
     var map = { '1han':'#c96442','2han':'#c99442','3han':'#c4a242','6han':'#a45ac4','yakuman':'#c4425a' };
     return map[cat] || '#c96442';
@@ -32,18 +28,21 @@
     </view>
   </scroll-view>
 
-  <!-- 役种卡片 grid -->
-  <view class="card-grid">
-    <block wx:for="{{list}}" wx:key="id">
-      <view class="yaku-card chip-{{item.category}}" data-id="{{item.id}}" bindtap="onCardTap">
-        <view class="card-badge" style="background:{{utils.getBadgeColor(item.category)}}">{{utils.formatHan(item)}}</view>
-        <view class="card-name">{{item.name}}</view>
-        <view class="card-cond">{{utils.truncate(item.condition, 24)}}</view>
-        <view class="card-tags" wx:if="{{item.tags && item.tags.length}}">
-          <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag" class="tag">{{tag}}</text>
-        </view>
+  <!-- 役种卡片：单列，名称 + 番数、条件、一行完整牌例 -->
+  <view class="card-list">
+    <view wx:for="{{list}}" wx:key="id" class="yaku-card" data-id="{{item.id}}" bindtap="onCardTap">
+      <view class="card-head">
+        <text class="card-name">{{item.name}}</text>
+        <text class="card-badge" style="background:{{utils.getBadgeColor(item.category)}}">{{item.hanLabel}}</text>
       </view>
-    </block>
+      <view class="card-cond">{{item.condition}}</view>
+      <view wx:if="{{item.hasExample}}" class="card-tiles">
+        <image wx:for="{{item.handTiles}}" wx:key="key" wx:for-item="tile" class="card-tile {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+        <image wx:if="{{!item.winTile.isBlank}}" class="card-tile card-win-tile {{item.winTile.isHaku ? 'haku-tile' : ''}}" src="{{item.winTile.src}}" mode="aspectFit" />
+        <view wx:else class="card-tile card-win-tile card-tile-blank">任</view>
+      </view>
+      <view wx:else class="card-no-example">靠和牌时机或开杠成立，没有固定牌形 · 点击查看详情</view>
+    </view>
   </view>
 
   <!-- 空态 -->
