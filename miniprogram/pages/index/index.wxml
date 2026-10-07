@@ -63,6 +63,7 @@
       <button class="btn btn-secondary" bindtap="openRiichi" disabled="{{room && !roomWritable}}">立直</button>
       <button class="btn btn-secondary" bindtap="openDraw" disabled="{{room && !roomWritable}}">流局</button>
     </view>
+    <view class="table-setup-hint">{{room ? '点击任一玩家卡片打开房间面板' : '点击任一玩家卡片修改人数与玩家姓名'}}</view>
     <view class="toolbar">
       <button class="btn btn-danger btn-small" bindtap="undo" disabled="{{room && !roomWritable}}">撤销</button>
       <button class="btn btn-danger btn-small" bindtap="showHistory">记录</button>

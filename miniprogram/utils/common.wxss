@@ -120,5 +120,7 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 .rank-mark.rank-first { background: var(--accent, #c46645); color: #fff; }
 
 /* 工具栏 */
+/* 主按钮与工具栏之间的玩家卡片操作提示（日麻 / 川麻共用） */
+.table-setup-hint { margin-top: -4rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
 .toolbar { display: flex; gap: 14rpx; margin-top: 20rpx; }
 .toolbar .btn { flex: 1; }

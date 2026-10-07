@@ -105,7 +105,6 @@
 }
 .sichuan-score-actions { gap: 8rpx; }
 .sichuan-score-actions .btn { white-space: nowrap; }
-.table-setup-hint { margin-top: -4rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
 .sichuan-actions .toolbar { margin-top: 0; }
 
 /* ── 胡牌弹窗番型按钮 ── */
