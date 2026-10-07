@@ -123,9 +123,6 @@
 .root-options .seg-btn { min-width: 0; flex: 1; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; white-space: nowrap; }
 
 /* ── 对局规则 ── */
-.rule-corner { pointer-events: auto; padding: 4rpx 6rpx; margin: -4rpx -6rpx; border-radius: 10rpx; }
-.rule-corner:active { background: rgba(201,100,66,.08); }
-.rule-corner .corner-value { color: var(--accent, #c96442); }
 .rule-summary { margin-top: 18rpx; padding: 12rpx 16rpx; border-radius: 12rpx; background: #f3f0e7; color: #8a8470; font-size: 21rpx; text-align: center; }
 .rule-options { gap: 8rpx; }
 .rule-options .seg-btn { min-width: 0; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; white-space: nowrap; }

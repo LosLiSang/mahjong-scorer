@@ -56,6 +56,11 @@ function normalizeSichuanRules(rules) {
   };
 }
 
+// 日麻对局级规则：xuezhan = 血战到底
+function normalizeRiichiRules(rules) {
+  return { xuezhan: !!(rules && rules.xuezhan) };
+}
+
 function newGame(mode, gameType, previousGame) {
   const type = normalizeGameType(gameType);
   if (type === 'sichuan') {
@@ -77,6 +82,8 @@ function newGame(mode, gameType, previousGame) {
     mode: count === 3 ? 'sanma' : 'yonma',
     playerCount: count,
     sanmaTsumoRule: 'loss',
+    rules: normalizeRiichiRules(previousGame && previousGame.rules),
+    handWinners: [],
     players: Array.from({ length: count }, (_, index) => ({
       name: `玩家${PLAYER_LABELS[index]}`,
       points: startPoints,
@@ -262,6 +269,9 @@ function moveSeat(room, { openId, seatIndex }) {
       ? remapSichuanHistoryEntry(entry, source, target)
       : remapRiichiHistoryEntry(entry, source, target)
   );
+  if (Array.isArray(next.game.handWinners)) {
+    next.game.handWinners = next.game.handWinners.map(index => remapPlayerIndex(index, source, target));
+  }
   next.game = applySeatNames(next.game, next.seats);
   return next;
 }
@@ -313,6 +323,7 @@ function normalizeHistoryEntry(entry) {
     normalized.total = Number(source.total);
     normalized.han = Number(source.han);
     normalized.fu = Number(source.fu);
+    if (source.seq !== undefined) normalized.seq = Number(source.seq);
   }
   return normalized;
 }
@@ -359,6 +370,10 @@ function normalizeGame(game, gameType) {
     mode: source.mode,
     playerCount: Number(source.playerCount),
     sanmaTsumoRule: source.sanmaTsumoRule === 'half' ? 'half' : 'loss',
+    rules: normalizeRiichiRules(source.rules),
+    handWinners: Array.isArray(source.handWinners)
+      ? source.handWinners.slice(0, 4).map(Number)
+      : [],
     players: Array.isArray(source.players) ? source.players.slice(0, 4).map(player => ({
       name: String(player && player.name || '').slice(0, 12),
       points: Number(player && player.points),
@@ -414,6 +429,13 @@ function validateGame(game, roomMode, gameType) {
   if (!Number.isInteger(game.honba) || game.honba < 0) throw new Error('INVALID_GAME');
   if (!Number.isInteger(game.riichiSticks) || game.riichiSticks < 0) throw new Error('INVALID_GAME');
   if (!Array.isArray(game.history) || game.history.length > 500) throw new Error('INVALID_GAME');
+  const handWinners = Array.isArray(game.handWinners) ? game.handWinners : [];
+  if (
+    handWinners.length >= count ||
+    new Set(handWinners).size !== handWinners.length ||
+    handWinners.some(index => !Number.isInteger(index) || index < 0 || index >= count) ||
+    (handWinners.length && !(game.rules && game.rules.xuezhan))
+  ) throw new Error('INVALID_GAME');
   game.history.forEach(entry => {
     if (!entry || !['win', 'draw'].includes(entry.type) || typeof entry.round !== 'string') throw new Error('INVALID_GAME');
     if (entry.type === 'draw') {
@@ -511,6 +533,7 @@ module.exports = {
   sanitizeNickname,
   sanitizeAvatarFileId,
   normalizeSichuanRules,
+  normalizeRiichiRules,
   newGame,
   createSeats,
   applySeatNames,

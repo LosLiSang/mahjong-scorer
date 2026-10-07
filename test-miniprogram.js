@@ -233,6 +233,53 @@ page.analyzeHand();
 assert(page.data.analysisResult, page.data.analysisMessage);
 assert.equal(page.data.analysisResult.typeName, '七对子');
 
+// 日麻血战到底（#9）：设置开启 → 和牌后本局继续、已和玩家不可再选 → 和满 3 家结束
+page.closeWin();
+page.openPlayerSetup();
+page.selectSetupRule({ currentTarget: { dataset: { value: 'xuezhan' } } });
+page.confirmSetup();
+assert.equal(page.data.game.rules.xuezhan, true, '对局设置可开启血战到底');
+assert.equal(page.data.ruleName, '血战到底', '牌桌角落显示当前玩法');
+const xzWin = (winner, loser) => {
+  page.openWin();
+  page.selectWinner({ currentTarget: { dataset: { index: winner } } });
+  page.selectWinType({ currentTarget: { dataset: { value: 'ron' } } });
+  page.selectLoser({ currentTarget: { dataset: { index: loser } } });
+  page.confirmWin();
+};
+xzWin(1, 2);
+assert.equal(page.data.roundName, '东一', '首和后仍在本局');
+assert.deepEqual(page.data.game.handWinners, [1]);
+assert.equal(page.data.playerViews[1].won, true, '玩家卡片标记已和');
+assert.equal(page.data.ruleSub, '本局已和 1 家');
+page.openWin();
+assert.notEqual(page.data.win.winnerIdx, 1, '默认和牌者跳过已和玩家');
+page.selectWinner({ currentTarget: { dataset: { index: 1 } } });
+assert.notEqual(page.data.win.winnerIdx, 1, '已和玩家不能被选为和牌者');
+page.closeWin();
+page.openRules();
+page.selectRulesOption({ currentTarget: { dataset: { value: 'standard' } } });
+page.confirmRules();
+assert.equal(page.data.game.rules.xuezhan, true, '本局已有人和牌时不能关闭血战');
+page.closeRules();
+xzWin(3, 2);
+xzWin(0, 2);
+assert.equal(page.data.roundName, '东二', '和满 3 家后进入下一局（首和非亲 → 轮庄）');
+assert.deepEqual(page.data.game.handWinners, []);
+page.undo();
+assert.deepEqual(page.data.game.handWinners, [1, 3], '本地撤销回到上一次和牌前');
+page.openDraw();
+assert.deepEqual(page.data.tenpaiSelected, [false, true, false, true], '流局时已和玩家预选为听牌');
+page.toggleTenpai({ currentTarget: { dataset: { index: 1 } } });
+assert.equal(page.data.tenpaiSelected[1], true, '已和玩家的听牌状态不可取消');
+page.closeDraw();
+page.resetGame();
+assert.equal(page.data.game.rules.xuezhan, true, '重置保留血战规则');
+page.openPlayerSetup();
+page.selectSetupRule({ currentTarget: { dataset: { value: 'standard' } } });
+page.confirmSetup();
+assert.equal(page.data.ruleName, '标准');
+
 // 章末小测：答错不标记，答对后持久化「已学会」；专项训练按主题载入
 let tutorialPageDefinition = null;
 let storedTutorialProgress = ['tiles'];

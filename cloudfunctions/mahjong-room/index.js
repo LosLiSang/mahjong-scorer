@@ -9,7 +9,7 @@ const db = cloud.database();
 const ROOMS = 'rooms';
 const VIEWS = 'room_views';
 const EVENTS = 'room_events';
-const GAME_COMMANDS = new Set(['win', 'draw', 'riichi', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup', 'sichuan-rules']);
+const GAME_COMMANDS = new Set(['win', 'draw', 'riichi', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup', 'sichuan-rules', 'riichi-rules']);
 let collectionsReady = null;
 
 function error(code) {
@@ -265,6 +265,7 @@ async function submitGame(event, openId) {
     assertActive(room);
     const roomGameType = Domain.normalizeGameType(room.gameType);
     const commandGameType = type.startsWith('sichuan-') ? 'sichuan' : 'riichi';
+    const isRulesCommand = type === 'sichuan-rules' || type === 'riichi-rules';
     if (roomGameType !== commandGameType) error('INVALID_GAME_TYPE');
     assertMember(room, openId);
     assertVersion(room, event.expectedVersion);
@@ -272,13 +273,21 @@ async function submitGame(event, openId) {
     let nextGame = Domain.normalizeGame(event.nextGame, room.gameType);
     nextGame = Domain.applySeatNames(nextGame, room.seats);
     Domain.validateGame(nextGame, room.mode, room.gameType);
-    if (roomGameType === 'sichuan') {
-      // 对局规则只能由房主通过 sichuan-rules 修改；其他命令一律沿用房间现有规则
-      if (type === 'sichuan-rules') {
-        if (room.hostOpenId !== openId) error('HOST_ONLY');
-      } else {
-        nextGame.rules = Domain.normalizeSichuanRules(room.game && room.game.rules);
+    // 对局规则只能由房主通过 *-rules 命令修改；其他命令一律沿用房间现有规则
+    if (isRulesCommand) {
+      if (room.hostOpenId !== openId) error('HOST_ONLY');
+      // 规则命令只替换 rules，分数 / 历史一律沿用房间现状
+      const rules = nextGame.rules;
+      nextGame = Domain.clone(room.game);
+      nextGame.rules = rules;
+      if (roomGameType === 'riichi' && !rules.xuezhan && (room.game.handWinners || []).length) {
+        error('HAND_IN_PROGRESS');
       }
+    } else if (roomGameType === 'sichuan') {
+      nextGame.rules = Domain.normalizeSichuanRules(room.game && room.game.rules);
+    } else {
+      nextGame.rules = Domain.normalizeRiichiRules(room.game && room.game.rules);
+      if (!nextGame.rules.xuezhan) nextGame.handWinners = [];
     }
 
     const now = new Date();

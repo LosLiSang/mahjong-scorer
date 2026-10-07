@@ -38,6 +38,7 @@ const HAN_OPTIONS = Array.from({ length: 13 }, (_, i) => ({ value: i + 1, label:
 function buildPlayerViews(game, roomSeats) {
   const classMap = { '东': 'dong', '南': 'nan', '西': 'xi', '北': 'bei' };
   const ranks = Shared.rankPlayers(game.players.map(player => player.points));
+  const winners = Game.handWinnersOf(game);
   return game.players.map((player, index) => {
     const seat = Game.seatOf(game, index);
     const roomSeat = roomSeats && roomSeats[index];
@@ -47,17 +48,39 @@ function buildPlayerViews(game, roomSeats) {
       seat,
       seatClass: classMap[seat],
       rank: ranks[index],
+      won: winners.includes(index),
       avatarFileId: roomSeat && roomSeat.avatarFileId || '',
       avatarText
     });
   });
 }
 
+// 血战中跳过已和玩家：从 start 开始找第一个仍在场、且不是 exclude 的玩家
+function nextActive(game, start, exclude) {
+  const count = game.playerCount || 4;
+  const out = Game.handWinnersOf(game);
+  for (let step = 0; step < count; step++) {
+    const idx = (start + step) % count;
+    if (idx !== exclude && !out.includes(idx)) return idx;
+  }
+  return -1;
+}
+
+// 牌桌 / 规则相关的派生显示
+function ruleViewOf(game) {
+  const xuezhan = Game.isXuezhan(game);
+  const wonCount = Game.handWinnersOf(game).length;
+  return {
+    ruleName: xuezhan ? '血战到底' : '标准',
+    ruleSub: xuezhan ? `本局已和 ${wonCount} 家` : `记录 ${(game.history || []).length} 局`
+  };
+}
+
 function defaultWin(game) {
-  const winnerIdx = game.dealerIndex;
+  const winnerIdx = nextActive(game, game.dealerIndex, -1);
   const count = game.playerCount || 4;
   return {
-    winnerIdx, loserIdx: (winnerIdx + 1) % count, isTsumo: false,
+    winnerIdx, loserIdx: nextActive(game, (winnerIdx + 1) % count, winnerIdx), isTsumo: false,
     winTile: null, han: 3, fu: 30,
     riichiState: game.players[winnerIdx].riichi ? 'riichi' : 'none',
     doraIndicators: [], uraDoraIndicators: [],
@@ -102,7 +125,9 @@ Page({
     showRiichi: false, riichiSelected: [],
     showDraw: false, tenpaiSelected: [],
     showHistory: false,
-    showSetup: false, setupMode: 4, setupNames: ['','','',''],
+    showSetup: false, setupMode: 4, setupNames: ['','','',''], setupXuezhan: false,
+    showRules: false, rulesXuezhan: false, rulesEditable: true,
+    ruleName: '标准', ruleSub: '记录 0 局',
     undoStack: [],
     // realtime room
     roomConfigured: RoomService.isConfigured(),
@@ -141,6 +166,7 @@ Page({
     game.mode = game.playerCount === 3 ? 'sanma' : 'yonma';
     if (!game.sanmaTsumoRule) game.sanmaTsumoRule = 'loss';
     if (!game.history) game.history = [];
+    Game.ensureRules(game);
     this.initGame(game);
     // 预构建牌面数据，保证首次打开结算弹窗前页面状态完整。
     this.setData({ win: defaultWin(game) });
@@ -197,15 +223,20 @@ Page({
   },
 
   initGame(game) {
-    const rn = Game.roundNames(game);
-    this.setData({
-      game,
-      playerViews: buildPlayerViews(game),
-      roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`,
-      roundWind: roundWindOf(game),
-      undoStack: []
-    });
+    this.setData(Object.assign(this.gameView(game), { undoStack: [] }));
     this.saveGame(game);
+  },
+
+  // 一局状态变化后需要刷新的全部派生显示
+  gameView(game, roomSeats) {
+    Game.ensureRules(game);
+    const rn = Game.roundNames(game);
+    return Object.assign({
+      game,
+      playerViews: buildPlayerViews(game, roomSeats),
+      roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`,
+      roundWind: roundWindOf(game)
+    }, ruleViewOf(game));
   },
 
   saveGame(game) {
@@ -455,7 +486,6 @@ Page({
     if (!room || !room.game) return;
     const previousActionId = this.data.lastSeenRoomActionId;
     const action = room.lastAction;
-    const rn = Game.roundNames(room.game);
     const roomActivityViews = (room.activity || []).map(item => ({
       id: item.id,
       summary: item.summary,
@@ -468,17 +498,13 @@ Page({
     if (roomAvatarFileId) {
       try { wx.setStorageSync(ROOM_AVATAR_KEY, roomAvatarFileId); } catch (e) {}
     }
-    this.updateRoomWritable({
+    this.updateRoomWritable(Object.assign(this.gameView(room.game, room.seats), {
       room,
-      game: room.game,
-      playerViews: buildPlayerViews(room.game, room.seats),
       roomAvatarFileId,
-      roundName: rn[room.game.roundIndex] || `第${room.game.roundIndex + 1}局`,
-      roundWind: roundWindOf(room.game),
       undoStack: [],
       roomActivityViews,
       lastSeenRoomActionId: action && action.id || previousActionId
-    });
+    }));
     if (notify && action && action.id !== previousActionId && previousActionId && !action.isMine) {
       wx.showToast({ title: action.summary || `${action.operatorNickname} 更新了房间`, icon: 'none' });
     }
@@ -640,8 +666,7 @@ Page({
     const stack = this.data.undoStack.slice();
     if (!stack.length) { wx.showToast({ title: '没有可撤销操作', icon: 'none' }); return; }
     const game = stack.pop();
-    const rn = Game.roundNames(game);
-    this.setData({ undoStack: stack, game, playerViews: buildPlayerViews(game), roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`, roundWind: roundWindOf(game) });
+    this.setData(Object.assign(this.gameView(game), { undoStack: stack }));
     this.saveGame(game);
   },
 
@@ -663,7 +688,8 @@ Page({
         }
         return;
       }
-      const game = Game.newGame(this.data.game.playerCount || 4);
+      // 重置清空点数与记录，但保留玩法规则
+      const game = Game.newGame(this.data.game.playerCount || 4, this.data.game.rules);
       this.initGame(game);
     }});
   },
@@ -675,7 +701,10 @@ Page({
     }
     const g = this.data.game;
     const names = g.players.map(p => p.name);
-    this.setData({ showSetup: true, setupMode: g.playerCount || 4, setupNames: names.concat(['','','','']).slice(0,4) });
+    this.setData({ showSetup: true, setupMode: g.playerCount || 4, setupNames: names.concat(['','','','']).slice(0,4), setupXuezhan: Game.isXuezhan(g) });
+  },
+  selectSetupRule(e) {
+    this.setData({ setupXuezhan: e.currentTarget.dataset.value === 'xuezhan' });
   },
   closeSetup() { this.setData({ showSetup: false }); },
   selectPlayerCount(e) {
@@ -695,17 +724,23 @@ Page({
       wx.showToast({ title: '请填写所有玩家姓名', icon: 'none' });
       return;
     }
-    const game = Game.newGame(count);
+    const old = this.data.game;
+    const keepProgress = old && old.playerCount === count;
+    if (keepProgress && !this.data.setupXuezhan && Game.handWinnersOf(old).length) {
+      wx.showToast({ title: '本局已有人和牌，结束本局后才能关闭血战到底', icon: 'none' });
+      return;
+    }
+    const game = Game.newGame(count, { xuezhan: this.data.setupXuezhan });
     game.players.forEach((p, i) => { p.name = names[i] || '玩家'; });
 
     // 保留旧存档的名字（如果存在的话，且模式不变）
-    const old = this.data.game;
-    if (old && old.playerCount === count) {
+    if (keepProgress) {
       game.honba = old.honba;
       game.roundIndex = old.roundIndex;
       game.dealerIndex = old.dealerIndex;
       game.riichiSticks = old.riichiSticks;
       game.history = old.history;
+      game.handWinners = Game.handWinnersOf(old).slice();
       game.players.forEach((p, i) => {
         p.name = names[i];
         p.points = old.players[i] ? old.players[i].points : p.points;
@@ -722,8 +757,47 @@ Page({
       return;
     }
     // 点击任意玩家卡片打开设置面板
-    this.setData({ showSetup: true, setupMode: this.data.game.playerCount || 4,
-      setupNames: this.data.game.players.map(p => p.name) });
+    this.openPlayerSetup();
+  },
+
+  // ===== 玩法规则（牌桌右上角） =====
+  openRules() {
+    const room = this.data.room;
+    this.setData({
+      showRules: true,
+      rulesXuezhan: Game.isXuezhan(this.data.game),
+      rulesEditable: !room || !!(room.isHost && room.status === 'active')
+    });
+  },
+  closeRules() { this.setData({ showRules: false }); },
+  selectRulesOption(e) {
+    if (!this.data.rulesEditable) return;
+    this.setData({ rulesXuezhan: e.currentTarget.dataset.value === 'xuezhan' });
+  },
+  async confirmRules() {
+    if (!this.data.rulesEditable) return this.closeRules();
+    const game = this.data.game;
+    const xuezhan = this.data.rulesXuezhan;
+    if (xuezhan === Game.isXuezhan(game)) return this.closeRules();
+    if (!xuezhan && Game.handWinnersOf(game).length) {
+      wx.showToast({ title: '本局已有人和牌，结束本局后才能关闭血战到底', icon: 'none' });
+      return;
+    }
+    const next = Shared.clone(game);
+    next.rules = Game.normalizeRules({ xuezhan });
+    Game.ensureRules(next);
+    if (this.data.room) {
+      try {
+        await this.submitRoomGame(next, 'riichi-rules', `房主将玩法改为${xuezhan ? '血战到底' : '标准'}`);
+        this.setData({ showRules: false });
+      } catch (err) {
+        this.roomError(err);
+      }
+      return;
+    }
+    this.snapshot();
+    this.setData(Object.assign(this.gameView(next), { showRules: false }));
+    this.saveGame(next);
   },
 
   // ===== 和牌面板 =====
@@ -753,9 +827,10 @@ Page({
 
   selectWinner(e) {
     const idx = Number(e.currentTarget.dataset.index);
+    if (Game.handWinnersOf(this.data.game).includes(idx)) return;
     const win = Shared.clone(this.data.win);
     win.winnerIdx = idx;
-    if (win.loserIdx === idx) win.loserIdx = (idx + 1) % (this.data.game.playerCount || 4);
+    if (win.loserIdx === idx) win.loserIdx = nextActive(this.data.game, (idx + 1) % (this.data.game.playerCount || 4), idx);
     win.riichiState = this.data.game.players[idx].riichi ? 'riichi' : 'none';
     win.conditions.isIppatsu = false;
     this.setData({ win, analysisStage: 0, analysisResult: null, analysisMessage: '和牌者已修改，请重新分析' });
@@ -763,8 +838,10 @@ Page({
     this.previewWinCalc();
   },
   selectLoser(e) {
+    const idx = Number(e.currentTarget.dataset.index);
+    if (Game.handWinnersOf(this.data.game).includes(idx)) return;
     const win = Shared.clone(this.data.win);
-    win.loserIdx = Number(e.currentTarget.dataset.index);
+    win.loserIdx = idx;
     this.setData({ win, analysisResult: null });
     this.previewWinCalc();
   },
@@ -1085,14 +1162,20 @@ Page({
     const baseOverride = this.data.analysisResult ? this.data.analysisResult.raw.basePoint : null;
     const payment = Game.calcWinPayments(game, win.winnerIdx, han, fu, win.isTsumo, win.loserIdx, baseOverride);
 
+    if (!Game.canWin(game, win.winnerIdx, win.loserIdx, win.isTsumo)) {
+      wx.showToast({ title: '已和玩家不能再和牌或放铳', icon: 'none' });
+      return;
+    }
     const fullWin = Object.assign({}, win, { han, fu });
     const next = Game.applyWin(game, fullWin, payment);
+    const continues = Game.handWinnersOf(next).length > 0;
+    const toast = continues ? `+${payment.total}点 · 本局继续` : `+${payment.total}点`;
     if (this.data.room) {
       const winnerName = game.players[win.winnerIdx].name;
       try {
-        await this.submitRoomGame(next, 'win', `${winnerName} 完成和牌结算`);
+        await this.submitRoomGame(next, 'win', `${winnerName} 完成和牌结算${continues ? '（血战继续）' : ''}`);
         this.setData({ showWin: false, analysisStage: 0 });
-        wx.showToast({ title: `+${payment.total}点`, icon: 'success' });
+        wx.showToast({ title: toast, icon: continues ? 'none' : 'success' });
       } catch (err) {
         this.roomError(err);
       }
@@ -1100,10 +1183,9 @@ Page({
     }
 
     this.snapshot();
-    const rn = Game.roundNames(next);
-    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, roundWind: roundWindOf(next), showWin: false, analysisStage: 0 });
+    this.setData(Object.assign(this.gameView(next), { showWin: false, analysisStage: 0 }));
     this.saveGame(next);
-    wx.showToast({ title: `+${payment.total}点`, icon: 'success' });
+    wx.showToast({ title: toast, icon: continues ? 'none' : 'success' });
   },
 
   // ===== 立直 =====
@@ -1114,7 +1196,7 @@ Page({
   closeRiichi() { this.setData({ showRiichi: false }); },
   toggleRiichiPlayer(e) {
     const i = Number(e.currentTarget.dataset.index);
-    if (this.data.game.players[i].riichi) return;
+    if (this.data.game.players[i].riichi || Game.handWinnersOf(this.data.game).includes(i)) return;
     const sel = this.data.riichiSelected.slice();
     sel[i] = !sel[i];
     this.setData({ riichiSelected: sel });
@@ -1134,7 +1216,7 @@ Page({
       return;
     }
     this.snapshot();
-    this.setData({ game: next, playerViews: buildPlayerViews(next), showRiichi: false });
+    this.setData(Object.assign(this.gameView(next), { showRiichi: false }));
     this.saveGame(next);
   },
 
@@ -1142,11 +1224,13 @@ Page({
   openDraw() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
     const count = this.data.game.playerCount || 4;
-    this.setData({ showDraw: true, tenpaiSelected: new Array(count).fill(false) });
+    const won = Game.handWinnersOf(this.data.game);
+    this.setData({ showDraw: true, tenpaiSelected: Array.from({ length: count }, (_, i) => won.includes(i)) });
   },
   closeDraw() { this.setData({ showDraw: false }); },
   toggleTenpai(e) {
     const i = Number(e.currentTarget.dataset.index);
+    if (Game.handWinnersOf(this.data.game).includes(i)) return;
     const a = this.data.tenpaiSelected.slice();
     a[i] = !a[i];
     this.setData({ tenpaiSelected: a });
@@ -1164,8 +1248,7 @@ Page({
       return;
     }
     this.snapshot();
-    const rn = Game.roundNames(next);
-    this.setData({ game: next, playerViews: buildPlayerViews(next), roundName: rn[next.roundIndex] || `第${next.roundIndex + 1}局`, roundWind: roundWindOf(next), showDraw: false });
+    this.setData(Object.assign(this.gameView(next), { showDraw: false }));
     this.saveGame(next);
   },
 

@@ -22,6 +22,7 @@ const ERROR_MESSAGES = {
   POINT_TOTAL_MISMATCH: '点数总计异常，已拒绝同步',
   NOTHING_TO_UNDO: '没有可撤销的最新计分',
   HOST_ONLY: '只有房主可以执行此操作',
+  HAND_IN_PROGRESS: '本局已有人和牌，结束本局后才能关闭血战到底',
   HOST_SEAT_LOCKED: '房主座位不能释放，请先结束房间',
   SEAT_EMPTY: '该座位当前无人占用',
   ROOM_CODE_EXHAUSTED: '暂时无法生成房间码，请稍后重试',
