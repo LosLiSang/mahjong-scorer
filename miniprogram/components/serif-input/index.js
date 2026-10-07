@@ -4,7 +4,9 @@
 Component({
   options: {
     // 让页面 wxss（如 .setup-name-input / .sichuan-input）作用到组件内部节点
-    styleIsolation: 'apply-shared'
+    styleIsolation: 'apply-shared',
+    // 去掉组件宿主节点，让内部框直接作为父级 flex 子项填满原 input 的位置
+    virtualHost: true
   },
 
   properties: {

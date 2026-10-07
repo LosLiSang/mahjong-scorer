@@ -1,8 +1,5 @@
-/* 宿主节点作为块级 / 弹性子项填满原 input 的位置 */
-:host { display: block; flex: 1; min-width: 0; width: 100%; }
-
 /* 外框尺寸、边框、字号由页面传入的 ext-class 决定；这里只负责内部填满与对齐 */
-.serif-input-box { display: flex; align-items: center; box-sizing: border-box; overflow: hidden; }
+.serif-input-box { display: flex; flex: 1; min-width: 0; width: 100%; align-items: center; box-sizing: border-box; overflow: hidden; }
 .serif-input-native,
 .serif-input-text {
   flex: 1;
