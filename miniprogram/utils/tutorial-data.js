@@ -387,9 +387,17 @@ const MAHJONG_TUTORIAL = {
       explanation: '中张连张容易发展成两面顺子；无役牌价值的孤张字牌通常更适合先打。',
     },
   ],
+  // 学习阶段：首页按阶段分组展示章节，训练在对应阶段学完后推荐
+  stages: [
+    { id: 'intro', title: '入门', lessonIds: ['tiles', 'turn', 'winning-shape'] },
+    { id: 'yaku', title: '役与和牌', lessonIds: ['yaku', 'waits'] },
+    { id: 'scoring', title: '算分', lessonIds: ['scoring', 'fu-detail', 'limits'] },
+    { id: 'practice', title: '实战', lessonIds: ['strategy'] },
+  ],
   trainingTopics: [
     {
       id: 'basic-concepts',
+      stageId: 'intro',
       icon: '🀄',
       title: '牌与和牌基础',
       description: '认牌、面子、雀头、役与副露',
@@ -397,6 +405,7 @@ const MAHJONG_TUTORIAL = {
     },
     {
       id: 'waits-scoring',
+      stageId: 'scoring',
       icon: '🧮',
       title: '听牌与算分',
       description: '听牌形、番符顺序与点数档位',
@@ -404,6 +413,7 @@ const MAHJONG_TUTORIAL = {
     },
     {
       id: 'yaku-shapes',
+      stageId: 'yaku',
       icon: '🎴',
       title: '役形判断',
       description: '从完整手牌判断常见役种',
@@ -411,6 +421,7 @@ const MAHJONG_TUTORIAL = {
     },
     {
       id: 'opening-strategy',
+      stageId: 'practice',
       icon: '🧭',
       title: '开局决策',
       description: '留好型、打孤张与新手役路线',
@@ -455,6 +466,66 @@ function gradeTrainingTopic(topicId, answers) {
   return topic ? gradeTutorialQuestions(topic.questions, answers) : null;
 }
 
+// 首页视图：继续学习哪一章、各阶段完成度、训练是否推荐。
+// progress 为已学会章节 id 列表；纯函数，不读存储。
+function buildTutorialHome(progress) {
+  const learned = new Set(Array.isArray(progress) ? progress : []);
+  const lessons = MAHJONG_TUTORIAL.lessons;
+  const order = new Map(lessons.map((lesson, index) => [lesson.id, index]));
+  const next = lessons.find(lesson => !learned.has(lesson.id)) || null;
+
+  const stages = MAHJONG_TUTORIAL.stages.map(stage => {
+    const items = stage.lessonIds.filter(id => order.has(id)).map(id => {
+      const index = order.get(id);
+      return {
+        id,
+        number: index + 1,
+        title: lessons[index].title,
+        learned: learned.has(id),
+        current: !!next && next.id === id,
+      };
+    });
+    const doneCount = items.filter(item => item.learned).length;
+    const numbers = items.map(item => item.number);
+    return {
+      id: stage.id,
+      title: stage.title,
+      lessons: items,
+      doneCount,
+      total: items.length,
+      complete: items.length > 0 && doneCount === items.length,
+      current: items.some(item => item.current),
+      rangeText: numbers.length > 1 ? `第 ${numbers[0]}–${numbers[numbers.length - 1]} 章` : `第 ${numbers[0]} 章`,
+    };
+  });
+  const stageById = new Map(stages.map(stage => [stage.id, stage]));
+
+  const trainings = MAHJONG_TUTORIAL.trainingTopics.map(topic => {
+    const stage = stageById.get(topic.stageId);
+    const recommended = !!(stage && stage.complete);
+    return {
+      id: topic.id,
+      icon: topic.icon,
+      title: topic.title,
+      description: topic.description,
+      questionCount: topic.questionIds.length,
+      recommended,
+      hint: recommended ? `已学完「${stage.title}」，推荐练习` : (stage ? `建议先学完${stage.rangeText}` : ''),
+    };
+  });
+
+  const completedCount = lessons.filter(lesson => learned.has(lesson.id)).length;
+  return {
+    next: next ? { id: next.id, number: order.get(next.id) + 1, title: next.title, summary: next.summary } : null,
+    stages,
+    trainings,
+    recommendedTrainings: trainings.filter(item => item.recommended),
+    completedCount,
+    totalLessons: lessons.length,
+    progressPercent: lessons.length ? Math.round(completedCount / lessons.length * 100) : 0,
+  };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     MAHJONG_TUTORIAL,
@@ -463,5 +534,6 @@ if (typeof module !== 'undefined' && module.exports) {
     getTrainingTopic,
     gradeTutorialQuestions,
     gradeTrainingTopic,
+    buildTutorialHome,
   };
 }

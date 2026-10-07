@@ -211,9 +211,6 @@ let lessonProblems = [];
 assert.equal(lessonProblems.length, 0, '教学馆课程数据应完整：' + lessonProblems.join('；'));
 assert(!!TutorialData.getTutorialLesson('strategy'), '教学馆应包含「开局策略」课');
 assert(/bindtap="submitLessonCheck"/.test(tutorialMarkup), '课程结尾应提供章末小测提交入口');
-assert(/lesson-status-badge/.test(tutorialMarkup), '每章课程卡片应显示明确的学习状态标签');
-assert(/已学会[\s\S]*未学会/.test(tutorialMarkup), '课程状态应区分已学会与未学会');
-assert(/item\.learned/.test(tutorialMarkup), '课程卡片应读取预计算的 learned 状态');
 assert(!/progress\.indexOf/.test(tutorialMarkup), 'WXML 中不能调用 Array.indexOf 判断课程状态');
 assert(!/bindtap="completeLesson"/.test(tutorialMarkup), '不应再用手动按钮直接标记学完');
 
@@ -232,7 +229,28 @@ const yakuQuizIds = (yakuTraining && yakuTraining.questions || []).map(x => x.id
 const needQuiz = ['q9','q10','q11','q12','q13','q14','q15'];
 const missingQuiz = needQuiz.filter(id => !yakuQuizIds.includes(id));
 assert.equal(missingQuiz.length, 0, '役形判断专项应包含全部判断题：' + missingQuiz.join('、'));
-assert(/bindtap="openTraining"/.test(tutorialMarkup), '教学馆应按主题展示专项训练入口');
+// 教学馆首页（#2）：继续学习指向第一个未学会章节；阶段完成后才推荐对应训练
+{
+  const cases = [
+    { progress: [], next: 'tiles', current: 'intro', recommended: [] },
+    { progress: ['tiles', 'turn', 'winning-shape'], next: 'yaku', current: 'yaku', recommended: ['basic-concepts'] },
+    { progress: ['tiles', 'yaku'], next: 'turn', current: 'intro', recommended: [] },
+    { progress: TutorialData.MAHJONG_TUTORIAL.lessons.map(l => l.id), next: null, current: null,
+      recommended: ['basic-concepts', 'waits-scoring', 'yaku-shapes', 'opening-strategy'] },
+  ];
+  cases.forEach(c => {
+    const home = TutorialData.buildTutorialHome(c.progress);
+    assert.equal(home.next ? home.next.id : null, c.next, `继续学习章节：${c.progress.join(',')}`);
+    const cur = home.stages.find(stage => stage.current);
+    assert.equal(cur ? cur.id : null, c.current, '当前阶段');
+    assert.deepEqual(home.recommendedTrainings.map(t => t.id), c.recommended, '推荐训练');
+    assert.equal(home.trainings.length, 4, '训练全部可做，始终列出');
+  });
+  const stagedIds = TutorialData.MAHJONG_TUTORIAL.stages.flatMap(stage => stage.lessonIds);
+  assert.deepEqual(stagedIds, TutorialData.MAHJONG_TUTORIAL.lessons.map(l => l.id), '阶段应按顺序覆盖全部章节且不重复');
+  const fresh = TutorialData.buildTutorialHome([]);
+  assert.equal(fresh.trainings.find(t => t.id === 'yaku-shapes').hint, '建议先学完第 4–5 章');
+}
 assert(!/入门测验/.test(tutorialMarkup), '页面不应再显示单一的入门测验入口');
 const perfectYakuAnswers = yakuTraining.questions.map(question => question.answer);
 const yakuGrade = TutorialData.gradeTrainingTopic('yaku-shapes', perfectYakuAnswers);
@@ -345,8 +363,18 @@ assert.equal(
   true,
   '答对后课程列表中的状态标签应立即更新为已学会'
 );
+assert.equal(tutorialPage.data.nextLesson.id, 'winning-shape', '答对后「继续学习」前进到下一章');
+tutorialPage.openNextLesson();
+assert.equal(tutorialPage.data.activeLesson.id, 'winning-shape', '课程弹窗内可直接进入下一章');
+tutorialPage.closeLesson();
+assert.equal(tutorialPage.data.stages.find(s => s.id === 'intro').expanded, true, '默认展开当前阶段');
+assert.equal(tutorialPage.data.stages.find(s => s.id === 'scoring').expanded, false, '其余阶段默认折叠');
+tutorialPage.toggleStage({ currentTarget: { dataset: { id: 'scoring' } } });
+assert.equal(tutorialPage.data.stages.find(s => s.id === 'scoring').expanded, true, '点击阶段标题可展开');
+tutorialPage.switchHomeTab({ currentTarget: { dataset: { tab: 'training' } } });
+assert.equal(tutorialPage.data.homeTab, 'training');
 tutorialPage.openTraining({ currentTarget: { dataset: { id: 'yaku-shapes' } } });
-assert.equal(tutorialPage.data.quizQuestions.length, 7, '役形判断专项应载入 7 道题');
+assert.equal(tutorialPage.data.quizQuestions.length, 7, '役形判断专项应载入 7 道题（未推荐也可做）');
 
 // 川麻交互：番型选中状态预计算；罚分按送分方、收分方和类型结算
 let sichuanPageDefinition = null;

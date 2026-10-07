@@ -1,92 +1,74 @@
 /* pages/tutorial/index.wxss — 教学馆 */
 @import "/utils/common.wxss";
 
-/* ===== Hero ===== */
+/* ===== 继续学习 ===== */
 .hero {
   background: linear-gradient(145deg, #4a6741, #2d4a2a);
   border-radius: 26rpx;
-  padding: 40rpx 32rpx;
-  margin-bottom: 0;
+  padding: 28rpx 30rpx 30rpx;
   color: #f0f5ec;
 }
-.hero-title { font-size: 40rpx; font-weight: 700; line-height: 1.3; margin-bottom: 12rpx; }
-.hero-sub { font-size: 26rpx; opacity: 0.85; line-height: 1.6; margin-bottom: 28rpx; }
+.hero-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12rpx; }
+.hero-kicker { font-size: 22rpx; letter-spacing: 2rpx; opacity: .75; }
+.hero-progress-text { font-size: 22rpx; opacity: .85; }
+.progress-bar { height: 10rpx; background: rgba(255,255,255,.2); border-radius: 99rpx; overflow: hidden; }
+.progress-fill { height: 100%; background: #8fbc7a; border-radius: inherit; transition: width .3s ease; min-width: 0; }
+.hero-label { margin-top: 24rpx; font-size: 22rpx; opacity: .75; }
+.hero-title { margin-top: 6rpx; font-size: 36rpx; font-weight: 700; line-height: 1.35; }
+.hero-sub { margin-top: 8rpx; font-size: 23rpx; line-height: 1.6; opacity: .85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-btn { margin: 22rpx 0 0; width: 100%; padding: 18rpx 0; border-radius: 16rpx; background: #f0f5ec; color: #2d4a2a; font-size: 28rpx; font-weight: 700; line-height: 1.4; }
+.hero-btn::after { border: 0; }
 
-/* ===== 进度 ===== */
-.progress-section { margin-top: 8rpx; }
-.progress-bar {
-  height: 12rpx; background: rgba(255,255,255,.2); border-radius: 99rpx; overflow: hidden;
-}
-.progress-fill {
-  height: 100%; background: #8fbc7a; border-radius: inherit;
-  transition: width 0.3s ease; min-width: 0;
-}
-.progress-text { font-size: 22rpx; opacity: 0.7; margin-top: 10rpx; }
+/* ===== 推荐练习 ===== */
+.recommend-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10rpx; margin-top: 18rpx; }
+.recommend-label { color: #5a7a4a; font-size: 22rpx; font-weight: 700; }
+.recommend-chip { padding: 8rpx 18rpx; border-radius: 99rpx; background: #e5f0df; color: #4f6743; font-size: 22rpx; }
 
-/* ===== 区块标题 ===== */
-.section-title {
-  font-size: 32rpx; font-weight: 700; color: #3d3929;
-  margin: 32rpx 0 18rpx;
-}
+/* ===== 分段切换 ===== */
+.home-tabs { display: flex; gap: 6rpx; margin: 24rpx 0 18rpx; padding: 6rpx; border-radius: 18rpx; background: #ebe7da; }
+.home-tab { flex: 1; padding: 14rpx 0; border-radius: 14rpx; color: #746e5c; font-size: 26rpx; text-align: center; }
+.home-tab.active { background: #fff; color: var(--accent, #c96442); font-weight: 700; box-shadow: 0 2rpx 8rpx rgba(61,57,41,.08); }
 
-/* ===== 课程列表 ===== */
-.lesson-list { display: flex; flex-direction: column; gap: 14rpx; }
-.lesson-card {
-  position: relative; background: #fff; border: 2rpx solid #e8e5d8;
-  border-radius: 20rpx; padding: 22rpx; display: flex; align-items: center; gap: 16rpx;
-}
-.lesson-card:active { transform: scale(.98); }
-.lesson-card-inner {
-  flex: 1; display: flex; align-items: center; gap: 16rpx; min-width: 0;
-}
-.lesson-number {
-  min-width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; background: #f5eee7; color: var(--accent, #c96442); font-weight: 700; font-size: 22rpx;
-}
-.lesson-info { flex: 1; min-width: 0; overflow: hidden; }
-.lesson-card-title-row { display: flex; align-items: center; gap: 12rpx; min-width: 0; }
-.lesson-card-title {
-  flex: 1; min-width: 0; font-size: 28rpx; font-weight: 700; color: #3d3929;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.lesson-status-badge {
-  flex: 0 0 auto; padding: 6rpx 12rpx; border-radius: 99rpx;
-  font-size: 19rpx; font-weight: 700; line-height: 1.2;
-}
-.lesson-status-badge.pending { color: #8a8470; background: #f1eee5; }
-.lesson-status-badge.learned { color: #4f6743; background: #e5f0df; }
-.lesson-card-summary {
-  font-size: 22rpx; color: #918a76; margin-top: 6rpx;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.lesson-card-status { font-size: 20rpx; color: #aaa38e; margin-top: 8rpx; }
-.lesson-card-status.learned { color: #5a7a4a; font-weight: 600; }
-.lesson-arrow { color: #b8b299; font-size: 36rpx; }
+/* ===== 课程目录：按阶段分组 ===== */
+.stage-list { display: flex; flex-direction: column; gap: 12rpx; }
+.stage-group { background: #fff; border: 2rpx solid #e8e5d8; border-radius: 18rpx; overflow: hidden; }
+.stage-group.current { border-color: #cfdcc6; }
+.stage-head { display: flex; align-items: center; gap: 12rpx; padding: 20rpx 22rpx; }
+.stage-title { color: #3d3929; font-size: 27rpx; font-weight: 700; }
+.stage-range { flex: 1; color: #aaa28f; font-size: 21rpx; }
+.stage-count { color: #8a8470; font-size: 22rpx; }
+.stage-count.done { color: #5a7a4a; font-weight: 700; }
+.stage-arrow { width: 24rpx; color: #b8b299; font-size: 22rpx; text-align: center; }
+.lesson-row { display: flex; align-items: center; gap: 14rpx; padding: 16rpx 22rpx; border-top: 2rpx solid #f1eee5; }
+.lesson-row:active { background: #faf8f2; }
+.lesson-row.current { background: #f6f9f3; }
+.lesson-row-num { flex: 0 0 auto; width: 44rpx; height: 44rpx; border-radius: 50%; background: #f5eee7; color: var(--accent, #c96442); font-size: 22rpx; font-weight: 700; line-height: 44rpx; text-align: center; }
+.lesson-row-num.learned { background: #e5f0df; color: #4f6743; }
+.lesson-row-title { flex: 1; min-width: 0; overflow: hidden; color: #3d3929; font-size: 26rpx; text-overflow: ellipsis; white-space: nowrap; }
+.lesson-row-tag { flex: 0 0 auto; padding: 4rpx 12rpx; border-radius: 99rpx; background: #5a7a4a; color: #fff; font-size: 19rpx; }
+.lesson-arrow { color: #b8b299; font-size: 34rpx; line-height: 1; }
 
-/* ===== 专项训练入口 ===== */
-.training-list { display: flex; flex-direction: column; gap: 14rpx; }
-.quiz-entry {
-  background: #fff; border: 2rpx solid #e8e5d8;
-  border-radius: 20rpx; padding: 24rpx;
-  display: flex; align-items: center; gap: 16rpx;
-}
+/* ===== 专项训练 ===== */
+.training-list { display: flex; flex-direction: column; gap: 12rpx; }
+.quiz-entry { display: flex; align-items: center; gap: 16rpx; padding: 22rpx; border: 2rpx solid #e8e5d8; border-radius: 18rpx; background: #fff; }
+.quiz-entry.recommended { border-color: #b9cfa9; background: #f8fbf5; }
 .quiz-entry:active { transform: scale(.98); }
-.quiz-entry-icon { font-size: 40rpx; min-width: 56rpx; text-align: center; }
-.quiz-entry-info { flex: 1; }
-.quiz-entry-title { font-size: 28rpx; font-weight: 700; color: #3d3929; }
-.quiz-entry-desc { font-size: 22rpx; color: #8a8470; margin-top: 4rpx; }
+.quiz-entry-icon { min-width: 56rpx; font-size: 40rpx; text-align: center; }
+.quiz-entry-info { flex: 1; min-width: 0; }
+.quiz-entry-title { color: #3d3929; font-size: 28rpx; font-weight: 700; }
+.quiz-entry-tag { margin-left: 10rpx; padding: 2rpx 10rpx; border-radius: 99rpx; background: #5a7a4a; color: #fff; font-size: 18rpx; font-weight: 600; vertical-align: middle; }
+.quiz-entry-desc { margin-top: 4rpx; color: #8a8470; font-size: 22rpx; }
+.quiz-entry-hint { margin-top: 4rpx; color: #aaa28f; font-size: 20rpx; }
+.quiz-entry.recommended .quiz-entry-hint { color: #5a7a4a; }
 
-/* ===== 导航卡片 ===== */
-.nav-cards { display: flex; flex-direction: column; gap: 14rpx; }
-.nav-card {
-  background: #fff; border: 2rpx solid #e8e5d8;
-  border-radius: 20rpx; padding: 24rpx;
-  display: flex; align-items: center; gap: 16rpx;
-}
+/* ===== 工具 ===== */
+.nav-cards { display: flex; flex-direction: column; gap: 12rpx; }
+.nav-card { display: flex; align-items: center; gap: 16rpx; padding: 22rpx; border: 2rpx solid #e8e5d8; border-radius: 18rpx; background: #fff; }
 .nav-card:active { transform: scale(.98); }
-.nav-card-icon { font-size: 36rpx; min-width: 52rpx; text-align: center; }
-.nav-card-title { font-size: 28rpx; font-weight: 700; color: #3d3929; flex: 1; }
-.nav-card-desc { font-size: 22rpx; color: #8a8470; margin-top: 4rpx; display: none; }
+.nav-card-icon { min-width: 52rpx; font-size: 36rpx; text-align: center; }
+.nav-card-info { flex: 1; min-width: 0; }
+.nav-card-title { color: #3d3929; font-size: 28rpx; font-weight: 700; }
+.nav-card-desc { margin-top: 4rpx; color: #8a8470; font-size: 22rpx; }
 .nav-card-arrow { color: #b8b299; font-size: 32rpx; }
 
 /* ===== 课程弹窗 ===== */
