@@ -19,15 +19,13 @@
     </view>
   </view>
 
-  <!-- 房间服务 -->
+  <!-- 联机房间 -->
   <view class="settings-card">
-    <view class="settings-title">房间服务</view>
-    <view class="kv-row"><text class="kv-key">服务方式</text><text class="kv-value">微信云开发</text></view>
-    <view class="kv-row"><text class="kv-key">云环境</text><text class="kv-value {{cloudEnvId ? '' : 'warn'}}">{{cloudEnvId || '未配置'}}</text></view>
-    <view class="kv-row"><text class="kv-key">房间函数</text><text class="kv-value">{{roomFunctionName}}</text></view>
+    <view class="settings-title">联机房间</view>
+    <view class="kv-row"><text class="kv-key">联机功能</text><text class="kv-value {{roomAvailable ? '' : 'warn'}}">{{roomAvailable ? '可用' : '暂不可用'}}</text></view>
     <view class="kv-row"><text class="kv-key">日麻房间</text><text class="kv-value">{{activeRiichiRoom || '无'}}</text></view>
     <view class="kv-row"><text class="kv-key">川麻房间</text><text class="kv-value">{{activeSichuanRoom || '无'}}</text></view>
-    <view class="field-hint">房间码为各模式最近使用的房间，可在对应计分页管理。将来切换自建房间服务时，配置会放在这里。</view>
+    <view class="field-hint">{{roomAvailable ? '显示各模式最近进入的房间，可在对应计分页管理。' : '联机暂不可用，本地计分不受影响。'}}</view>
   </view>
 
   <!-- 关于 -->
