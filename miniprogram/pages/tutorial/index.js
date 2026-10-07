@@ -5,6 +5,7 @@ const {
   MAHJONG_TUTORIAL,
   getTutorialQuestion,
   getTrainingTopic,
+  buildTutorialHome,
 } = require('../../utils/tutorial-data');
 
 const PROGRESS_KEY = 'mj_tutorial_progress_v1';
@@ -24,6 +25,14 @@ Page({
     totalLessons: 0,
     completedCount: 0,
     progressPercent: 0,
+
+    // 首页：继续学习 + 课程 / 训练 / 工具 分段
+    homeTab: 'lessons',
+    nextLesson: null,
+    stages: [],
+    expandedStages: {},
+    trainingViews: [],
+    recommendedTrainings: [],
 
     // lesson modal
     showLesson: false,
@@ -113,6 +122,44 @@ Page({
       learned: progress.includes(lesson.id),
     }));
     this.setData({ progress, lessons, completedCount, progressPercent });
+    this.refreshHome(progress);
+  },
+
+  // 首页派生视图：继续学习、阶段分组、训练推荐
+  refreshHome(progress) {
+    const home = buildTutorialHome(progress);
+    // 默认只展开当前阶段；用户手动展开 / 收起的保留
+    const expandedStages = Object.assign({}, this.data.expandedStages);
+    home.stages.forEach(stage => {
+      if (expandedStages[stage.id] === undefined) expandedStages[stage.id] = stage.current;
+    });
+    const stages = home.stages.map(stage => Object.assign({}, stage, { expanded: !!expandedStages[stage.id] }));
+    this.setData({
+      nextLesson: home.next,
+      stages,
+      expandedStages,
+      trainingViews: home.trainings,
+      recommendedTrainings: home.recommendedTrainings,
+      completedCount: home.completedCount,
+      progressPercent: home.progressPercent,
+    });
+  },
+
+  switchHomeTab(e) {
+    this.setData({ homeTab: e.currentTarget.dataset.tab });
+  },
+
+  toggleStage(e) {
+    const id = e.currentTarget.dataset.id;
+    const expandedStages = Object.assign({}, this.data.expandedStages, { [id]: !this.data.expandedStages[id] });
+    const stages = this.data.stages.map(stage => Object.assign({}, stage, { expanded: !!expandedStages[stage.id] }));
+    this.setData({ expandedStages, stages });
+  },
+
+  continueLearning() {
+    const next = this.data.nextLesson;
+    if (next) this.openLesson({ currentTarget: { dataset: { id: next.id } } });
+    else this.setData({ homeTab: 'training' });
   },
 
   // ===== 课程 =====
@@ -184,7 +231,14 @@ Page({
       activeLesson: { ...lesson, learned: true },
       activeLessonLearned: true,
     });
+    this.refreshHome(progress);
     wx.showToast({ title: '本章已学会 ✓', icon: 'success', duration: 1500 });
+  },
+
+  openNextLesson() {
+    const next = this.data.nextLesson;
+    if (!next) return this.closeLesson();
+    this.openLesson({ currentTarget: { dataset: { id: next.id } } });
   },
 
   retryLessonCheck() {

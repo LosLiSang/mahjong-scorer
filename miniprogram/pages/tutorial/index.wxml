@@ -2,79 +2,102 @@
 
 <view class="page-root" style="{{themeStyle}}">
   <view class="container">
-  <!-- Hero -->
+  <!-- 继续学习 -->
   <view class="hero">
-    <view class="hero-title">从认牌到看懂点数</view>
-    <view class="hero-sub">系统学习日麻基础，新手也能快速上手计分</view>
-    <view class="progress-section">
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{progressPercent}}%"></view>
-      </view>
-      <view class="progress-text">已学会 {{completedCount}} / {{totalLessons}} 章（{{progressPercent}}%）</view>
+    <view class="hero-top">
+      <text class="hero-kicker">日麻教学馆</text>
+      <text class="hero-progress-text">已学会 {{completedCount}} / {{totalLessons}} 章</text>
     </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+    </view>
+    <block wx:if="{{nextLesson}}">
+      <view class="hero-label">{{completedCount ? '继续学习' : '从这里开始'}}</view>
+      <view class="hero-title">第{{nextLesson.number}}章 · {{nextLesson.title}}</view>
+      <view class="hero-sub">{{nextLesson.summary}}</view>
+      <button class="hero-btn" bindtap="continueLearning">{{completedCount ? '继续学习' : '开始学习'}}</button>
+    </block>
+    <block wx:else>
+      <view class="hero-label">全部课程已学会</view>
+      <view class="hero-title">去专项训练巩固一下</view>
+      <button class="hero-btn" bindtap="continueLearning">去训练</button>
+    </block>
   </view>
 
-  <!-- 课程列表 -->
-  <view class="section-title">📚 课程</view>
-  <view class="lesson-list">
-    <view
-      wx:for="{{lessons}}"
-      wx:key="id"
-      class="lesson-card"
-      data-id="{{item.id}}"
-      bindtap="openLesson"
-    >
-      <view class="lesson-card-inner">
-        <view class="lesson-number">第{{index + 1}}章</view>
-        <view class="lesson-info">
-          <view class="lesson-card-title-row">
-            <view class="lesson-card-title">{{item.title}}</view>
-            <view class="lesson-status-badge {{item.learned ? 'learned' : 'pending'}}">
-              {{item.learned ? '已学会' : '未学会'}}
-            </view>
-          </view>
-          <view class="lesson-card-summary">{{item.summary}}</view>
-          <view class="lesson-card-status {{item.learned ? 'learned' : ''}}">
-            {{item.learned ? '本章小测已通过' : '学习课程并完成章末小测'}}
-          </view>
+  <!-- 推荐训练：对应阶段学完后才出现 -->
+  <view wx:if="{{recommendedTrainings.length}}" class="recommend-row">
+    <text class="recommend-label">推荐练习</text>
+    <view wx:for="{{recommendedTrainings}}" wx:key="id" class="recommend-chip" data-id="{{item.id}}" bindtap="openTraining">{{item.icon}} {{item.title}}</view>
+  </view>
+
+  <!-- 分段切换 -->
+  <view class="home-tabs">
+    <view class="home-tab {{homeTab === 'lessons' ? 'active' : ''}}" data-tab="lessons" bindtap="switchHomeTab">课程</view>
+    <view class="home-tab {{homeTab === 'training' ? 'active' : ''}}" data-tab="training" bindtap="switchHomeTab">训练</view>
+    <view class="home-tab {{homeTab === 'tools' ? 'active' : ''}}" data-tab="tools" bindtap="switchHomeTab">工具</view>
+  </view>
+
+  <!-- 课程：按阶段分组的紧凑目录 -->
+  <view wx:if="{{homeTab === 'lessons'}}" class="stage-list">
+    <view wx:for="{{stages}}" wx:key="id" wx:for-item="stage" class="stage-group {{stage.current ? 'current' : ''}}">
+      <view class="stage-head" data-id="{{stage.id}}" bindtap="toggleStage">
+        <text class="stage-title">{{stage.title}}</text>
+        <text class="stage-range">{{stage.rangeText}}</text>
+        <text class="stage-count {{stage.complete ? 'done' : ''}}">{{stage.complete ? '✓ ' : ''}}{{stage.doneCount}}/{{stage.total}}</text>
+        <text class="stage-arrow">{{stage.expanded ? '▾' : '▸'}}</text>
+      </view>
+      <block wx:if="{{stage.expanded}}">
+        <view
+          wx:for="{{stage.lessons}}"
+          wx:key="id"
+          class="lesson-row {{item.current ? 'current' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="openLesson"
+        >
+          <text class="lesson-row-num {{item.learned ? 'learned' : ''}}">{{item.learned ? '✓' : item.number}}</text>
+          <text class="lesson-row-title">{{item.title}}</text>
+          <text wx:if="{{item.current}}" class="lesson-row-tag">当前</text>
+          <text class="lesson-arrow">›</text>
         </view>
-      </view>
-      <view class="lesson-arrow">›</view>
+      </block>
     </view>
   </view>
 
-  <!-- 专项训练 -->
-  <view class="section-title">🎯 专项训练</view>
-  <view class="training-list">
+  <!-- 训练：全部可做，学完对应阶段才标推荐 -->
+  <view wx:if="{{homeTab === 'training'}}" class="training-list">
     <view
-      wx:for="{{trainingTopics}}"
+      wx:for="{{trainingViews}}"
       wx:key="id"
-      class="quiz-entry"
+      class="quiz-entry {{item.recommended ? 'recommended' : ''}}"
       data-id="{{item.id}}"
       bindtap="openTraining"
     >
       <view class="quiz-entry-icon">{{item.icon}}</view>
       <view class="quiz-entry-info">
-        <view class="quiz-entry-title">{{item.title}}</view>
-        <view class="quiz-entry-desc">{{item.description}} · {{item.questions.length}} 题</view>
+        <view class="quiz-entry-title">{{item.title}}<text wx:if="{{item.recommended}}" class="quiz-entry-tag">推荐</text></view>
+        <view class="quiz-entry-desc">{{item.description}} · {{item.questionCount}} 题</view>
+        <view class="quiz-entry-hint">{{item.hint}}</view>
       </view>
       <view class="lesson-arrow">›</view>
     </view>
   </view>
 
-  <!-- 工具入口 -->
-  <view class="section-title">🧭 工具</view>
-  <view class="nav-cards">
+  <!-- 工具 -->
+  <view wx:if="{{homeTab === 'tools'}}" class="nav-cards">
     <view class="nav-card" bindtap="goToYakuCatalog">
       <view class="nav-card-icon">📋</view>
-      <view class="nav-card-title">役种图鉴</view>
-      <view class="nav-card-desc">查看全部役种、番数与条件</view>
+      <view class="nav-card-info">
+        <view class="nav-card-title">役种图鉴</view>
+        <view class="nav-card-desc">查看全部役种、番数与条件</view>
+      </view>
       <view class="nav-card-arrow">›</view>
     </view>
     <view class="nav-card" bindtap="goToScoringGuide">
       <view class="nav-card-icon">🧮</view>
-      <view class="nav-card-title">算分详解</view>
-      <view class="nav-card-desc">符数、番数、点数档位完全拆解</view>
+      <view class="nav-card-info">
+        <view class="nav-card-title">算分详解</view>
+        <view class="nav-card-desc">符数、番数、点数档位完全拆解</view>
+      </view>
       <view class="nav-card-arrow">›</view>
     </view>
   </view>
@@ -162,6 +185,8 @@
           </view>
           <view class="quiz-explanation-text">{{lessonCheckExplanation}}</view>
           <button wx:if="{{!lessonCheckCorrect}}" class="btn btn-secondary" bindtap="retryLessonCheck">重新作答</button>
+          <button wx:elif="{{nextLesson}}" class="btn" bindtap="openNextLesson">下一章：{{nextLesson.title}}</button>
+          <button wx:else class="btn" bindtap="closeLesson">全部学完，返回</button>
         </view>
         <view wx:if="{{!lessonCheckSubmitted}}" class="quiz-submit-area">
           <button class="btn" bindtap="submitLessonCheck" disabled="{{lessonCheckAnswer < 0}}">确认答案</button>
