@@ -1,0 +1,17 @@
+<view class="serif-input-box {{extClass}} {{disabled ? 'is-disabled' : ''}}" bindtap="activate">
+  <input
+    wx:if="{{focused}}"
+    class="serif-input-native"
+    type="{{type}}"
+    value="{{current}}"
+    placeholder="{{placeholder}}"
+    placeholder-class="serif-input-placeholder"
+    maxlength="{{maxlength}}"
+    focus="{{true}}"
+    bindinput="onInput"
+    bindblur="onBlur"
+    bindconfirm="onConfirm"
+  />
+  <view wx:elif="{{current}}" class="serif-input-text">{{current}}</view>
+  <view wx:else class="serif-input-text serif-input-placeholder">{{placeholder}}</view>
+</view>

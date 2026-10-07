@@ -1,0 +1,27 @@
+/* 宿主节点作为块级 / 弹性子项填满原 input 的位置 */
+:host { display: block; flex: 1; min-width: 0; width: 100%; }
+
+/* 外框尺寸、边框、字号由页面传入的 ext-class 决定；这里只负责内部填满与对齐 */
+.serif-input-box { display: flex; align-items: center; box-sizing: border-box; overflow: hidden; }
+.serif-input-native,
+.serif-input-text {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  font-size: inherit;
+  color: inherit;
+  text-align: inherit;
+  letter-spacing: inherit;
+}
+.serif-input-native { min-height: 0; line-height: normal; }
+.serif-input-text {
+  display: block;
+  line-height: inherit;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: "Noto Serif SC", "Songti SC", STSong, SimSun, Georgia, serif;
+}
+.serif-input-placeholder { color: #b5af9c; font-weight: 400; }
+.is-disabled { color: #746e5c; background: #f3f0e8 !important; }

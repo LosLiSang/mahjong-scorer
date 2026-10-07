@@ -97,7 +97,7 @@
       </view>
 
       <view class="label">微信昵称</view>
-      <input class="setup-name-input serif-input" type="nickname" value="{{roomNickname}}" bindinput="onRoomNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
+      <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{roomNickname}}" bindinput="onRoomNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
       <view class="room-profile-picker-row">
         <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseRoomAvatar" loading="{{roomAvatarUploading}}" disabled="{{roomAvatarUploading}}">
           <image wx:if="{{roomAvatarFileId}}" class="room-avatar-picker-image" src="{{roomAvatarFileId}}" mode="aspectFill" />
@@ -426,8 +426,8 @@
     </view>
 
     <view class="label">每位收分玩家获得</view>
-    <input
-      class="sichuan-input"
+    <serif-input
+      ext-class="sichuan-input"
       type="digit"
       placeholder="输入罚分金额"
       value="{{penaltyAmount}}"
@@ -450,8 +450,8 @@
     <view wx:if="{{room}}" class="room-privacy-hint setup-room-hint">联网房间姓名由座位昵称决定，本次只同步该玩家的定缺状态。</view>
 
     <view class="label">玩家姓名</view>
-    <input
-      class="setup-name-input serif-input sichuan-serif-input"
+    <serif-input
+      ext-class="setup-name-input serif-input sichuan-serif-input"
       value="{{setupName}}"
       bindinput="onSetupNameInput"
       placeholder="玩家姓名"

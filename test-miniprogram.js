@@ -452,3 +452,26 @@ page.selectMoveSeatTarget({ currentTarget: { dataset: { index: 1 } } });
 assert.equal(page.data.moveSeatTarget, 1, '日麻可选中空座作为目标');
 
 console.log('mini-program tests passed');
+
+// 衬线输入框组件（#8）：非输入态显示文本，聚焦才换成原生 input；昵称只触发 blur 时也要回传值
+let serifInputDef = null;
+global.Component = def => { serifInputDef = def; };
+require('./miniprogram/components/serif-input/index');
+const serifEvents = [];
+const serifInput = Object.assign({}, serifInputDef.methods, {
+  data: { value: '', disabled: false, focused: false, current: '玩家一' },
+  setData(patch) { Object.assign(this.data, patch); },
+  triggerEvent(name, detail) { serifEvents.push([name, detail.value]); },
+});
+serifInput.activate();
+assert.equal(serifInput.data.focused, true, '点击后才渲染原生 input');
+serifInput.onInput({ detail: { value: '东家' } });
+serifInput.onBlur({ detail: { value: '东家' } });
+assert.equal(serifInput.data.focused, false, '失焦后回到衬线文本显示');
+assert.deepEqual(serifEvents.filter(e => e[0] === 'input'), [['input', '东家']], '输入值只回传一次');
+serifInput.activate();
+serifInput.onBlur({ detail: { value: '微信昵称' } });
+assert.deepEqual(serifEvents[serifEvents.length - 2], ['input', '微信昵称'], '仅 blur 带回新值时也应触发 input');
+serifInput.data.disabled = true;
+serifInput.activate();
+assert.equal(serifInput.data.focused, false, '禁用时不能进入输入态');

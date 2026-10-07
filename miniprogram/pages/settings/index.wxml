@@ -13,7 +13,7 @@
       </button>
       <view class="profile-fields">
         <view class="field-label">微信昵称</view>
-        <input class="setup-name-input serif-input" type="nickname" value="{{nickname}}" bindinput="onNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
+        <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{nickname}}" bindinput="onNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
         <view class="field-hint">{{nickname ? '已保存，加入房间时使用' : '填写后加入房间时自动带上'}}</view>
       </view>
     </view>
