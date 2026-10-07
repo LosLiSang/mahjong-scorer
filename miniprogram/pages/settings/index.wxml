@@ -1,0 +1,72 @@
+<!-- pages/settings/index.wxml — 设置 -->
+
+<view class="page-root" style="{{themeStyle}}">
+  <view class="container">
+  <!-- 玩家资料 -->
+  <view class="settings-card">
+    <view class="settings-title">玩家资料</view>
+    <view class="settings-desc">昵称和头像在加入联机房间后展示给同房间的其他玩家</view>
+    <view class="profile-row">
+      <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseAvatar" loading="{{avatarUploading}}" disabled="{{avatarUploading}}">
+        <image wx:if="{{avatarFileId}}" class="room-avatar-picker-image" src="{{avatarFileId}}" mode="aspectFill" />
+        <text wx:else class="room-avatar-picker-placeholder">选头像</text>
+      </button>
+      <view class="profile-fields">
+        <view class="field-label">微信昵称</view>
+        <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{nickname}}" bindinput="onNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
+        <view class="field-hint">{{nickname ? '已保存，加入房间时使用' : '填写后加入房间时自动带上'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 房间服务 -->
+  <view class="settings-card">
+    <view class="settings-title">房间服务</view>
+    <view class="kv-row"><text class="kv-key">服务方式</text><text class="kv-value">微信云开发</text></view>
+    <view class="kv-row"><text class="kv-key">云环境</text><text class="kv-value {{cloudEnvId ? '' : 'warn'}}">{{cloudEnvId || '未配置'}}</text></view>
+    <view class="kv-row"><text class="kv-key">房间函数</text><text class="kv-value">{{roomFunctionName}}</text></view>
+    <view class="kv-row"><text class="kv-key">日麻房间</text><text class="kv-value">{{activeRiichiRoom || '无'}}</text></view>
+    <view class="kv-row"><text class="kv-key">川麻房间</text><text class="kv-value">{{activeSichuanRoom || '无'}}</text></view>
+    <view class="field-hint">房间码为各模式最近使用的房间，可在对应计分页管理。将来切换自建房间服务时，配置会放在这里。</view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="settings-card">
+    <view class="settings-title">关于</view>
+    <view class="kv-row"><text class="kv-key">联系与合作</text><text class="kv-value link" bindtap="copyContact">lisangcode@outlook.com</text></view>
+  </view>
+
+  <!-- 外观 -->
+  <view class="settings-card">
+    <view class="settings-title">外观</view>
+    <view class="field-label">强调色</view>
+    <view class="swatch-row">
+      <view
+        wx:for="{{themeAccents}}"
+        wx:key="id"
+        class="swatch {{themeAccentId === item.id ? 'active' : ''}}"
+        style="background: {{item.color}};"
+        data-id="{{item.id}}"
+        bindtap="pickAccent"
+      >{{item.name}}</view>
+    </view>
+    <view class="field-label">背景</view>
+    <view class="swatch-row">
+      <view
+        wx:for="{{themeBgs}}"
+        wx:key="id"
+        class="swatch swatch-bg {{themeBgId === item.id ? 'active' : ''}}"
+        style="background: {{item.color}};"
+        data-id="{{item.id}}"
+        bindtap="pickBackground"
+      >{{item.name}}</view>
+    </view>
+  </view>
+
+  <view class="footer-spacer"></view>
+  <view class="rights-banner" bindtap="copyContact">
+    <text class="rights-owner">© 2026 Lisang</text>
+    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
+  </view>
+</view>
+</view>

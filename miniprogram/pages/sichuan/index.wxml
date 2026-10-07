@@ -1,6 +1,7 @@
 <!-- pages/sichuan/index.wxml — 川麻积分 -->
 
-<view class="container">
+<view class="page-root" style="{{themeStyle}}">
+  <view class="container">
   <!-- 联机房间状态 -->
   <view class="room-banner {{room ? 'active' : ''}} {{room && !roomConnected ? 'offline' : ''}}" bindtap="openRoomPanel">
     <view class="room-banner-main">
@@ -13,27 +14,26 @@
 
   <!-- ═══ 十字牌桌 ═══ -->
   <view class="table-board sichuan-board">
-    <view class="table-corner corner-tl">
-      <text class="corner-label">模式</text>
-      <text class="corner-value">川麻</text>
+    <view class="table-corner corner-tl rule-corner" bindtap="openRules">
+      <text class="corner-label">玩法</text>
+      <text class="corner-value">{{rulesModeName}}</text>
     </view>
-    <view class="table-corner corner-tr">
-      <text class="corner-label">人数</text>
-      <text class="corner-value">4 人</text>
+    <view class="table-corner corner-tr rule-corner" bindtap="openRules">
+      <text class="corner-label">底分</text>
+      <text class="corner-value">{{game.rules.baseScore}} 分</text>
     </view>
-    <view class="table-corner corner-bl">
-      <text class="corner-label">记录</text>
-      <text class="corner-value">{{game.history.length}} 笔</text>
+    <view class="table-corner corner-bl rule-corner" bindtap="openRules">
+      <text class="corner-label">封顶</text>
+      <text class="corner-value">{{game.rules.fanCap}} 番</text>
     </view>
     <view class="table-corner corner-br">
       <text class="corner-label">状态</text>
-      <text class="corner-value">{{game.history.length ? '进行中' : '待开局'}}</text>
+      <text class="corner-value">{{stateText}}</text>
+      <text class="corner-sub">{{game.history.length}} 笔记录</text>
     </view>
 
     <view class="table-center sichuan-center">
-      <view class="center-kicker">即时结算</view>
-      <view class="center-title">川麻积分</view>
-      <view class="center-sub">四人零和计分</view>
+      <view class="center-title">{{centerMain}}</view>
     </view>
 
     <view
@@ -54,24 +54,27 @@
         <text class="missing-prefix">缺</text>
         <text class="missing-suit">{{item.missingSuit === 'm' ? '万' : item.missingSuit === 'p' ? '筒' : '索'}}</text>
       </view>
+      <view class="rank-mark {{ranks[index] === 1 ? 'rank-first' : ''}}">{{ranks[index]}}位</view>
     </view>
   </view>
 
   <!-- ═══ 操作按钮 ═══ -->
   <view wx:if="{{room && !roomWritable && room.status === 'active'}}" class="room-write-warning">{{roomOnline ? '正在连接房间，暂时不能提交操作' : '网络已断开，离线操作不会提交'}}</view>
-  <view class="sichuan-actions">
+  <view class="sichuan-actions score-actions">
     <view class="btn-row sichuan-score-actions">
       <button class="btn" bindtap="openWin" disabled="{{room && !roomWritable}}">胡牌积分</button>
       <button class="btn btn-secondary" bindtap="openGang" disabled="{{room && !roomWritable}}">杠分</button>
       <button class="btn btn-secondary" bindtap="openPenalty" disabled="{{room && !roomWritable}}">罚分</button>
     </view>
-    <view class="table-setup-hint">点击东、南、西、北任一玩家卡片修改该玩家信息</view>
     <view class="toolbar">
       <button class="btn btn-danger btn-small" bindtap="undo" disabled="{{room && !roomWritable}}">撤销</button>
       <button class="btn btn-danger btn-small" bindtap="openHistory">记录</button>
+      <button class="btn btn-danger btn-small" bindtap="openRules">设置</button>
       <button class="btn btn-danger btn-small" bindtap="resetGame" disabled="{{room && (!roomWritable || !room.isHost)}}">重置</button>
     </view>
+    <view class="table-setup-hint">点击东、南、西、北任一玩家卡片修改该玩家信息</view>
   </view>
+  <view class="footer-spacer"></view>
   <view class="rights-banner" bindtap="copyContact">
     <text class="rights-owner">© 2026 Lisang</text>
     <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
@@ -95,7 +98,7 @@
       </view>
 
       <view class="label">微信昵称</view>
-      <input class="setup-name-input serif-input" type="nickname" value="{{roomNickname}}" bindinput="onRoomNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
+      <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{roomNickname}}" bindinput="onRoomNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
       <view class="room-profile-picker-row">
         <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseRoomAvatar" loading="{{roomAvatarUploading}}" disabled="{{roomAvatarUploading}}">
           <image wx:if="{{roomAvatarFileId}}" class="room-avatar-picker-image" src="{{roomAvatarFileId}}" mode="aspectFill" />
@@ -266,35 +269,8 @@
       >{{item}}根</view>
     </view>
 
-    <!-- 底分 + 封顶 -->
-    <view class="sichuan-opts-row">
-      <view style="flex:1">
-        <view class="label">底分</view>
-        <view class="seg-group">
-          <view
-            wx:for="{{baseScoreOptions}}"
-            wx:key="*this"
-            class="seg-btn {{winBaseScore === item ? 'active' : ''}}"
-            style="flex:1"
-            data-value="{{item}}"
-            bindtap="setWinBaseScore"
-          >{{item}}</view>
-        </view>
-      </view>
-      <view style="flex:1">
-        <view class="label">封顶</view>
-        <view class="seg-group">
-          <view
-            wx:for="{{fanCapOptions}}"
-            wx:key="*this"
-            class="seg-btn {{winFanCap === item ? 'active' : ''}}"
-            style="flex:1"
-            data-value="{{item}}"
-            bindtap="setWinFanCap"
-          >{{item}}番</view>
-        </view>
-      </view>
-    </view>
+    <!-- 底分 + 封顶：读取对局规则 -->
+    <view class="rule-summary">本局规则：底分 {{winBaseScore}} · 封顶 {{winFanCap}} 番（点牌桌四角修改）</view>
 
     <!-- 预览 -->
     <view wx:if="{{winFanPreview}}" class="result-box sichuan-result">
@@ -340,20 +316,65 @@
         bindtap="selectGangReceiver"
       >{{seats[index]}} · {{item.name}}</view>
     </view>
-    <view class="label">每人支付金额</view>
-    <input
-      class="sichuan-input"
-      type="digit"
-      placeholder="输入金额"
-      value="{{gangAmount}}"
-      bindinput="onGangAmountInput"
-    />
-    <view wx:if="{{gangAmount}}" class="settlement-preview">
-      {{seats[gangReceiver]}} 共收 {{gangAmount * 3}} 分（3人 × {{gangAmount}}）
+    <view class="label">杠类型</view>
+    <view class="seg-group seg-one-line gang-kind-row">
+      <view
+        wx:for="{{gangKinds}}"
+        wx:key="id"
+        class="seg-btn gang-kind-btn {{gangKind === item.id ? 'active' : ''}}"
+        data-kind="{{item.id}}"
+        bindtap="selectGangKind"
+      ><text class="gang-kind-name">{{item.name}}</text><text class="gang-kind-alias">{{item.alias}}</text></view>
+    </view>
+    <block wx:if="{{gangKind === 'ming'}}">
+      <view class="label">放杠者</view>
+      <view class="seg-group seg-one-line player-select-row">
+        <view
+          wx:for="{{game.players}}"
+          wx:key="index"
+          wx:if="{{index !== gangReceiver}}"
+          class="seg-btn {{gangDiscarder === index ? 'active' : ''}}"
+          data-index="{{index}}"
+          bindtap="selectGangDiscarder"
+        >{{seats[index]}} · {{item.name}}</view>
+      </view>
+    </block>
+    <view wx:if="{{gangPreview}}" class="settlement-preview">
+      <view>{{gangPreview.text}}</view>
+      <view class="gang-rule-note">{{gangPreview.desc}}（底分 {{game.rules.baseScore}}）</view>
     </view>
     <view class="modal-actions">
       <button class="btn btn-secondary" bindtap="closeGang">取消</button>
       <button class="btn" bindtap="confirmGang">确认</button>
+    </view>
+  </view>
+</view>
+
+<!-- ═══ 对局规则弹窗 ═══ -->
+<view wx:if="{{showRules}}" class="overlay tab-safe-overlay" bindtap="handleOverlayTap" data-id="showRules">
+  <view class="modal compact-modal rules-modal">
+    <view class="modal-title">本局规则</view>
+    <view wx:if="{{!rulesEditable}}" class="room-privacy-hint setup-room-hint">联机房间只有房主可以修改规则。</view>
+
+    <view class="label">玩法</view>
+    <view class="seg-group seg-one-line rule-options">
+      <view wx:for="{{playModes}}" wx:key="id" class="seg-btn {{rulesDraft.mode === item.id ? 'active' : ''}} {{rulesEditable ? '' : 'disabled'}}" data-key="mode" data-value="{{item.id}}" bindtap="setRuleOption">{{item.name}}</view>
+    </view>
+
+    <view class="label">底分</view>
+    <view class="seg-group seg-one-line rule-options">
+      <view wx:for="{{baseScoreOptions}}" wx:key="*this" class="seg-btn {{rulesDraft.baseScore === item ? 'active' : ''}} {{rulesEditable ? '' : 'disabled'}}" data-key="baseScore" data-value="{{item}}" bindtap="setRuleOption">{{item}} 分</view>
+    </view>
+
+    <view class="label">封顶</view>
+    <view class="seg-group seg-one-line rule-options">
+      <view wx:for="{{fanCapOptions}}" wx:key="*this" class="seg-btn {{rulesDraft.fanCap === item ? 'active' : ''}} {{rulesEditable ? '' : 'disabled'}}" data-key="fanCap" data-value="{{item}}" bindtap="setRuleOption">{{item}} 番</view>
+    </view>
+    <view class="room-privacy-hint">胡牌和杠分将按本局底分与封顶自动计算；已记录的流水不会重算。</view>
+
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeRules">{{rulesEditable ? '取消' : '关闭'}}</button>
+      <button wx:if="{{rulesEditable}}" class="btn" bindtap="confirmRules" disabled="{{room && !roomWritable}}">{{room ? '同步' : '保存'}}</button>
     </view>
   </view>
 </view>
@@ -406,8 +427,8 @@
     </view>
 
     <view class="label">每位收分玩家获得</view>
-    <input
-      class="sichuan-input"
+    <serif-input
+      ext-class="sichuan-input"
       type="digit"
       placeholder="输入罚分金额"
       value="{{penaltyAmount}}"
@@ -430,8 +451,8 @@
     <view wx:if="{{room}}" class="room-privacy-hint setup-room-hint">联网房间姓名由座位昵称决定，本次只同步该玩家的定缺状态。</view>
 
     <view class="label">玩家姓名</view>
-    <input
-      class="setup-name-input serif-input sichuan-serif-input"
+    <serif-input
+      ext-class="setup-name-input serif-input sichuan-serif-input"
       value="{{setupName}}"
       bindinput="onSetupNameInput"
       placeholder="玩家姓名"
@@ -485,4 +506,5 @@
       <button class="btn btn-secondary" bindtap="closeHistory">关闭</button>
     </view>
   </scroll-view>
+</view>
 </view>

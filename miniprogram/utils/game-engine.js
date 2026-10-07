@@ -11,13 +11,45 @@ const MODE_CONFIG = {
   3: { startPoints: 35000, returnPoints: 40000, seats: SEATS_3P, label: '三麻' }
 };
 
-function newGame(countOrMode) {
+// 对局级规则：xuezhan = 血战到底（一家和牌后本局继续，和满 n-1 家才结束）
+function normalizeRules(rules) {
+  return { xuezhan: !!(rules && rules.xuezhan) };
+}
+
+// 旧存档 / 旧房间补齐规则与本局已和名单
+function ensureRules(game) {
+  if (!game) return game;
+  game.rules = normalizeRules(game.rules);
+  const count = game.playerCount || (game.players ? game.players.length : 4);
+  game.handWinners = Array.isArray(game.handWinners)
+    ? [...new Set(game.handWinners.map(Number))].filter(i => Number.isInteger(i) && i >= 0 && i < count)
+    : [];
+  if (!game.rules.xuezhan) game.handWinners = [];
+  return game;
+}
+
+function isXuezhan(game) {
+  return !!(game && game.rules && game.rules.xuezhan);
+}
+
+function handWinnersOf(game) {
+  return isXuezhan(game) && Array.isArray(game.handWinners) ? game.handWinners : [];
+}
+
+// 血战中本局已有人和牌：后续和牌不再收本场与供托
+function isFollowUpWin(game) {
+  return handWinnersOf(game).length > 0;
+}
+
+function newGame(countOrMode, rules) {
   const count = (Number(countOrMode) === 3 || countOrMode === 'sanma') ? 3 : 4;
   const config = MODE_CONFIG[count];
   return {
     mode: count === 3 ? 'sanma' : 'yonma',
     playerCount: count,
     sanmaTsumoRule: 'loss',
+    rules: normalizeRules(rules),
+    handWinners: [],
     players: config.seats.map((seat, i) => ({
       name: `玩家${['一','二','三','四'][i]}`,
       points: config.startPoints,
@@ -67,20 +99,25 @@ function calcWinPayments(game, winnerIdx, han, fu, isTsumo, loserIdx, baseOverri
   const isDealer = winnerIdx === game.dealerIndex;
   const count = game.playerCount || 4;
   const payments = [];
+  // 血战：本场与供托只算给本局第一个和牌者；已和玩家离场，不再支付
+  const followUp = isFollowUpWin(game);
+  const honba = followUp ? 0 : game.honba;
+  const sticks = followUp ? 0 : game.riichiSticks;
+  const out = new Set(handWinnersOf(game));
 
   if (isTsumo) {
     if (count === 4) {
-      const honbaPer = game.honba * 100;
+      const honbaPer = honba * 100;
       for (let i = 0; i < count; i++) {
-        if (i === winnerIdx) continue;
+        if (i === winnerIdx || out.has(i)) continue;
         const multiplier = isDealer || i === game.dealerIndex ? 2 : 1;
         payments.push({ from: i, to: winnerIdx, amount: ceil100(base * multiplier) + honbaPer });
       }
     } else {
       // 三麻自摸损：每家付 base（亲子基础倍率 2）
-      const honbaPer = game.honba * 100;
+      const honbaPer = honba * 100;
       for (let i = 0; i < count; i++) {
-        if (i === winnerIdx) continue;
+        if (i === winnerIdx || out.has(i)) continue;
         const multiplier = isDealer || i === game.dealerIndex ? 2 : 1;
         payments.push({ from: i, to: winnerIdx, amount: ceil100(base * multiplier) + honbaPer });
       }
@@ -90,19 +127,19 @@ function calcWinPayments(game, winnerIdx, han, fu, isTsumo, loserIdx, baseOverri
       payments.push({
         from: loserIdx,
         to: winnerIdx,
-        amount: ceil100(base * (isDealer ? 6 : 4)) + game.honba * 300
+        amount: ceil100(base * (isDealer ? 6 : 4)) + honba * 300
       });
     } else {
       // 三麻荣和
       payments.push({
         from: loserIdx,
         to: winnerIdx,
-        amount: ceil100(base * (isDealer ? 6 : 4)) + game.honba * 300
+        amount: ceil100(base * (isDealer ? 6 : 4)) + honba * 300
       });
     }
   }
 
-  const stickBonus = game.riichiSticks * 1000;
+  const stickBonus = sticks * 1000;
   return {
     base,
     payments,
@@ -111,33 +148,61 @@ function calcWinPayments(game, winnerIdx, han, fu, isTsumo, loserIdx, baseOverri
   };
 }
 
+// 血战：已和玩家不能再和，也不能放铳
+function canWin(game, winnerIdx, loserIdx, isTsumo) {
+  const out = handWinnersOf(game);
+  if (out.includes(winnerIdx)) return false;
+  if (!isTsumo && (out.includes(loserIdx) || loserIdx === winnerIdx)) return false;
+  return true;
+}
+
+// 结束本局：连庄看 renchan（标准规则看亲家，血战看本局第一个和牌者）
+function finishHand(next, renchan) {
+  next.players.forEach(p => { p.riichi = false; });
+  next.handWinners = [];
+  if (renchan) next.honba += 1;
+  else advanceRound(next);
+}
+
 function applyWin(game, win, result) {
-  const next = JSON.parse(JSON.stringify(game));
+  const next = ensureRules(JSON.parse(JSON.stringify(game)));
+  if (!canWin(next, win.winnerIdx, win.loserIdx, win.isTsumo)) throw new Error('INVALID_WINNER');
+  const xuezhan = isXuezhan(next);
+  const followUp = isFollowUpWin(next);
   result.payments.forEach(p => {
     next.players[p.from].points -= p.amount;
     next.players[p.to].points += p.amount;
   });
   next.players[win.winnerIdx].points += result.stickBonus;
-  next.riichiSticks = 0;
-  next.history.unshift({
+  if (!followUp) next.riichiSticks = 0;
+  const entry = {
     type: 'win', round: roundNames(game)[next.roundIndex] || `第${next.roundIndex + 1}局`,
     winner: win.winnerIdx, loser: win.loserIdx, isTsumo: win.isTsumo,
     total: result.total, han: win.han, fu: win.fu
-  });
-  next.players.forEach(p => { p.riichi = false; });
-  if (win.winnerIdx === next.dealerIndex) {
-    next.honba += 1;
-  } else {
-    advanceRound(next);
+  };
+  if (!xuezhan) {
+    next.history.unshift(entry);
+    finishHand(next, win.winnerIdx === next.dealerIndex);
+    return next;
+  }
+  next.handWinners.push(win.winnerIdx);
+  entry.seq = next.handWinners.length;
+  next.history.unshift(entry);
+  // 已和玩家离场：立直状态随和牌清除
+  next.players[win.winnerIdx].riichi = false;
+  const count = next.playerCount || 4;
+  if (next.handWinners.length >= count - 1) {
+    finishHand(next, next.handWinners[0] === next.dealerIndex);
   }
   return next;
 }
 
 function applyRiichi(game, selected) {
-  const next = JSON.parse(JSON.stringify(game));
+  const next = ensureRules(JSON.parse(JSON.stringify(game)));
+  const out = handWinnersOf(next);
   selected.forEach(idx => {
     const p = next.players[idx];
-    if (!p.riichi && p.points >= 1000) {
+    if (p && !out.includes(idx) && !p.riichi && p.points >= 1000) {
       p.riichi = true;
       p.points -= 1000;
       next.riichiSticks += 1;
@@ -147,8 +212,10 @@ function applyRiichi(game, selected) {
 }
 
 function applyDraw(game, tenpai) {
-  const next = JSON.parse(JSON.stringify(game));
-  const set = new Set(tenpai);
+  const next = ensureRules(JSON.parse(JSON.stringify(game)));
+  const winners = handWinnersOf(next).slice();
+  // 血战：已和玩家视为听牌，不付不听罚符
+  const set = new Set(tenpai.concat(winners));
   const count = set.size;
   const total = game.playerCount || 4;
   if (count > 0 && count < total) {
@@ -167,12 +234,8 @@ function applyDraw(game, tenpai) {
     type: 'draw', round: roundNames(game)[next.roundIndex],
     tenpai: [...set]
   });
-  next.players.forEach(p => { p.riichi = false; });
-  if (set.has(next.dealerIndex)) {
-    next.honba += 1;
-  } else {
-    advanceRound(next);
-  }
+  // 本局已有人和牌：连庄只看第一个和牌者；否则看亲家是否听牌
+  finishHand(next, winners.length ? winners[0] === next.dealerIndex : set.has(next.dealerIndex));
   return next;
 }
 
@@ -185,7 +248,8 @@ function advanceRound(game) {
 
 module.exports = {
   SEATS_4P, SEATS_3P, ROUND_NAMES_4P, ROUND_NAMES_3P, MODE_CONFIG,
-  newGame, ceil100, modeConfig, roundNames, seatOf,
+  newGame, normalizeRules, ensureRules, isXuezhan, handWinnersOf, isFollowUpWin, canWin,
+  ceil100, modeConfig, roundNames, seatOf,
   roundWindTile, seatWindTile, calcBasePoint,
   calcWinPayments, applyWin, applyRiichi, applyDraw
 };

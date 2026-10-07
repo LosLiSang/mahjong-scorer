@@ -3,7 +3,7 @@
 
 const {
   countTiles, decompose, calcBasePoint, evaluateHand, isYaochuu,
-} = require('./mahjong-logic');
+} = require('./miniprogram/utils/mahjong-logic');
 
 let pass = 0, fail = 0;
 
@@ -180,6 +180,62 @@ console.log('\n=== 立直状态 ===');
   test('结算两立直选项计入两立直', doubleRiichi.valid && doubleRiichi.yaku.some(y => y.name === '两立直'), true);
   const noRiichiIppatsu = evaluateHand({ ...common, isIppatsu: true });
   test('未立直不能单独取得一发', !noRiichiIppatsu.valid || !noRiichiIppatsu.yaku.some(y => y.name === '一发'), true);
+}
+
+console.log('\n=== 血战到底（#9） ===');
+{
+  const Game = require('./miniprogram/utils/game-engine');
+  // 2 本场、供托 2 本的四麻血战局；直接给 basePoint=1000 便于心算
+  const start = () => {
+    const g = Game.newGame(4, { xuezhan: true });
+    g.honba = 2; g.riichiSticks = 2;
+    g.players[0].riichi = true; g.players[3].riichi = true;
+    return g;
+  };
+  const win = (g, w, l, tsumo) => Game.applyWin(g, { winnerIdx: w, loserIdx: l, isTsumo: tsumo, han: 1, fu: 30 },
+    Game.calcWinPayments(g, w, 1, 30, tsumo, l, 1000));
+
+  let g = start();
+  const first = Game.calcWinPayments(g, 1, 1, 30, false, 2, 1000);
+  test('首和收本场与供托', [first.payments[0].amount, first.stickBonus], [4000 + 600, 2000]);
+  g = win(g, 1, 2, false);
+  test('首和后本局继续，记录已和', [g.roundIndex, g.handWinners], [0, [1]]);
+  test('供托被首和拿走', g.riichiSticks, 0);
+  const second = Game.calcWinPayments(g, 3, 1, 30, true, -1, 1000);
+  test('后续自摸不收本场/供托，已和玩家不付', second.payments.map(p => [p.from, p.amount]), [[0, 2000], [2, 1000]]);
+  test('已和玩家不能再和', Game.canWin(g, 1, 0, false), false);
+  test('已和玩家不能放铳', Game.canWin(g, 0, 1, false), false);
+  g = win(g, 3, -1, true);
+  test('四麻和满 3 家前不结束', [g.roundIndex, g.handWinners], [0, [1, 3]]);
+  test('已和者立直状态清除', [g.players[3].riichi, g.players[0].riichi], [false, true]);
+  g = win(g, 0, 2, false);
+  test('和满 3 家结束本局；首和南家非亲 → 轮庄', [g.roundIndex, g.dealerIndex, g.honba, g.handWinners], [1, 1, 0, []]);
+
+  // 亲家首和 → 连庄，后续非亲和牌不影响
+  let d = start();
+  d = win(d, 0, 1, false); d = win(d, 2, 1, false); d = win(d, 3, 1, false);
+  test('亲家首和 → 连庄本场 +1', [d.roundIndex, d.dealerIndex, d.honba], [0, 0, 3]);
+
+  // 有人和牌后流局：已和者视为听牌；连庄看首和者
+  let r = start();
+  r = win(r, 2, 1, false);
+  const pts = r.players.map(p => p.points);
+  r = Game.applyDraw(r, [0]);
+  test('流局：已和者视为听牌、不付罚符', r.players.map((p, i) => p.points - pts[i]), [1500, -1500, 1500, -1500]);
+  test('流局：首和者非亲 → 轮庄', [r.roundIndex, r.honba, r.handWinners], [1, 0, []]);
+
+  // 三麻和满 2 家结束
+  let t = Game.newGame(3, { xuezhan: true });
+  t = Game.applyWin(t, { winnerIdx: 1, loserIdx: 0, isTsumo: false, han: 1, fu: 30 }, Game.calcWinPayments(t, 1, 1, 30, false, 0, 1000));
+  test('三麻首和后继续', t.handWinners, [1]);
+  t = Game.applyWin(t, { winnerIdx: 2, loserIdx: 0, isTsumo: false, han: 1, fu: 30 }, Game.calcWinPayments(t, 2, 1, 30, false, 0, 1000));
+  test('三麻和满 2 家结束', [t.roundIndex, t.handWinners], [1, []]);
+
+  // 标准规则不受影响
+  let n = Game.newGame(4);
+  n = Game.applyWin(n, { winnerIdx: 1, loserIdx: 2, isTsumo: false, han: 1, fu: 30 }, Game.calcWinPayments(n, 1, 1, 30, false, 2, 1000));
+  test('标准规则一家和牌即轮庄', [n.roundIndex, n.handWinners], [1, []]);
+  test('旧存档补齐默认规则', Game.ensureRules({ players: [{}, {}, {}, {}] }).rules, { xuezhan: false });
 }
 
 console.log(`\n=== 结果: ${pass} passed, ${fail} failed ===`);

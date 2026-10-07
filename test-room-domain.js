@@ -1,5 +1,17 @@
 const assert = require('assert');
-const Room = require('./cloudfunctions/mahjong-room/domain');
+const fs = require('fs');
+const path = require('path');
+
+// 防漂移：云函数目录里的 domain.js 必须与 packages/room-core 真源一致（先跑 node scripts/sync-room-core.js）。
+const canonical = path.join(__dirname, 'packages', 'room-core', 'domain.js');
+const synced = path.join(__dirname, 'cloudfunctions', 'mahjong-room', 'domain.js');
+assert.equal(
+  fs.readFileSync(canonical, 'utf8'),
+  fs.readFileSync(synced, 'utf8'),
+  'room-core 领域文件已漂移：请改 packages/room-core/domain.js 后运行 node scripts/sync-room-core.js'
+);
+
+const Room = require('./packages/room-core');
 
 const generated = Room.generateRoomCode(() => 0);
 assert.equal(generated, '222222');
@@ -143,6 +155,35 @@ assert(Room.validateGame(normalizedSichuan, sichuan.mode, 'sichuan'));
 const invalidSichuan = JSON.parse(JSON.stringify(normalizedSichuan));
 invalidSichuan.players[0].score += 1;
 assert.throws(() => Room.validateGame(invalidSichuan, 'yonma', 'sichuan'), /POINT_TOTAL_MISMATCH/);
+assert.deepEqual(normalizedSichuan.rules, { mode: 'xuezhan', baseScore: 1, fanCap: 6 }, '旧川麻房间应补齐默认规则');
+const ruledSichuan = Room.normalizeGame(Object.assign({}, sichuan.game, { rules: { mode: 'xueliu', baseScore: 5, fanCap: 4, extra: 1 } }), 'sichuan');
+assert.deepEqual(ruledSichuan.rules, { mode: 'xueliu', baseScore: 5, fanCap: 4 });
+assert.equal(Room.newGame('yonma', 'sichuan', ruledSichuan).rules.baseScore, 5, '重置房间应保留规则');
+const gangGame = JSON.parse(JSON.stringify(normalizedSichuan));
+gangGame.players[2].score += 2; gangGame.players[3].score -= 2;
+gangGame.history.push({ type: 'gang', gangKind: 'ming', receiver: 2, payers: [3], amountPerPayer: 2, label: '明杠', createdAt: 1, deltas: [0, 0, 2, -2] });
+const normalizedGang = Room.normalizeGame(gangGame, 'sichuan');
+assert.equal(normalizedGang.history[1].gangKind, 'ming', 'gangKind 应保留');
+assert(Room.validateGame(normalizedGang, 'yonma', 'sichuan'));
+const badGang = JSON.parse(JSON.stringify(normalizedGang));
+badGang.history[1].payers = [0, 3];
+assert.throws(() => Room.validateGame(badGang, 'yonma', 'sichuan'), /INVALID_GAME/, '明杠只能有一个付款者');
+// 日麻血战到底（#9）：规则与本局已和名单随房间同步、换座重映射、校验
+{
+  const riichiRoom = Room.createRoomDocument({ code: 'XZ2345', mode: 4, ownerOpenId: 'xz-owner', ownerNickname: '房主', seatIndex: 0 });
+  assert.deepEqual(riichiRoom.game.rules, { xuezhan: false }, '新日麻房间默认标准规则');
+  const g = Room.normalizeGame(Object.assign({}, riichiRoom.game, { rules: { xuezhan: true, x: 1 }, handWinners: [2] }), 'riichi');
+  assert.deepEqual(g.rules, { xuezhan: true });
+  assert.deepEqual(g.handWinners, [2]);
+  assert(Room.validateGame(g, 'yonma'));
+  assert.equal(Room.newGame('yonma', 'riichi', g).rules.xuezhan, true, '重置保留血战规则');
+  const bad = Object.assign({}, g, { rules: { xuezhan: false } });
+  assert.throws(() => Room.validateGame(bad, 'yonma'), /INVALID_GAME/, '标准规则下不能有已和名单');
+  const full = Object.assign({}, g, { handWinners: [0, 1, 2, 3] });
+  assert.throws(() => Room.validateGame(full, 'yonma'), /INVALID_GAME/, '已和名单不能满员');
+  const moved = Room.moveSeat(Object.assign({}, riichiRoom, { game: g }), { openId: 'xz-owner', seatIndex: 2 });
+  assert.deepEqual(moved.game.handWinners, [0], '换座后已和名单随座位重映射');
+}
 assert.equal(Room.publicRoomPreview(sichuan).gameType, 'sichuan');
 assert.equal(Room.roomView(sichuan, 'sichuan-owner').gameType, 'sichuan');
 

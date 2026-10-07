@@ -72,7 +72,7 @@
   width: 120rpx;
   flex-shrink: 0;
   font-size: 24rpx;
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-weight: 700;
   text-align: center;
 }
@@ -121,7 +121,7 @@
   width: 100rpx;
   flex-shrink: 0;
   font-size: 24rpx;
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-weight: 700;
   text-align: center;
 }
@@ -156,7 +156,7 @@
   color: #3d3929;
 }
 .total-rounded .highlight {
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-size: 34rpx;
 }
 
@@ -179,7 +179,7 @@
   color: #3d3929;
   margin-bottom: 8rpx;
 }
-.picker-arrow { font-size: 32rpx; color: #c96442; }
+.picker-arrow { font-size: 32rpx; color: var(--accent, #c96442); }
 
 .toggle-row {
   display: flex;
@@ -198,8 +198,8 @@
   transition: all 0.15s;
 }
 .toggle-btn.active {
-  background: #c96442;
-  border-color: #c96442;
+  background: var(--accent, #c96442);
+  border-color: var(--accent, #c96442);
   color: #fff;
   font-weight: 600;
 }
@@ -218,7 +218,7 @@
   color: #8a8470;
 }
 .calc-mangan-badge {
-  background: #c96442;
+  background: var(--accent, #c96442);
   color: #fff;
   font-size: 22rpx;
   padding: 4rpx 16rpx;
@@ -276,7 +276,7 @@
   overflow: hidden;
 }
 .mangan-card-head {
-  background: linear-gradient(135deg, #c96442, #a84e32);
+  background: linear-gradient(135deg, var(--accent, #c96442), #a84e32);
   padding: 18rpx 24rpx;
 }
 .mangan-name {
@@ -303,11 +303,11 @@
   font-weight: 500;
 }
 .mangan-val.base {
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-weight: 700;
 }
 .mangan-val.dealer {
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-weight: 600;
 }
 
@@ -330,4 +330,4 @@
 }
 
 /* ===== 底栏留白 ===== */
-.bottom-spacer { height: 100rpx; }
+.bottom-spacer { flex: 1 1 auto; }

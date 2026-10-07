@@ -256,7 +256,7 @@ img[src$="Haku.svg"] { background: #fffef9; border: 1px solid #999486; border-ra
   </div>
 </div>
 
-<script src="mahjong-logic.js"></script>
+<script src="miniprogram/utils/mahjong-logic.js"></script>
 <script>
 // 把 mahjong-logic.js 导出的函数挂到 window（浏览器环境没有 module.exports）
 // 实际上浏览器里这些函数已经是全局的，不需要 require
@@ -472,7 +472,7 @@ const TILE_DEFS = [
 
 function tileImgSrc(tileId) {
   const name = TILE_IMG[tileId];
-  return name ? `tiles/${name}.svg` : '';
+  return name ? `miniprogram/assets/tiles/${name}.svg` : '';
 }
 
 let handTiles = []; // 选中的牌的 id 数组

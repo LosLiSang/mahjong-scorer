@@ -7,7 +7,7 @@
   height: calc(108rpx + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
-  background: rgba(250, 248, 242, .98);
+  background: var(--tabbar-bg, rgba(250, 248, 242, .98));
   box-sizing: border-box;
   box-shadow: 0 -4rpx 24rpx rgba(61, 57, 41, .08);
   font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
@@ -55,12 +55,12 @@
 }
 
 .tab-item.selected {
-  color: #c46645;
+  color: var(--accent, #c46645);
 }
 
 .tab-item.selected .tab-mark {
   color: #fff;
-  background: #c46645;
-  border-color: #c46645;
+  background: var(--accent, #c46645);
+  border-color: var(--accent, #c46645);
   box-shadow: 0 3rpx 10rpx rgba(196, 102, 69, .25);
 }

@@ -1,6 +1,7 @@
 <!-- pages/tutorial/index.wxml — 教学馆 -->
 
-<view class="container">
+<view class="page-root" style="{{themeStyle}}">
+  <view class="container">
   <!-- Hero -->
   <view class="hero">
     <view class="hero-title">从认牌到看懂点数</view>
@@ -77,6 +78,7 @@
       <view class="nav-card-arrow">›</view>
     </view>
   </view>
+  <view class="footer-spacer"></view>
   <view class="rights-banner" bindtap="copyContact">
     <text class="rights-owner">© 2026 Lisang</text>
     <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
@@ -236,4 +238,5 @@
       </view>
     </block>
   </view>
+</view>
 </view>

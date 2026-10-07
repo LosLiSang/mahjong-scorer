@@ -1,3 +1,5 @@
+const Theme = require('../utils/theme');
+
 Component({
   data: {
     selected: 0,
@@ -5,9 +7,17 @@ Component({
     selectedColor: '#c46645',
     list: [
       { pagePath: '/pages/index/index', text: '日麻计分', mark: '日' },
+      { pagePath: '/pages/sichuan/index', text: '川麻积分', mark: '川' },
       { pagePath: '/pages/tutorial/index', text: '教学馆', mark: '学' },
-      { pagePath: '/pages/sichuan/index', text: '川麻积分', mark: '川' }
-    ]
+      { pagePath: '/pages/settings/index', text: '设置', mark: '设' }
+    ],
+    themeStyle: ''
+  },
+
+  lifetimes: {
+    attached() {
+      this.setData({ themeStyle: Theme.current().tabBarStyle });
+    }
   },
 
   methods: {

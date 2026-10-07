@@ -1,5 +1,6 @@
 *.log
 node_modules/
+apps/web/dist/
 .verification/
 .DS_Store
 Thumbs.db

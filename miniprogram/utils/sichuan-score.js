@@ -52,6 +52,57 @@
     { id: 'gen', name: '根', fan: 1, group: 'extra', exampleTiles: ['1m','1m','1m','1m'], exampleText: '手牌中每一组四张相同牌计一根。' },
   ];
 
+  const SICHUAN_PLAY_MODES = [
+    { id: 'xuezhan', name: '血战到底', short: '血战' },
+    { id: 'xueliu', name: '血流成河', short: '血流' },
+  ];
+  const SICHUAN_BASE_SCORE_OPTIONS = [1, 2, 5, 10];
+  const SICHUAN_FAN_CAP_OPTIONS = [3, 4, 5, 6];
+  const DEFAULT_SICHUAN_RULES = { mode: 'xuezhan', baseScore: 1, fanCap: 6 };
+
+  // 杠分三种情况：明杠只收放杠者；暗杠、加杠收其余各家
+  const SICHUAN_GANG_KINDS = [
+    { id: 'ming', name: '明杠', alias: '直杠 / 点杠', multiplier: 2, payerMode: 'single', desc: '仅放杠者一人支付 2 × 底分' },
+    { id: 'an', name: '暗杠', alias: '下雨', multiplier: 2, payerMode: 'others', desc: '其余各家每家支付 2 × 底分' },
+    { id: 'bu', name: '加杠', alias: '巴杠 / 刮风', multiplier: 1, payerMode: 'others', desc: '其余各家每家支付 1 × 底分' },
+  ];
+
+  function normalizeSichuanRules(rules) {
+    const source = rules || {};
+    const mode = SICHUAN_PLAY_MODES.some(item => item.id === source.mode) ? source.mode : DEFAULT_SICHUAN_RULES.mode;
+    const baseScore = SICHUAN_BASE_SCORE_OPTIONS.includes(Number(source.baseScore)) ? Number(source.baseScore) : DEFAULT_SICHUAN_RULES.baseScore;
+    const fanCap = SICHUAN_FAN_CAP_OPTIONS.includes(Number(source.fanCap)) ? Number(source.fanCap) : DEFAULT_SICHUAN_RULES.fanCap;
+    return { mode, baseScore, fanCap };
+  }
+
+  function sichuanPlayModeName(mode) {
+    const found = SICHUAN_PLAY_MODES.find(item => item.id === mode);
+    return found ? found.name : SICHUAN_PLAY_MODES[0].name;
+  }
+
+  function findGangKind(kind) {
+    return SICHUAN_GANG_KINDS.find(item => item.id === kind) || null;
+  }
+
+  // 计算一次杠分：返回付款者列表与每人金额；参数不合法时返回 null
+  function calculateGang({ kind, receiver, baseScore = 1, discarder = -1, payers = null, playerCount = 4 }) {
+    const type = findGangKind(kind);
+    const r = Number(receiver);
+    if (!type || !Number.isInteger(r) || r < 0 || r >= playerCount) return null;
+    const amountPerPayer = type.multiplier * (Number(baseScore) || 1);
+    let list;
+    if (type.payerMode === 'single') {
+      const d = Number(discarder);
+      if (!Number.isInteger(d) || d < 0 || d >= playerCount || d === r) return null;
+      list = [d];
+    } else {
+      const all = Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== r);
+      list = Array.isArray(payers) ? all.filter(i => payers.includes(i)) : all;
+      if (!list.length) return null;
+    }
+    return { kind: type.id, kindName: type.name, payers: list, amountPerPayer, total: amountPerPayer * list.length };
+  }
+
   function calculateSichuanFan(selectedIds = [], fanCap = 6, rootCount = 0) {
     const normalizedRootCount = Math.max(0, Math.min(4, Math.trunc(Number(rootCount) || 0)));
     const resolved = [...new Set(selectedIds)]
@@ -80,7 +131,7 @@
     return (Number(unitScore) || 1) * (Number(baseMultiplier) || 1) * Math.pow(2, totalFan - 1);
   }
 
-  function createSichuanGame(names = ['玩家一', '玩家二', '玩家三', '玩家四'], initialScore = 0) {
+  function createSichuanGame(names = ['玩家一', '玩家二', '玩家三', '玩家四'], initialScore = 0, rules = null) {
     return {
       version: 1,
       players: names.slice(0, 4).map((name, index) => ({
@@ -88,13 +139,14 @@
         score: Number(initialScore) || 0,
         missingSuit: '',
       })),
+      rules: normalizeSichuanRules(rules),
       history: [],
     };
   }
 
-  function createTransferEntry({ type = 'manual', receiver, payers = [], amountPerPayer, label = '' }) {
+  function createTransferEntry({ type = 'manual', receiver, payers = [], amountPerPayer, label = '', gangKind }) {
     const amount = Math.max(0, Number(amountPerPayer) || 0);
-    return {
+    const entry = {
       type,
       receiver: Number(receiver),
       payers: [...new Set(payers.map(Number))],
@@ -102,6 +154,8 @@
       label: String(label || type),
       createdAt: Date.now(),
     };
+    if (type === 'gang' && findGangKind(gangKind)) entry.gangKind = gangKind;
+    return entry;
   }
 
   function entryDeltas(game, entry) {
@@ -132,6 +186,15 @@
   return {
     SICHUAN_FAN_TYPES,
     SICHUAN_PENALTY_TYPES,
+    SICHUAN_PLAY_MODES,
+    SICHUAN_BASE_SCORE_OPTIONS,
+    SICHUAN_FAN_CAP_OPTIONS,
+    SICHUAN_GANG_KINDS,
+    DEFAULT_SICHUAN_RULES,
+    normalizeSichuanRules,
+    sichuanPlayModeName,
+    findGangKind,
+    calculateGang,
     calculateSichuanFan,
     setSichuanMissingSuit,
     scoreFromFan,

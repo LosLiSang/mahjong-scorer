@@ -8,15 +8,15 @@
 .room-banner-main { display: flex; flex-direction: column; gap: 5rpx; min-width: 0; }
 .room-banner-title { color: #3d3929; font-size: 28rpx; font-weight: 700; letter-spacing: 1rpx; }
 .room-banner-status { color: #8a8470; font-size: 21rpx; }
-.room-banner-action { color: #c96442; font-size: 24rpx; white-space: nowrap; }
-.room-write-warning { margin: 18rpx 0; padding: 16rpx 20rpx; border-radius: 14rpx; background: #fff0e8; color: #9b593f; font-size: 22rpx; text-align: center; }
+.room-banner-action { color: var(--accent, #c96442); font-size: 24rpx; white-space: nowrap; }
+.room-write-warning { margin: 0 0 18rpx; padding: 16rpx 20rpx; border-radius: 14rpx; background: #fff0e8; color: #9b593f; font-size: 22rpx; text-align: center; }
 .room-config-hint { margin-bottom: 22rpx; padding: 20rpx; border-radius: 16rpx; background: #fff3df; color: #815f31; font-size: 23rpx; line-height: 1.7; }
 .code-text { font-family: monospace; color: #9b4c31; }
 .room-mode-tabs { margin-bottom: 20rpx; }
 .room-privacy-hint { margin-top: 10rpx; color: #98917d; font-size: 21rpx; line-height: 1.6; }
 .room-seat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10rpx; margin-top: 10rpx; }
 .room-seat-option { display: flex; flex-direction: column; align-items: center; gap: 6rpx; min-width: 0; padding: 18rpx 8rpx; border: 2rpx solid #dfd9ca; border-radius: 16rpx; background: #fff; color: #706a58; font-size: 21rpx; }
-.room-seat-option.active { border-color: #c96442; background: #fff1e9; color: #9a442b; box-shadow: inset 0 0 0 2rpx rgba(201,100,66,.12); }
+.room-seat-option.active { border-color: var(--accent, #c96442); background: #fff1e9; color: #9a442b; box-shadow: inset 0 0 0 2rpx rgba(201,100,66,.12); }
 .room-seat-option.occupied { opacity: .55; background: #ece9e0; }
 .room-seat-option.occupied.active { border-color: #dfd9ca; box-shadow: none; }
 .room-seat-wind { font-size: 30rpx; font-weight: 700; }
@@ -29,13 +29,13 @@
 .room-full-hint { margin-top: 14rpx; padding: 14rpx 16rpx; border-radius: 12rpx; background: #fff3df; color: #8a6439; font-size: 21rpx; line-height: 1.6; }
 .room-current-status { margin-bottom: 18rpx; padding: 18rpx 20rpx; border-radius: 16rpx; background: #eef5e8; color: #536349; font-size: 22rpx; line-height: 1.7; }
 .room-current-status.ended { background: #ece9e0; color: #77705f; }
-.room-code-card { display: flex; align-items: baseline; justify-content: center; gap: 16rpx; margin-bottom: 16rpx; padding: 24rpx; border: 2rpx dashed #c96442; border-radius: 18rpx; background: #fffaf5; }
+.room-code-card { display: flex; align-items: baseline; justify-content: center; gap: 16rpx; margin-bottom: 16rpx; padding: 24rpx; border: 2rpx dashed var(--accent, #c96442); border-radius: 18rpx; background: #fffaf5; }
 .room-code-label, .room-code-copy { color: #918a77; font-size: 20rpx; }
-.room-code-value { color: #c96442; font-family: monospace; font-size: 40rpx; font-weight: 700; letter-spacing: 7rpx; }
+.room-code-value { color: var(--accent, #c96442); font-family: monospace; font-size: 40rpx; font-weight: 700; letter-spacing: 7rpx; }
 .room-member-list { border: 2rpx solid #e2dccd; border-radius: 16rpx; overflow: hidden; background: #fff; }
 .room-member-row { display: flex; align-items: center; justify-content: space-between; min-height: 76rpx; padding: 10rpx 18rpx; border-bottom: 2rpx solid #eee9dd; font-size: 24rpx; }
 .room-member-row:last-child { border-bottom: 0; }
-.room-member-seat { display: inline-flex; align-items: center; justify-content: center; width: 42rpx; height: 42rpx; margin-right: 14rpx; border-radius: 50%; background: #f1ede2; color: #c96442; font-weight: 700; }
+.room-member-seat { display: inline-flex; align-items: center; justify-content: center; width: 42rpx; height: 42rpx; margin-right: 14rpx; border-radius: 50%; background: #f1ede2; color: var(--accent, #c96442); font-weight: 700; }
 .room-me-mark { margin-left: 10rpx; padding: 3rpx 10rpx; border-radius: 12rpx; background: #e8f2df; color: #567145; font-size: 18rpx; }
 .room-empty-mark { color: #aaa28f; font-size: 21rpx; }
 .room-release-btn { width: auto !important; min-height: 0; margin: 0; padding: 8rpx 14rpx; border: 0; border-radius: 12rpx; background: #eee9df; color: #8a6658; font-size: 20rpx; line-height: 1.3; }
@@ -54,8 +54,8 @@
 
 /* ── 牌桌微调 ── */
 .sichuan-board { border-color: #d8d1c3; }
-.sichuan-center { border-color: #d8d1c3; background: rgba(255,255,255,.96); }
-.center-title { color: #c96442; font-size: 28rpx; font-weight: 700; line-height: 1.35; white-space: nowrap; }
+.sichuan-center { min-height: 114rpx; border-color: #d8d1c3; background: rgba(255,255,255,.96); }
+.center-title { color: var(--accent, #c96442); font-size: 29rpx; font-weight: 700; line-height: 1.35; white-space: nowrap; }
 .center-sub { margin-top: 4rpx; color: #8a8470; font-size: 18rpx; }
 
 /* ── 玩家卡片 ── */
@@ -96,19 +96,6 @@
   border: 1rpx solid #d4a0a0;
 }
 
-/* ── 操作区 ── */
-.sichuan-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-  margin-top: 20rpx;
-}
-.sichuan-score-actions { gap: 8rpx; }
-.sichuan-score-actions .btn { min-width: 0; padding: 18rpx 6rpx; border-radius: 14rpx; font-size: 24rpx; white-space: nowrap; }
-.table-setup-hint { margin-top: -4rpx; color: #aaa28f; font-size: 19rpx; text-align: center; }
-.sichuan-actions .toolbar { margin-top: 0; gap: 8rpx; }
-.sichuan-actions .toolbar .btn { padding: 12rpx 16rpx; border-radius: 13rpx; font-size: 21rpx; }
-
 /* ── 胡牌弹窗番型按钮 ── */
 .sch-fan-btn {
   min-width: 0;
@@ -135,23 +122,26 @@
 .root-options { flex-wrap: nowrap; gap: 8rpx; }
 .root-options .seg-btn { min-width: 0; flex: 1; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; white-space: nowrap; }
 
-/* ── 底分/封顶行 ── */
-.sichuan-opts-row {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  margin-top: 8rpx;
-}
-.sichuan-opts-row > view { width: 100%; min-width: 0; }
-.sichuan-opts-row .seg-btn { min-width: 0; padding-left: 8rpx; padding-right: 8rpx; white-space: nowrap; }
+/* ── 对局规则 ── */
+.rule-summary { margin-top: 18rpx; padding: 12rpx 16rpx; border-radius: 12rpx; background: #f3f0e7; color: #8a8470; font-size: 21rpx; text-align: center; }
+.rule-options { gap: 8rpx; }
+.rule-options .seg-btn { min-width: 0; padding: 12rpx 4rpx; border-radius: 12rpx; font-size: 21rpx; white-space: nowrap; }
+.rules-modal { max-width: 600rpx; }
+
+/* ── 杠分类型 ── */
+.gang-kind-row { gap: 8rpx; }
+.gang-kind-btn { display: flex; flex-direction: column; align-items: center; gap: 2rpx; min-width: 0; padding: 10rpx 4rpx; border-radius: 12rpx; }
+.gang-kind-name { font-size: 24rpx; font-weight: 700; }
+.gang-kind-alias { font-size: 17rpx; opacity: .72; white-space: nowrap; }
+.gang-rule-note { margin-top: 4rpx; font-size: 20rpx; color: #a09a87; }
 
 /* ── 计算结果 ── */
 .sichuan-result {
-  border-color: #c96442;
+  border-color: var(--accent, #c96442);
   background: #fef9f5;
 }
 .sichuan-result .points {
-  color: #c96442;
+  color: var(--accent, #c96442);
 }
 .sichuan-win-modal, .history-modal, .penalty-modal { max-height: 92vh; }
 .setup-modal { max-width: 560rpx; height: auto; max-height: none; overflow: visible; }
@@ -164,7 +154,7 @@
 .penalty-type-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8rpx; }
 .penalty-type-btn { min-width: 0; padding: 12rpx 8rpx; border-radius: 12rpx; font-size: 21rpx; }
 .penalty-rule-card { margin-top: 14rpx; padding: 18rpx 20rpx; border-radius: 16rpx; background: #f3f0e7; border: 2rpx solid #e3ddcf; }
-.penalty-rule-title { color: #c96442; font-size: 22rpx; font-weight: 700; margin-top: 10rpx; }
+.penalty-rule-title { color: var(--accent, #c96442); font-size: 22rpx; font-weight: 700; margin-top: 10rpx; }
 .penalty-rule-title:first-child { margin-top: 0; }
 .penalty-rule-text { margin-top: 5rpx; color: #686250; font-size: 22rpx; line-height: 1.65; }
 .penalty-rule-note { margin-top: 12rpx; color: #9a927f; font-size: 19rpx; line-height: 1.5; }
@@ -237,7 +227,7 @@
 .sb-seat {
   display: block;
   font-size: 20rpx;
-  color: #c96442;
+  color: var(--accent, #c96442);
   font-weight: 500;
 }
 .sb-name {
@@ -255,7 +245,7 @@
   font-weight: 700;
 }
 .sb-score.plus { color: #5a7a4a; }
-.sb-score.minus { color: #c96442; }
+.sb-score.minus { color: var(--accent, #c96442); }
 
 /* ── 记录列表 ── */
 .sichuan-history {
@@ -285,7 +275,7 @@
   font-size: 22rpx;
   font-weight: 700;
   color: #fff;
-  background: #c96442;
+  background: var(--accent, #c96442);
   padding: 2rpx 12rpx;
   border-radius: 8rpx;
   flex-shrink: 0;
