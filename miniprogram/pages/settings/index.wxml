@@ -74,12 +74,13 @@
   <block wx:if="{{activeTab === 'model'}}">
     <view class="settings-card">
       <view class="settings-title">拍照识牌模型</view>
-      <view class="kv-row"><text class="kv-key">当前使用</text><text class="kv-value">{{modelCustom ? '自定义 · ' + modelName : '云端默认'}}</text></view>
+      <view class="kv-row"><text class="kv-key">当前使用</text><text class="kv-value">{{modelCustom ? '自定义 · ' + modelName + '（本机直连）' : '云端默认'}}</text></view>
       <view class="field-hint">日麻和牌结算中「📷 拍照识牌」使用的多模态模型。留空即用云端默认。</view>
     </view>
     <view class="settings-card">
       <view class="settings-title">自定义模型</view>
-      <view class="settings-desc">任意 OpenAI 兼容的多模态接口。配置只保存在本机，识牌时经云函数转发。</view>
+      <view class="settings-desc">任意 OpenAI 兼容的多模态接口。配置只存本机，照片和 Key 直接从手机发给该接口，不经过云端。</view>
+      <view class="field-hint">正式版需该地址已加入小程序「request 合法域名」，否则会被拦截。</view>
       <view class="inline-field"><text class="inline-label">地址</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" /></view>
       <view class="inline-field"><text class="inline-label">Key</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" /></view>
       <view class="inline-field">

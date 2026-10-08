@@ -121,7 +121,7 @@ function describeModelTest(result) {
     ok: true,
     seesImage: !!result.seesImage,
     title: result.seesImage ? `可用 · ${seconds}s` : `已连通 · ${seconds}s，但可能看不懂图片`,
-    detail: `${result.model || '云端默认'}：“${result.reply || ''}”`
+    detail: `${result.via === 'local' ? '本机直连' : '云端默认'} · ${result.model || ''}：“${result.reply || ''}”`
   };
 }
 

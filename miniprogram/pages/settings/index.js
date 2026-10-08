@@ -128,6 +128,7 @@ Page({
     if (this.data.modelListLoading) return;
     const check = TileRecognition.checkModelDraft(this.modelDraft(), false);
     if (!check.ok) return wx.showToast({ title: check.message, icon: 'none' });
+    if (check.useDefault) return wx.showToast({ title: '请先填写地址和 Key', icon: 'none' });
     this.setData({ modelListLoading: true });
     try {
       const modelList = await Recognizer.listModels(this.modelDraft());

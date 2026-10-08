@@ -814,6 +814,7 @@ Page({
     const win = defaultWin(g, this.data.room && this.data.room.mySeat);
     this.setData({
       showWin: true, winStep: 1, win, hand: [], handHistory: [],
+      recognizeAvailable: Recognizer.isAvailable(),
       analysisStage: 0, analysisMessage: '', analysisResult: null,
       melds: [], decompositions: [], decompIndex: 0,
       showDora: false, showUra: false,
