@@ -17,12 +17,11 @@
 .swatch { padding: 12rpx 20rpx; border-radius: 12rpx; border: 2rpx solid #e8e5d8; color: #fff; font-size: 22rpx; }
 .swatch.active { box-shadow: 0 0 0 4rpx rgba(61,57,41,.25); border-color: #3d3929; }
 .swatch-bg { color: #3d3929; }
-.fold-head { display: flex; align-items: center; gap: 12rpx; }
-.fold-head .settings-title { flex: 1; }
-.fold-value { max-width: 300rpx; overflow: hidden; color: #8a8470; font-size: 22rpx; text-overflow: ellipsis; white-space: nowrap; }
-.fold-arrow { color: #b0a994; font-size: 32rpx; line-height: 1; transition: transform .2s ease; }
-.fold-arrow.open { transform: rotate(90deg); }
 .inline-field { display: flex; align-items: center; gap: 16rpx; margin-top: 14rpx; }
 .inline-label { flex-shrink: 0; width: 64rpx; color: #8a8470; font-size: 24rpx; }
 .inline-input { flex: 1; min-width: 0; }
 .model-actions { margin-top: 18rpx; }
+.settings-tabs { position: sticky; top: 0; z-index: 10; display: flex; gap: 6rpx; margin: 0 24rpx; padding: 6rpx; transform: translateY(16rpx); background: #ebe8de; border-radius: 999rpx; box-shadow: 0 0 0 16rpx var(--bg, #f5f4ee); }
+.settings-tab { flex: 1; padding: 14rpx 0; border-radius: 999rpx; color: #8a8470; font-size: 26rpx; text-align: center; transition: background-color .2s ease, color .2s ease; }
+.settings-tab.active { background: var(--accent, #c96442); color: #fff; font-weight: 600; }
+.settings-body { padding-top: 40rpx; min-height: auto; }

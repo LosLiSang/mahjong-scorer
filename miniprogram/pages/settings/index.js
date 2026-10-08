@@ -30,7 +30,13 @@ Page({
     modelName: '',
     modelApiKey: '',
     modelCustom: false,
-    modelPanelOpen: false
+    settingsTabs: [
+      { id: 'player', label: '玩家' },
+      { id: 'theme', label: '外观' },
+      { id: 'model', label: '识牌' },
+      { id: 'about', label: '关于' }
+    ],
+    activeTab: 'player'
   },
 
   onLoad() {
@@ -100,7 +106,9 @@ Page({
     }
   },
 
-  toggleModelPanel() { this.setData({ modelPanelOpen: !this.data.modelPanelOpen }); },
+  switchTab(e) {
+    this.setData({ activeTab: e.currentTarget.dataset.id });
+  },
 
   onModelBaseUrlInput(e) { this.setData({ modelBaseUrl: e.detail.value }); },
   onModelNameInput(e) { this.setData({ modelName: e.detail.value }); },
@@ -113,7 +121,7 @@ Page({
       apiKey: this.data.modelApiKey
     });
     if (!result.ok) return wx.showToast({ title: result.message, icon: 'none' });
-    this.setData({ modelCustom: !!result.config, modelPanelOpen: false });
+    this.setData({ modelCustom: !!result.config });
     wx.showToast({ title: result.config ? '已使用自定义模型' : '已恢复默认模型', icon: 'success' });
   },
 
