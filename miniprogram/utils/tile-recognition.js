@@ -98,7 +98,35 @@ function normalizeModelConfig(config) {
   return { ok: true, config: { baseUrl, model, apiKey } };
 }
 
+// 获取 / 测试前的草稿校验：全空 = 用云端默认；填了任一项就要求地址 + Key（测试还要模型名）
+function checkModelDraft(draft, needModel) {
+  const d = draft || {};
+  const baseUrl = String(d.baseUrl || '').trim();
+  const apiKey = String(d.apiKey || '').trim();
+  const model = String(d.model || '').trim();
+  if (!baseUrl && !apiKey && !model) return { ok: true, useDefault: true };
+  if (!baseUrl || !apiKey) return { ok: false, message: '请先填写地址和 Key' };
+  if (!/^https:\/\/[^\s/]+/i.test(baseUrl)) return { ok: false, message: '地址必须以 https:// 开头' };
+  if (needModel && !model) return { ok: false, message: '请先填写或获取模型名' };
+  return { ok: true, useDefault: false };
+}
+
+// 测试结果 → 展示文案
+function describeModelTest(result) {
+  if (!result || !result.ok) {
+    return { ok: false, title: '测试失败', detail: (result && result.message) || '请检查地址、Key 与模型名' };
+  }
+  const seconds = (Math.max(0, result.latencyMs || 0) / 1000).toFixed(1);
+  return {
+    ok: true,
+    seesImage: !!result.seesImage,
+    title: result.seesImage ? `可用 · ${seconds}s` : `已连通 · ${seconds}s，但可能看不懂图片`,
+    detail: `${result.model || '云端默认'}：“${result.reply || ''}”`
+  };
+}
+
 module.exports = {
   VALID_TILES, MIN_TILES, MAX_TILES, MIN_CONFIDENCE,
-  extractJson, normalizeTile, parseRecognition, normalizeModelConfig
+  extractJson, normalizeTile, parseRecognition, normalizeModelConfig,
+  checkModelDraft, describeModelTest
 };

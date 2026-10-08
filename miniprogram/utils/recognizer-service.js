@@ -14,6 +14,8 @@ const ERROR_MESSAGES = {
   MODEL_AUTH_FAILED: '识牌模型鉴权失败，请检查 API Key',
   MODEL_TIMEOUT: '识牌超时，请重试或手动选牌',
   MODEL_EMPTY_RESPONSE: '模型没有返回结果，请重试',
+  MODEL_LIST_EMPTY: '该接口没有返回可用模型，请手动填写模型名',
+  UNKNOWN_ACTION: '云函数版本过旧，请重新部署 tile-recognizer',
   MODEL_REQUEST_FAILED: '识牌服务暂时不可用，请手动选牌'
 };
 
@@ -68,23 +70,52 @@ async function chooseImage() {
   }
 }
 
-// 调用云函数并返回 parseRecognition 的结果（ok:false 时含给用户看的 message）
-async function recognize(filePath) {
+async function callRecognizer(data) {
   if (!isAvailable()) throw fail('CLOUD_NOT_CONFIGURED');
-  const imageBase64 = wx.getFileSystemManager().readFileSync(filePath, 'base64');
-  const mimeType = /\.png$/i.test(filePath) ? 'image/png' : 'image/jpeg';
   let response;
   try {
     response = await wx.cloud.callFunction({
       name: Config.tileFunctionName || 'tile-recognizer',
-      data: { imageBase64, mimeType, modelConfig: loadModelConfig() }
+      data
     });
   } catch (err) {
     throw fail(/timeout|超时/i.test(err && (err.errMsg || err.message) || '') ? 'MODEL_TIMEOUT' : 'MODEL_REQUEST_FAILED');
   }
   const result = response && response.result;
   if (!result || !result.ok) throw fail(result && result.code);
+  return result;
+}
+
+// 设置页草稿→云函数配置：全空表示用云端默认（null）
+function draftConfig(draft) {
+  const d = draft || {};
+  const baseUrl = String(d.baseUrl || '').trim().replace(/\/+$/, '');
+  const apiKey = String(d.apiKey || '').trim();
+  const model = String(d.model || '').trim();
+  return baseUrl || apiKey || model ? { baseUrl, apiKey, model } : null;
+}
+
+// 调用云函数并返回 parseRecognition 的结果（ok:false 时含给用户看的 message）
+async function recognize(filePath) {
+  if (!isAvailable()) throw fail('CLOUD_NOT_CONFIGURED');
+  const imageBase64 = wx.getFileSystemManager().readFileSync(filePath, 'base64');
+  const mimeType = /\.png$/i.test(filePath) ? 'image/png' : 'image/jpeg';
+  const result = await callRecognizer({ action: 'recognize', imageBase64, mimeType, modelConfig: loadModelConfig() });
   return TileRecognition.parseRecognition(result.text);
 }
 
-module.exports = { isAvailable, loadModelConfig, saveModelConfig, chooseImage, recognize, ERROR_MESSAGES };
+// 获取模型列表（用设置页当前填写的地址 + Key，未填则用云端默认）
+async function listModels(draft) {
+  const result = await callRecognizer({ action: 'listModels', modelConfig: draftConfig(draft) });
+  return result.models || [];
+}
+
+// 测试模型：返回 { model, reply, seesImage, latencyMs }
+async function testModel(draft) {
+  return callRecognizer({ action: 'testModel', modelConfig: draftConfig(draft) });
+}
+
+module.exports = {
+  isAvailable, loadModelConfig, saveModelConfig, chooseImage, recognize,
+  listModels, testModel, draftConfig, ERROR_MESSAGES
+};

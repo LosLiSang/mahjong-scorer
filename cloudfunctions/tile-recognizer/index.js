@@ -24,18 +24,24 @@ const PROMPT = [
   '{"hand":["1m","2m"],"winTile":"5p","confidence":0.9}'
 ].join('\n');
 
+// 测试模型用的 32×32 纯红 PNG
+const TEST_IMAGE = 'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR4nGO4IydHU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAJI2YD1ZaHIvAAAAAElFTkSuQmCC';
+const TEST_PROMPT = '这张图片是什么颜色？只回答一个词。';
+
 function error(code) {
   const err = new Error(code);
   err.code = code;
   return err;
 }
 
-function resolveModel(custom, env) {
-  if (custom && custom.baseUrl && custom.model && custom.apiKey) {
+// requireModel=false 时（获取模型列表）允许自定义配置不填模型名
+function resolveModel(custom, env, requireModel) {
+  const needModel = requireModel !== false;
+  if (custom && custom.baseUrl && custom.apiKey && (custom.model || !needModel)) {
     if (!/^https:\/\//i.test(custom.baseUrl)) throw error('INVALID_MODEL_CONFIG');
     return {
       baseUrl: String(custom.baseUrl).replace(/\/+$/, ''),
-      model: String(custom.model),
+      model: String(custom.model || ''),
       apiKey: String(custom.apiKey)
     };
   }
@@ -69,16 +75,17 @@ function buildRequest(model, imageBase64, mimeType) {
   };
 }
 
+// request.body 为空时发 GET（模型列表），否则 POST JSON
 function postJson(request) {
   return new Promise((resolve, reject) => {
     const url = new URL(request.url);
-    const payload = JSON.stringify(request.body);
+    const payload = request.body ? JSON.stringify(request.body) : '';
     const req = https.request({
       hostname: url.hostname,
       port: url.port || 443,
       path: url.pathname + url.search,
-      method: 'POST',
-      headers: Object.assign({ 'Content-Length': Buffer.byteLength(payload) }, request.headers),
+      method: request.body ? 'POST' : 'GET',
+      headers: Object.assign(request.body ? { 'Content-Length': Buffer.byteLength(payload) } : {}, request.headers),
       timeout: REQUEST_TIMEOUT_MS
     }, res => {
       let text = '';
@@ -93,8 +100,49 @@ function postJson(request) {
     });
     req.on('timeout', () => req.destroy(error('MODEL_TIMEOUT')));
     req.on('error', err => reject(err && err.code === 'MODEL_TIMEOUT' ? err : error('MODEL_REQUEST_FAILED')));
-    req.end(payload);
+    if (payload) req.end(payload); else req.end();
   });
+}
+
+function replyText(response) {
+  const choice = response && response.choices && response.choices[0];
+  const content = choice && choice.message && choice.message.content;
+  return Array.isArray(content) ? content.map(part => part && part.text || '').join('') : (content || '');
+}
+
+// 获取模型列表：GET {baseUrl}/models（OpenAI 兼容），视觉类模型排前面
+async function listModels(event, env, send) {
+  const model = resolveModel(event.modelConfig, env, false);
+  const response = await send({
+    url: `${model.baseUrl}/models`,
+    headers: { Authorization: `Bearer ${model.apiKey}` }
+  });
+  const ids = (response && Array.isArray(response.data) ? response.data : [])
+    .map(item => item && item.id).filter(Boolean).map(String);
+  if (!ids.length) throw error('MODEL_LIST_EMPTY');
+  const visual = id => /vl|vision|4v|4o|gemini|omni|qvq|pixtral|llava|claude/i.test(id) ? 1 : 0;
+  const models = Array.from(new Set(ids))
+    .sort((a, b) => (visual(b) - visual(a)) || a.localeCompare(b))
+    .slice(0, 200);
+  return { models };
+}
+
+// 测试模型：发一张 32×32 纯红小图，检验连通、鉴权与看图能力，并返回耗时
+async function testModel(event, env, send, now) {
+  const model = resolveModel(event.modelConfig, env);
+  const clock = now || Date.now;
+  const started = clock();
+  const request = buildRequest(model, TEST_IMAGE, 'image/png');
+  request.body.messages[0].content[1].text = TEST_PROMPT;
+  request.body.max_tokens = 10;
+  const reply = String(replyText(await send(request))).trim();
+  if (!reply) throw error('MODEL_EMPTY_RESPONSE');
+  return {
+    model: model.model,
+    reply: reply.slice(0, 40),
+    seesImage: /红|red/i.test(reply),
+    latencyMs: clock() - started
+  };
 }
 
 async function recognize(event, env, post) {
@@ -103,20 +151,21 @@ async function recognize(event, env, post) {
   if (image.length > MAX_IMAGE_BASE64) throw error('IMAGE_TOO_LARGE');
   const model = resolveModel(event.modelConfig, env);
   const response = await post(buildRequest(model, image, event.mimeType));
-  const choice = response && response.choices && response.choices[0];
-  const content = choice && choice.message && choice.message.content;
-  const text = Array.isArray(content) ? content.map(part => part && part.text || '').join('') : content;
+  const text = replyText(response);
   if (!text) throw error('MODEL_EMPTY_RESPONSE');
   return { text: String(text) };
 }
 
 exports.main = async event => {
   try {
-    return Object.assign({ ok: true }, await recognize(event, process.env, postJson));
+    const action = event && event.action || 'recognize';
+    const handler = { recognize, listModels, testModel }[action];
+    if (!handler) throw error('UNKNOWN_ACTION');
+    return Object.assign({ ok: true }, await handler(event, process.env, postJson));
   } catch (err) {
     return { ok: false, code: err && err.code || 'MODEL_REQUEST_FAILED' };
   }
 };
 
 // 供单测使用
-exports._internal = { resolveModel, buildRequest, recognize, PROMPT, DEFAULT_BASE_URL, DEFAULT_MODEL };
+exports._internal = { resolveModel, buildRequest, recognize, listModels, testModel, PROMPT, DEFAULT_BASE_URL, DEFAULT_MODEL };

@@ -3,6 +3,7 @@
 const RoomService = require('../../utils/room-service');
 const Theme = require('../../utils/theme');
 const Recognizer = require('../../utils/recognizer-service');
+const TileRecognition = require('../../utils/tile-recognition');
 
 const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
 const ROOM_AVATAR_KEY = 'mj_room_avatar_v1';
@@ -30,6 +31,10 @@ Page({
     modelName: '',
     modelApiKey: '',
     modelCustom: false,
+    modelList: [],
+    modelListLoading: false,
+    modelTesting: false,
+    modelTest: null,
     settingsTabs: [
       { id: 'player', label: '玩家' },
       { id: 'theme', label: '外观' },
@@ -110,9 +115,50 @@ Page({
     this.setData({ activeTab: e.currentTarget.dataset.id });
   },
 
-  onModelBaseUrlInput(e) { this.setData({ modelBaseUrl: e.detail.value }); },
-  onModelNameInput(e) { this.setData({ modelName: e.detail.value }); },
-  onModelApiKeyInput(e) { this.setData({ modelApiKey: e.detail.value }); },
+  // 改了地址 / Key 后，旧的模型列表和测试结果不再可信
+  onModelBaseUrlInput(e) { this.setData({ modelBaseUrl: e.detail.value, modelList: [], modelTest: null }); },
+  onModelNameInput(e) { this.setData({ modelName: e.detail.value, modelTest: null }); },
+  onModelApiKeyInput(e) { this.setData({ modelApiKey: e.detail.value, modelList: [], modelTest: null }); },
+
+  modelDraft() {
+    return { baseUrl: this.data.modelBaseUrl, model: this.data.modelName, apiKey: this.data.modelApiKey };
+  },
+
+  async fetchModels() {
+    if (this.data.modelListLoading) return;
+    const check = TileRecognition.checkModelDraft(this.modelDraft(), false);
+    if (!check.ok) return wx.showToast({ title: check.message, icon: 'none' });
+    this.setData({ modelListLoading: true });
+    try {
+      const modelList = await Recognizer.listModels(this.modelDraft());
+      this.setData({ modelList });
+    } catch (err) {
+      this.setData({ modelList: [] });
+      wx.showToast({ title: err.message || '获取模型失败', icon: 'none' });
+    } finally {
+      this.setData({ modelListLoading: false });
+    }
+  },
+
+  pickModel(e) {
+    this.setData({ modelName: e.currentTarget.dataset.id, modelList: [], modelTest: null });
+  },
+
+  closeModelList() { this.setData({ modelList: [] }); },
+
+  async testModel() {
+    if (this.data.modelTesting) return;
+    const check = TileRecognition.checkModelDraft(this.modelDraft(), true);
+    if (!check.ok) return wx.showToast({ title: check.message, icon: 'none' });
+    this.setData({ modelTesting: true, modelTest: null });
+    let result;
+    try {
+      result = Object.assign({ ok: true }, await Recognizer.testModel(this.modelDraft()));
+    } catch (err) {
+      result = { ok: false, message: err.message };
+    }
+    this.setData({ modelTesting: false, modelTest: TileRecognition.describeModelTest(result) });
+  },
 
   saveModel() {
     const result = Recognizer.saveModelConfig({
@@ -127,7 +173,7 @@ Page({
 
   resetModel() {
     Recognizer.saveModelConfig(null);
-    this.setData({ modelBaseUrl: '', modelName: '', modelApiKey: '', modelCustom: false });
+    this.setData({ modelBaseUrl: '', modelName: '', modelApiKey: '', modelCustom: false, modelList: [], modelTest: null });
     wx.showToast({ title: '已恢复默认模型', icon: 'success' });
   },
 

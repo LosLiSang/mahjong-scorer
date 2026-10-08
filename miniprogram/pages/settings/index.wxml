@@ -81,10 +81,39 @@
       <view class="settings-title">自定义模型</view>
       <view class="settings-desc">任意 OpenAI 兼容的多模态接口。配置只保存在本机，识牌时经云函数转发。</view>
       <view class="inline-field"><text class="inline-label">地址</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" /></view>
-      <view class="inline-field"><text class="inline-label">模型</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelName}}" bindinput="onModelNameInput" maxlength="80" placeholder="qwen-vl-max" /></view>
       <view class="inline-field"><text class="inline-label">Key</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" /></view>
+      <view class="inline-field">
+        <text class="inline-label">模型</text>
+        <serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelName}}" bindinput="onModelNameInput" maxlength="80" placeholder="qwen-vl-max" />
+        <button class="btn btn-secondary btn-small inline-btn" bindtap="fetchModels" loading="{{modelListLoading}}" disabled="{{modelListLoading}}">获取</button>
+      </view>
+
+      <!-- 获取到的模型：点选填入；视觉类排在前面 -->
+      <view wx:if="{{modelList.length}}" class="model-list-box">
+        <view class="model-list-head">
+          <text>共 {{modelList.length}} 个，点选填入</text>
+          <text class="model-list-close" bindtap="closeModelList">收起</text>
+        </view>
+        <scroll-view scroll-y class="model-list">
+          <view
+            wx:for="{{modelList}}"
+            wx:key="*this"
+            class="model-chip {{modelName === item ? 'active' : ''}}"
+            data-id="{{item}}"
+            bindtap="pickModel"
+          >{{item}}</view>
+        </scroll-view>
+      </view>
+
+      <!-- 测试结果 -->
+      <view wx:if="{{modelTest}}" class="model-test {{modelTest.ok ? (modelTest.seesImage ? 'pass' : 'warn') : 'fail'}}">
+        <text class="model-test-title">{{modelTest.title}}</text>
+        <text class="model-test-detail">{{modelTest.detail}}</text>
+      </view>
+
       <view class="btn-row model-actions">
         <button class="btn btn-secondary btn-small" bindtap="resetModel">恢复默认</button>
+        <button class="btn btn-secondary btn-small" bindtap="testModel" loading="{{modelTesting}}" disabled="{{modelTesting}}">测试</button>
         <button class="btn btn-small" bindtap="saveModel">保存</button>
       </view>
     </view>

@@ -45,6 +45,28 @@ const H14 = ['1m','2m','3m','4p','5p','6p','7s','8s','9s','2z','2z','5m','5m','5
   assert.equal(r.ok, c.ok, JSON.stringify(c.input));
   if (c.ok) assert.deepEqual(r.config, c.config);
 });
+// 获取 / 测试模型前的草稿校验
+[
+  { draft: {}, needModel: true, ok: true, useDefault: true },
+  { draft: { baseUrl: 'https://a/v1', apiKey: 'k' }, needModel: false, ok: true, useDefault: false },
+  { draft: { baseUrl: 'https://a/v1', apiKey: 'k' }, needModel: true, ok: false, msg: /模型名/ },
+  { draft: { model: 'm' }, needModel: false, ok: false, msg: /地址和 Key/ },
+  { draft: { baseUrl: 'http://a', apiKey: 'k' }, needModel: false, ok: false, msg: /https/ },
+].forEach(c => {
+  const r = TileRecognition.checkModelDraft(c.draft, c.needModel);
+  assert.equal(r.ok, c.ok, JSON.stringify(c.draft));
+  if (c.ok) assert.equal(r.useDefault, c.useDefault);
+  else assert(c.msg.test(r.message), r.message);
+});
+[
+  { input: { ok: true, model: 'qwen-vl-max', reply: '红色', seesImage: true, latencyMs: 1234 }, ok: true, title: /可用 · 1\.2s/ },
+  { input: { ok: true, model: 'gpt-3.5', reply: '我看不到图片', seesImage: false, latencyMs: 800 }, ok: true, title: /看不懂图片/ },
+  { input: { ok: false, message: '识牌模型鉴权失败' }, ok: false, title: /测试失败/ },
+].forEach(c => {
+  const r = TileRecognition.describeModelTest(c.input);
+  assert.equal(r.ok, c.ok);
+  assert(c.title.test(r.title), r.title);
+});
 
 // 以自己为视角：真实座位 index → 展示位置（#5）
 [
