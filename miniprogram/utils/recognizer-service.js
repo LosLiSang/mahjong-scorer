@@ -1,7 +1,7 @@
 // recognizer-service.js — 拍照识牌：选图 → 压缩 → base64 → 模型
 // 两条通道：
 //   · 用户在设置页填了自定义模型 → 小程序本地 wx.request 直连（图片与 Key 都不经过云端）
-//   · 未填 → 调用云函数 tile-recognizer，使用云端默认模型（Key 只在服务端）
+//   · 未填 → 云函数 tile-recognizer 转发到 Cloudflare Worker，使用云端默认模型（Key 只在 Worker）
 // 注意：正式版本地直连要求该域名已加入小程序后台「request 合法域名」。
 const Config = require('../config');
 const TileRecognition = require('./tile-recognition');
@@ -24,7 +24,9 @@ const ERROR_MESSAGES = {
   MODEL_EMPTY_RESPONSE: '模型没有返回结果，请重试',
   MODEL_LIST_EMPTY: '该接口没有返回可用模型，请手动填写模型名',
   DOMAIN_NOT_ALLOWED: '该地址不在小程序合法域名中，无法从本机直连',
-  UNKNOWN_ACTION: '云函数版本过旧，请重新部署 tile-recognizer',
+  UNKNOWN_ACTION: '识牌服务版本过旧，请重新部署',
+  WORKER_UNAUTHORIZED: '云端识牌服务令牌不匹配，请检查部署配置',
+  WORKER_UNREACHABLE: '连不上云端识牌服务，请稍后重试或手动选牌',
   MODEL_REQUEST_FAILED: '识牌服务暂时不可用，请手动选牌'
 };
 

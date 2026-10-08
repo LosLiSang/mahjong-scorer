@@ -120,32 +120,51 @@ cloudfunctions/mahjong-room-cleanup
 
 日麻和牌结算第 2 步的「📷 拍照识牌」有两条通道：
 
-| 情况 | 请求路径 | Key 存放位置 |
+| 情况 | 请求路径 | 模型 Key 存放位置 |
 | --- | --- | --- |
-| 用户在「设置 → 识牌」填了自定义模型 | 小程序本机 `wx.request` 直连该接口，照片和 Key 都不经过云端 | 用户手机本地 |
-| 未填写 | 云函数 `tile-recognizer` 调用云端默认模型 | 云函数环境变量 |
+| 用户在「设置 → 识牌」填了自定义模型 | 小程序本机 `wx.request` 直连该接口 | 用户手机本地 |
+| 未填写（云端默认） | 小程序 → 微信云函数 `tile-recognizer` → Cloudflare Worker（`*.workers.dev`）→ 模型 | Worker Secret |
 
-### 云端默认模型
+小程序正式版只能请求已登记的「request 合法域名」，合法域名要求 ICP 备案，`workers.dev` 无法登记，国内网络也基本访问不到。因此由微信云函数在服务端转发：云函数只保存调用 Worker 的共享令牌，不保存模型 Key。
 
-1. 右键 `cloudfunctions/tile-recognizer` → “上传并部署：云端安装依赖”。该函数没有第三方依赖，`config.json` 中的超时已设为 20 秒。
+### 7.1 部署 Cloudflare Worker（`apps/tile-worker`）
+
+```bash
+cd apps/tile-worker
+npm install
+npx wrangler login
+# 模型 Key 与共享令牌只用 secret 保存，不写进 wrangler.jsonc
+npx wrangler secret put MODEL_API_KEY
+npx wrangler secret put WORKER_TOKEN      # 自己生成一段足够长的随机串
+npx wrangler deploy                       # 输出 https://mahjong-tile-worker.<子域>.workers.dev
+```
+
+- 默认模型在 `wrangler.jsonc` 的 `vars` 中配置：`MODEL_BASE_URL` 默认是 `https://dashscope.aliyuncs.com/compatible-mode/v1`，`MODEL_NAME` 默认是 `qwen-vl-max`。
+- 接口：`POST /recognize`、`POST /test`，都要求请求头带 `Authorization: Bearer <WORKER_TOKEN>`。
+- 已开启 Workers Logs 与 Traces，可在 Cloudflare 控制台查看调用记录。
+- 本地调试：复制 `.dev.vars.example` 为 `.dev.vars`，然后运行 `npm run dev`。
+
+### 7.2 部署微信云函数（`cloudfunctions/tile-recognizer`）
+
+1. 右键该目录 → “上传并部署：云端安装依赖”。该函数没有第三方依赖，`config.json` 中的超时设为 20 秒。
 2. 在云开发控制台 → 云函数 → `tile-recognizer` → 函数配置 → 环境变量中填写：
 
-| 变量 | 说明 | 默认值 |
-| --- | --- | --- |
-| `TILE_MODEL_API_KEY` | 模型 API Key（必填，只存放在服务端） | — |
-| `TILE_MODEL_BASE_URL` | OpenAI 兼容接口地址 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| `TILE_MODEL_NAME` | 模型名 | `qwen-vl-max` |
+| 变量 | 说明 |
+| --- | --- |
+| `TILE_WORKER_URL` | 上一步得到的 Worker 地址 |
+| `TILE_WORKER_TOKEN` | 与 Worker 的 `WORKER_TOKEN` 相同 |
 
-云函数只服务默认模型，不接受客户端传来的模型地址或 Key。
+云函数只转发白名单字段（图片、图片类型），不会把客户端传来的模型地址或 Key 带给 Worker。
 
-### 自定义模型（本机直连）
+### 7.3 自定义模型（本机直连）
 
-- 正式版小程序只能请求「小程序后台 → 开发管理 → 服务器域名 → request 合法域名」中登记过的域名。请把允许用户使用的厂商域名提前加进去（如 `dashscope.aliyuncs.com`、`open.bigmodel.cn`）。未登记的地址在真机上会被拦截，并提示“该地址不在小程序合法域名中”。开发者工具中勾选“不校验合法域名”后可以随意测试。
-- 「获取」按钮直连 `GET {地址}/models`，视觉类模型排在前面；「测试」按钮发送一张纯红小图，检查连通、鉴权和看图能力，并显示耗时。地址和 Key 都留空时，「测试」检查的是云端默认模型。
+- 正式版只能请求「小程序后台 → 开发管理 → 服务器域名 → request 合法域名」中登记过的域名。请提前登记允许用户使用的厂商域名（如 `dashscope.aliyuncs.com`、`open.bigmodel.cn`）；未登记的地址会提示“该地址不在小程序合法域名中”。开发者工具中勾选“不校验合法域名”后可以随意测试。
+- 「获取」按钮直连 `GET {地址}/models`，视觉类模型排在前面。「测试」按钮发送一张纯红小图，检查连通、鉴权和看图能力，并显示耗时。地址和 Key 都留空时，「测试」检查的是云端默认通道（云函数 → Worker）。
 
 ### 共同约定
 
-- 请求构造与响应解析的真源是 `miniprogram/utils/model-protocol.js`；修改后需运行 `node scripts/sync-model-protocol.js` 同步到云函数，`test-tile-recognizer.js` 会检查两份是否一致。
-- 照片在手机上压缩后以 base64 发出，不上传云存储，也不落盘。
-- 目前不限制调用次数；模型费用由所用的 Key 承担。
+- 请求构造与响应解析的唯一真源是 `miniprogram/utils/model-protocol.js`：小程序端直接引用，Worker 由 wrangler 打包时引入，无需复制。
+- 照片在手机上压缩后以 base64 发出，不上传云存储，不落盘；Worker 也不保存图片。
+- 目前不限制调用次数；云端默认通道的模型费用由 Worker 中配置的 Key 承担。
+- Cloudflare Workers 免费版：每天 10 万次请求；每次请求的 CPU 时间上限为 10ms，等待模型返回的时间不计入。照片在手机上已压缩到宽 1280、质量 70（base64 一般只有几百 KB），Worker 只解析和转发一次 JSON，通常在额度内；如果日志里出现 CPU 超限，可以降低压缩宽度。
 - 识别结果必须通过前端校验（合法牌 ID、14–18 张、同种牌不超过 4 张、置信度 ≥ 0.6）才会替换手牌；失败时只提示，不改动当前手牌。

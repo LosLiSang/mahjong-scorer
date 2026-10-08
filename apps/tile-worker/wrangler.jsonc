@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mahjong-tile-worker",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-08",
+  "workers_dev": true,
+  "vars": {
+    "MODEL_BASE_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "MODEL_NAME": "qwen-vl-max"
+  },
+  // MODEL_API_KEY 与 WORKER_TOKEN 用 `wrangler secret put` 设置，不写在这里
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  }
+}

@@ -1,8 +1,8 @@
 'use strict';
 
 // model-protocol.js — 识牌模型的 OpenAI 兼容协议（纯函数，零依赖）
-// 真源在 miniprogram/utils/，由 scripts/sync-model-protocol.js 复制到 cloudfunctions/tile-recognizer/。
-// 小程序本地直连（自定义模型）与云函数（默认模型）共用同一份请求构造与响应解析。
+// 小程序本地直连（自定义模型）与 Cloudflare Worker（apps/tile-worker，云端默认模型）
+// 直接引用同一份文件，Worker 由 wrangler 打包进去，无需复制。
 
 const PROMPT = [
   '你是日本麻将牌面识别器。照片里是一手和牌后的手牌（门前手牌，可能包含刚摸到 / 荣和的那张）。',

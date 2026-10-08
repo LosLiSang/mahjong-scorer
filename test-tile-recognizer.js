@@ -1,15 +1,8 @@
-// test-tile-recognizer.js — 拍照识牌两条通道：本地直连（自定义模型）+ 云函数（默认模型）
+// test-tile-recognizer.js — 拍照识牌：本地直连（自定义模型）/ 云函数 → Cloudflare Worker（默认模型）
 // 模型调用全部 mock，不发网络请求。用法: node test-tile-recognizer.js
 const assert = require('assert');
-const fs = require('fs');
 const path = require('path');
-
-// 防漂移：云函数里的协议文件必须与小程序真源一致（先跑 node scripts/sync-model-protocol.js）
-assert.equal(
-  fs.readFileSync(path.join(__dirname, 'miniprogram/utils/model-protocol.js'), 'utf8'),
-  fs.readFileSync(path.join(__dirname, 'cloudfunctions/tile-recognizer/model-protocol.js'), 'utf8'),
-  'model-protocol 已漂移：请改 miniprogram/utils/model-protocol.js 后运行 node scripts/sync-model-protocol.js'
-);
+const { pathToFileURL } = require('url');
 
 const Protocol = require('./miniprogram/utils/model-protocol');
 const Cloud = require('./cloudfunctions/tile-recognizer')._internal;
@@ -37,23 +30,84 @@ assert.deepEqual(
   .forEach(([status, code]) => assert.equal(Protocol.httpErrorCode(status), code));
 
 (async () => {
-  // ── 云函数：只服务默认模型，忽略任何客户端传来的模型配置 ──
+  // ── Cloudflare Worker：令牌校验 + 默认模型（fetch 注入 mock）──
+  const Worker = await import(pathToFileURL(path.join(__dirname, 'apps/tile-worker/src/index.js')).href);
+  const workerEnv = { MODEL_API_KEY: 'model-key', WORKER_TOKEN: 'tok' };
+  const post = (pathname, body, token) => new Request(`https://w.example${pathname}`, {
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
+    body: JSON.stringify(body || {})
+  });
+  let modelCalls = [];
+  let modelReply = () => new Response(JSON.stringify({ choices: [{ message: { content: '{"hand":[]}' } }] }));
+  const fakeFetch = async (url, init) => { modelCalls.push({ url, init }); return modelReply(); };
+  const call = async (req, env) => {
+    const res = await Worker.handle(req, env || workerEnv, fakeFetch);
+    return { status: res.status, body: await res.json() };
+  };
+  const origError = console.error;
+  const origLog = console.log;
+  console.error = () => {};
+  console.log = () => {};
+  try {
+    let r = await call(post('/recognize', { imageBase64: 'AAAA', mimeType: 'image/png' }, 'tok'));
+    assert.deepEqual(r, { status: 200, body: { ok: true, text: '{"hand":[]}' } });
+    assert.equal(modelCalls[0].url, 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', 'Worker 使用默认模型地址');
+    assert.equal(modelCalls[0].init.headers.Authorization, 'Bearer model-key', '模型 Key 只在 Worker 内使用');
+    assert.equal(JSON.parse(modelCalls[0].init.body).model, 'qwen-vl-max');
+
+    for (const c of [
+      { req: () => post('/recognize', { imageBase64: 'A' }), code: 'WORKER_UNAUTHORIZED', status: 401 },
+      { req: () => post('/recognize', { imageBase64: 'A' }, 'wrong'), code: 'WORKER_UNAUTHORIZED', status: 401 },
+      { req: () => post('/nope', {}, 'tok'), code: 'UNKNOWN_ACTION', status: 404 },
+      { req: () => new Request('https://w.example/test', { headers: { Authorization: 'Bearer tok' } }), code: 'METHOD_NOT_ALLOWED', status: 405 },
+      { req: () => post('/recognize', {}, 'tok'), code: 'IMAGE_REQUIRED', status: 400 },
+    ]) {
+      r = await call(c.req());
+      assert.deepEqual(r, { status: c.status, body: { ok: false, code: c.code } }, c.code);
+    }
+    r = await call(post('/recognize', { imageBase64: 'A' }, 'tok'), { WORKER_TOKEN: 'tok' });
+    assert.equal(r.body.code, 'MODEL_NOT_CONFIGURED');
+    r = await call(post('/recognize', { imageBase64: 'A' }, ''), { MODEL_API_KEY: 'k' });
+    assert.equal(r.body.code, 'WORKER_UNAUTHORIZED', '未设置 WORKER_TOKEN 时一律拒绝');
+
+    modelReply = () => new Response('{}', { status: 429 });
+    r = await call(post('/recognize', { imageBase64: 'A' }, 'tok'));
+    assert.equal(r.body.code, 'MODEL_RATE_LIMITED');
+
+    modelCalls = [];
+    modelReply = () => new Response(JSON.stringify({ choices: [{ message: { content: '红色' } }] }));
+    r = await call(post('/test', {}, 'tok'));
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.seesImage, true);
+    assert.equal(r.body.model, 'qwen-vl-max');
+    assert.equal(JSON.parse(modelCalls[0].init.body).max_tokens, 10);
+  } finally {
+    console.error = origError;
+    console.log = origLog;
+  }
+
+  // ── 微信云函数：只转发到 Worker，白名单字段，带共享令牌 ──
+  const cloudEnv = { TILE_WORKER_URL: 'https://mahjong-tile-worker.me.workers.dev/', TILE_WORKER_TOKEN: 'tok' };
+  assert.throws(() => Cloud.workerConfig({}), err => err.code === 'MODEL_NOT_CONFIGURED');
+  assert.throws(() => Cloud.workerConfig({ TILE_WORKER_URL: 'http://x', TILE_WORKER_TOKEN: 't' }), err => err.code === 'MODEL_NOT_CONFIGURED');
+  const fwd = Cloud.buildForward('recognize', { imageBase64: 'IMG', mimeType: 'image/png', modelConfig: custom, apiKey: 'leak' }, cloudEnv);
+  assert.equal(fwd.url, 'https://mahjong-tile-worker.me.workers.dev/recognize');
+  assert.equal(fwd.headers.Authorization, 'Bearer tok');
+  assert.deepEqual(fwd.body, { imageBase64: 'IMG', mimeType: 'image/png' }, '只转发白名单字段');
+  assert.deepEqual(Cloud.buildForward('testModel', {}, cloudEnv).body, {});
+  assert.equal(Cloud.buildForward('testModel', {}, cloudEnv).url, 'https://mahjong-tile-worker.me.workers.dev/test');
+  assert.throws(() => Cloud.buildForward('listModels', {}, cloudEnv), err => err.code === 'UNKNOWN_ACTION');
+  assert.throws(() => Cloud.buildForward('recognize', {}, cloudEnv), err => err.code === 'IMAGE_REQUIRED');
+  assert.throws(() => Cloud.buildForward('recognize', { imageBase64: 'x'.repeat(Cloud.MAX_IMAGE_BASE64 + 1) }, cloudEnv), err => err.code === 'IMAGE_TOO_LARGE');
   assert.deepEqual(
-    Cloud.defaultModel({ TILE_MODEL_API_KEY: 'env-key' }),
-    { baseUrl: Cloud.DEFAULT_BASE_URL, model: Cloud.DEFAULT_MODEL, apiKey: 'env-key' }
+    await Cloud.relay({ action: 'recognize', imageBase64: 'IMG' }, cloudEnv, async () => ({ ok: true, text: 'T' })),
+    { ok: true, text: 'T' }
   );
-  assert.throws(() => Cloud.defaultModel({}), err => err.code === 'MODEL_NOT_CONFIGURED');
-  let sent = null;
-  const cloudSend = async request => { sent = request; return { choices: [{ message: { content: '{"hand":[]}' } }] }; };
-  const out = await Cloud.recognize({ imageBase64: 'AAAA', modelConfig: custom }, { TILE_MODEL_API_KEY: 'k' }, cloudSend);
-  assert.equal(out.text, '{"hand":[]}');
-  assert(sent.url.startsWith(Cloud.DEFAULT_BASE_URL), '云函数不接受客户端传入的自定义地址');
-  assert.equal(sent.headers.Authorization, 'Bearer k');
-  await assert.rejects(Cloud.recognize({}, { TILE_MODEL_API_KEY: 'k' }, cloudSend), err => err.code === 'IMAGE_REQUIRED');
-  await assert.rejects(Cloud.recognize({ imageBase64: 'x'.repeat(Protocol.MAX_IMAGE_BASE64 + 1) }, { TILE_MODEL_API_KEY: 'k' }, cloudSend), err => err.code === 'IMAGE_TOO_LARGE');
-  let tick = 1000;
-  const cloudTest = await Cloud.testModel({}, { TILE_MODEL_API_KEY: 'k' }, async () => { tick += 700; return { choices: [{ message: { content: '红' } }] }; }, () => tick);
-  assert.deepEqual(cloudTest, { model: Cloud.DEFAULT_MODEL, reply: '红', seesImage: true, latencyMs: 700 });
+  await assert.rejects(
+    Cloud.relay({ action: 'testModel' }, cloudEnv, async () => ({ ok: false, code: 'WORKER_UNAUTHORIZED' })),
+    err => err.code === 'WORKER_UNAUTHORIZED', 'Worker 错误码原样透传'
+  );
 
   // ── 小程序端：自定义模型本地直连，未配置走云函数 ──
   const store = {};
