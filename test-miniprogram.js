@@ -17,6 +17,7 @@ const H14 = ['1m','2m','3m','4p','5p','6p','7s','8s','9s','2z','2z','5m','5m','5
   { name: '赤五 0p 折算为 5p', input: JSON.stringify({ hand: H14.slice(0, 13).concat('0p'), winTile: '0p' }), ok: true, winTile: '5p', aka: 1 },
   { name: '大小写/空格容错', input: JSON.stringify({ hand: H14.map(t => ' ' + t.toUpperCase()) }), ok: true, winTile: null, len: 14 },
   { name: '和牌张不在手牌中 → 留空', input: JSON.stringify({ hand: H14, winTile: '9m' }), ok: true, winTile: null },
+  { name: '代码块内漏了结尾 }（Workers AI 实测）', input: '```json\n' + JSON.stringify({ hand: H14, winTile: '6p', confidence: 0.9 }).slice(0, -1) + '\n```', ok: true, winTile: '6p', len: 14 },
   { name: '非 JSON', input: '看不清', ok: false, msg: /格式/ },
   { name: '非法牌 ID', input: JSON.stringify({ hand: H14.slice(0, 13).concat('8z') }), ok: false, msg: /8z/ },
   { name: '张数不足', input: JSON.stringify({ hand: H14.slice(0, 13) }), ok: false, msg: /13 张/ },

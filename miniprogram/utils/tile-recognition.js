@@ -23,9 +23,13 @@ function extractJson(text) {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const body = fenced ? fenced[1] : raw;
   const start = body.indexOf('{');
+  if (start < 0) return null;
   const end = body.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try { return JSON.parse(body.slice(start, end + 1)); } catch (e) { return null; }
+  if (end > start) {
+    try { return JSON.parse(body.slice(start, end + 1)); } catch (e) { /* 可能尾部漏了括号，继续尝试修补 */ }
+  }
+  // 模型偶尔漏掉结尾的 }：只补尾部括号，不做其他猜测
+  try { return JSON.parse(body.slice(start).trim() + '}'); } catch (e) { return null; }
 }
 
 // 单张牌 ID 归一化；非法返回 null

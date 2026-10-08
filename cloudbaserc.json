@@ -1,0 +1,13 @@
+{
+  "version": "2.0",
+  "envId": "{{env.ENV_ID}}",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "tile-recognizer",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "installDependency": false
+    }
+  ]
+}

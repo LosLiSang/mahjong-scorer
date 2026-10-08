@@ -71,6 +71,25 @@ assert.deepEqual(
     r = await call(post('/recognize', { imageBase64: 'A' }, ''), { MODEL_API_KEY: 'k' });
     assert.equal(r.body.code, 'WORKER_UNAUTHORIZED', '未设置 WORKER_TOKEN 时一律拒绝');
 
+    // 未配外部 Key → 走 Workers AI 绑定：关闭思考、去掉 model 字段、兼容 { response } 输出
+    let aiCall = null;
+    const aiEnv = { WORKER_TOKEN: 'tok', WORKERS_AI_MODEL: '@cf/test/vision', AI: { async run(name, input) { aiCall = { name, input }; return { response: '红色' }; } } };
+    r = await call(post('/test', {}, 'tok'), aiEnv);
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.model, '@cf/test/vision');
+    assert.equal(r.body.seesImage, true);
+    assert.equal(aiCall.name, '@cf/test/vision');
+    assert.equal(aiCall.input.model, undefined, 'Workers AI 输入不带 model 字段');
+    assert.deepEqual(aiCall.input.chat_template_kwargs, { enable_thinking: false }, '关闭推理模型思考');
+    aiEnv.AI.run = async () => ({ choices: [{ message: { content: '{"hand":[]}' }, finish_reason: 'stop' }] });
+    r = await call(post('/recognize', { imageBase64: 'A' }, 'tok'), aiEnv);
+    assert.deepEqual(r.body, { ok: true, text: '{"hand":[]}' });
+    aiEnv.AI.run = async () => { throw new Error('4006: daily free neuron limit exceeded'); };
+    r = await call(post('/recognize', { imageBase64: 'A' }, 'tok'), aiEnv);
+    assert.equal(r.body.code, 'MODEL_RATE_LIMITED', '免费额度用尽映射为限流');
+    r = await call(post('/test', {}, 'tok'), Object.assign({}, aiEnv, { MODEL_API_KEY: 'k' }));
+    assert.equal(r.body.model, 'qwen-vl-max', '配置了外部 Key 时优先走外部接口');
+
     modelReply = () => new Response('{}', { status: 429 });
     r = await call(post('/recognize', { imageBase64: 'A' }, 'tok'));
     assert.equal(r.body.code, 'MODEL_RATE_LIMITED');
@@ -90,6 +109,14 @@ assert.deepEqual(
   // ── 微信云函数：只转发到 Worker，白名单字段，带共享令牌 ──
   const cloudEnv = { TILE_WORKER_URL: 'https://mahjong-tile-worker.me.workers.dev/', TILE_WORKER_TOKEN: 'tok' };
   assert.throws(() => Cloud.workerConfig({}), err => err.code === 'MODEL_NOT_CONFIGURED');
+  assert.deepEqual(
+    Cloud.workerConfig({}, { workerUrl: 'https://w.dev/', workerToken: 'f' }),
+    { url: 'https://w.dev', token: 'f' }, '没有环境变量时读取 worker.config.json'
+  );
+  assert.deepEqual(
+    Cloud.workerConfig({ TILE_WORKER_URL: 'https://env.dev', TILE_WORKER_TOKEN: 'e' }, { workerUrl: 'https://w.dev', workerToken: 'f' }),
+    { url: 'https://env.dev', token: 'e' }, '环境变量优先于文件'
+  );
   assert.throws(() => Cloud.workerConfig({ TILE_WORKER_URL: 'http://x', TILE_WORKER_TOKEN: 't' }), err => err.code === 'MODEL_NOT_CONFIGURED');
   const fwd = Cloud.buildForward('recognize', { imageBase64: 'IMG', mimeType: 'image/png', modelConfig: custom, apiKey: 'leak' }, cloudEnv);
   assert.equal(fwd.url, 'https://mahjong-tile-worker.me.workers.dev/recognize');
