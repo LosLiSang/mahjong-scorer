@@ -115,3 +115,21 @@ cloudfunctions/mahjong-room-cleanup
 - `room_events`
 
 部署后必须在云开发控制台确认 `daily-room-cleanup` 触发器已存在并实际产生执行记录；仅上传代码但触发器未生效时，过期数据不会自动删除。
+
+## 7. 拍照识牌（可选）
+
+日麻和牌结算第 2 步的「📷 拍照识牌」会调用 `cloudfunctions/tile-recognizer`，再由它转发给 OpenAI 兼容的多模态模型。
+
+1. 右键 `cloudfunctions/tile-recognizer` → “上传并部署：云端安装依赖”（无第三方依赖，`config.json` 已将超时设为 20 秒）。
+2. 在云开发控制台 → 云函数 → `tile-recognizer` → 函数配置 → 环境变量中填写：
+
+| 变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `TILE_MODEL_API_KEY` | 模型 API Key（必填，只存放在服务端） | — |
+| `TILE_MODEL_BASE_URL` | OpenAI 兼容接口地址 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `TILE_MODEL_NAME` | 模型名 | `qwen-vl-max` |
+
+- 照片在小程序端压缩后以 base64 传给云函数，不上传云存储，也不落盘。
+- 用户可在「设置 → 拍照识牌模型」填写自己的 Base URL / 模型名 / API Key；该配置只保存在本机，优先于环境变量。
+- 目前不限制调用次数；模型费用由所配置的 Key 承担。
+- 识别结果必须通过前端校验（合法牌 ID、14–18 张、同种牌不超过 4 张、置信度 ≥ 0.6）才会替换手牌；失败时只提示，不改动当前手牌。

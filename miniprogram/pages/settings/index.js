@@ -2,6 +2,7 @@
 
 const RoomService = require('../../utils/room-service');
 const Theme = require('../../utils/theme');
+const Recognizer = require('../../utils/recognizer-service');
 
 const ROOM_NICKNAME_KEY = 'mj_room_nickname_v1';
 const ROOM_AVATAR_KEY = 'mj_room_avatar_v1';
@@ -23,7 +24,12 @@ Page({
     themeAccentId: Theme.current().accentId,
     themeBgId: Theme.current().bgId,
     themeAccents: Theme.ACCENTS,
-    themeBgs: Theme.BACKGROUNDS
+    themeBgs: Theme.BACKGROUNDS,
+    // 拍照识牌：自定义 OpenAI 兼容模型（留空用云端默认）
+    modelBaseUrl: '',
+    modelName: '',
+    modelApiKey: '',
+    modelCustom: false
   },
 
   onLoad() {
@@ -62,6 +68,13 @@ Page({
       activeRiichiRoom: read(ACTIVE_ROOM_KEYS.riichi),
       activeSichuanRoom: read(ACTIVE_ROOM_KEYS.sichuan)
     });
+    const model = Recognizer.loadModelConfig();
+    this.setData({
+      modelBaseUrl: model ? model.baseUrl : '',
+      modelName: model ? model.model : '',
+      modelApiKey: model ? model.apiKey : '',
+      modelCustom: !!model
+    });
   },
 
   onNicknameInput(e) {
@@ -84,6 +97,27 @@ Page({
     } finally {
       this.setData({ avatarUploading: false });
     }
+  },
+
+  onModelBaseUrlInput(e) { this.setData({ modelBaseUrl: e.detail.value }); },
+  onModelNameInput(e) { this.setData({ modelName: e.detail.value }); },
+  onModelApiKeyInput(e) { this.setData({ modelApiKey: e.detail.value }); },
+
+  saveModel() {
+    const result = Recognizer.saveModelConfig({
+      baseUrl: this.data.modelBaseUrl,
+      model: this.data.modelName,
+      apiKey: this.data.modelApiKey
+    });
+    if (!result.ok) return wx.showToast({ title: result.message, icon: 'none' });
+    this.setData({ modelCustom: !!result.config });
+    wx.showToast({ title: result.config ? '已使用自定义模型' : '已恢复默认模型', icon: 'success' });
+  },
+
+  resetModel() {
+    Recognizer.saveModelConfig(null);
+    this.setData({ modelBaseUrl: '', modelName: '', modelApiKey: '', modelCustom: false });
+    wx.showToast({ title: '已恢复默认模型', icon: 'success' });
   },
 
   copyContact() {

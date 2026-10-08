@@ -4,6 +4,7 @@ const Logic = require('../../utils/mahjong-logic');
 const Game = require('../../utils/game-engine');
 const RoomService = require('../../utils/room-service');
 const Theme = require('../../utils/theme');
+const Recognizer = require('../../utils/recognizer-service');
 const TableView = require('../../utils/table-view');
 
 const LOCAL_STORAGE_KEY = 'mj_game_v2';
@@ -113,6 +114,7 @@ Page({
     // win modal
     showWin: false, winStep: 1,
     hand: [], handDisplay: [], handHistory: [], win: null,
+    recognizing: false, recognizeAvailable: Recognizer.isAvailable(),
     winTileOptions: [], winTileName: '未选择',
     tileRows: [], doraTiles: [], uraTiles: [],
     showDora: false, showUra: false,
@@ -903,10 +905,60 @@ Page({
     this.invalidateAnalysis();
     this.refreshTiles();
   },
+  // 拍照识牌：识别成功才整体替换手牌；失败或低置信度只提示，不改动当前手牌
+  async recognizeHand() {
+    if (this.data.recognizing) return;
+    let filePath;
+    try {
+      filePath = await Recognizer.chooseImage();
+    } catch (err) {
+      return wx.showToast({ title: '无法打开相机或相册', icon: 'none' });
+    }
+    if (!filePath) return;
+    this.setData({ recognizing: true });
+    wx.showLoading && wx.showLoading({ title: '识牌中…', mask: true });
+    let result;
+    try {
+      result = await Recognizer.recognize(filePath);
+    } catch (err) {
+      result = { ok: false, message: err.message };
+    } finally {
+      wx.hideLoading && wx.hideLoading();
+      this.setData({ recognizing: false });
+    }
+    this.applyRecognizedHand(result);
+  },
+
+  applyRecognizedHand(result) {
+    if (!result || !result.ok) {
+      wx.showModal({ title: '未能识别', content: (result && result.message) || '请手动选牌', showCancel: false });
+      return;
+    }
+    const win = Shared.clone(this.data.win);
+    // 整体替换作为一条可撤销记录：撤销时恢复识别前的手牌与和牌张
+    const entry = { type: 'replace', hand: this.data.hand.slice(), winTile: win.winTile || null };
+    win.winTile = result.winTile;
+    this.setData({ hand: result.hand.slice(), handHistory: this.data.handHistory.concat([entry]), win });
+    this.invalidateAnalysis();
+    this.refreshTiles();
+    this.previewWinCalc();
+    const akaNote = result.akaCount ? `（含赤五 ${result.akaCount} 张，暂不自动计入赤宝牌）` : '';
+    wx.showModal({ title: '识别完成', content: result.message + akaNote, showCancel: false });
+  },
+
   undoTile() {
     const history = this.data.handHistory.slice();
     const id = history.pop();
     if (!id) return;
+    if (typeof id === 'object' && id.type === 'replace') {
+      const win = Shared.clone(this.data.win);
+      win.winTile = id.winTile;
+      this.setData({ hand: id.hand.slice(), handHistory: history, win });
+      this.invalidateAnalysis();
+      this.refreshTiles();
+      this.previewWinCalc();
+      return;
+    }
     const hand = this.data.hand.slice();
     const index = hand.lastIndexOf(id);
     if (index >= 0) hand.splice(index, 1);
