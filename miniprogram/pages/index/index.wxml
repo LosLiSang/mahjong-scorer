@@ -42,7 +42,7 @@
     </view>
 
     <view wx:for="{{playerViews}}" wx:key="index"
-      class="player-card seat-{{item.seatClass}} {{item.index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}} {{item.won ? 'won' : ''}}"
+      class="player-card seat-{{item.seatPos}} {{item.index === game.dealerIndex ? 'dealer' : ''}} {{item.riichi ? 'riichi' : ''}} {{item.won ? 'won' : ''}}"
       data-index="{{item.index}}" bindtap="onPlayerTap">
       <view wx:if="{{room}}" class="room-player-avatar">
         <image wx:if="{{item.avatarFileId}}" class="room-player-avatar-image" src="{{item.avatarFileId}}" mode="aspectFill" />

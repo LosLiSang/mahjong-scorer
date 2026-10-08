@@ -11,6 +11,7 @@ const { clone, tileSrc, rankPlayers } = require('../../utils/shared');
 const RoomService = require('../../utils/room-service');
 const SichuanRoom = require('../../utils/sichuan-room');
 const Theme = require('../../utils/theme');
+const TableView = require('../../utils/table-view');
 
 const ENTRY_TYPE_LABELS = { win: '胡牌', gang: '杠分', penalty: '罚分', manual: '转分', custom: '转分' };
 
@@ -59,7 +60,7 @@ Page({
 
   data: {
     seats: SEATS,
-    seatClasses: ['dong', 'nan', 'xi', 'bei'],
+    seatPositions: TableView.seatPositions(4),
     game: createSichuanGame(['玩家一', '玩家二', '玩家三', '玩家四']),
     // Win modal (胡牌)
     showWin: false,
@@ -235,6 +236,12 @@ Page({
       ranks, lastAmount, lastDetail, stateText, centerMain,
       rulesModeName: sichuanPlayModeName(rules.mode)
     });
+  },
+
+  // 联机且已入座时，记分弹窗主体默认选自己；本地模式仍为东家
+  mySubject() {
+    const room = this.data.room;
+    return TableView.defaultSubject(room && room.mySeat, 4, 0);
   },
 
   // ─── Realtime room ───────────────────────────────────
@@ -500,6 +507,7 @@ Page({
     this.updateRoomWritable({
       room,
       game: withRules(room.game),
+      seatPositions: TableView.seatPositions(4, room.mySeat),
       roomSeatViews,
       roomAvatarFileId,
       roomActivityViews,
@@ -529,6 +537,7 @@ Page({
       lastSeenRoomActionId: '',
       roomActivityViews: [],
       roomSeatViews: [],
+      seatPositions: TableView.seatPositions(4),
       moveSeatChoosing: false,
       moveSeatTarget: -1
     });
@@ -688,7 +697,7 @@ Page({
     const rules = normalizeSichuanRules(this.data.game.rules);
     this.setData({
       showWin: true,
-      winReceiver: 0,
+      winReceiver: this.mySubject(),
       winPayers: [false, false, false, false],
       winPayerCount: 0,
       winFanIds: ['pinghu'],
@@ -815,7 +824,8 @@ Page({
 
   openGang() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
-    this.setData({ showGang: true, gangReceiver: 0, gangKind: 'ming', gangDiscarder: 1 });
+    const gangReceiver = this.mySubject();
+    this.setData({ showGang: true, gangReceiver, gangKind: 'ming', gangDiscarder: firstOther(gangReceiver) });
     this.previewGang();
   },
 
@@ -906,8 +916,9 @@ Page({
 
   openPenalty() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
-    const penaltyPayer = 0;
-    const penaltyReceivers = [false, true, true, true];
+    const penaltyPayer = this.mySubject();
+    const penaltyReceivers = [true, true, true, true];
+    penaltyReceivers[penaltyPayer] = false;
     this.setData({
       showPenalty: true,
       penaltyPayer,

@@ -4,6 +4,7 @@ const Logic = require('../../utils/mahjong-logic');
 const Game = require('../../utils/game-engine');
 const RoomService = require('../../utils/room-service');
 const Theme = require('../../utils/theme');
+const TableView = require('../../utils/table-view');
 
 const LOCAL_STORAGE_KEY = 'mj_game_v2';
 const ACTIVE_ROOM_KEY = 'mj_active_room_v1';
@@ -35,8 +36,8 @@ const CONDITION_DEFS = [
 const FU_OPTIONS = [20,25,30,40,50,60,70,80,90,100,110];
 const HAN_OPTIONS = Array.from({ length: 13 }, (_, i) => ({ value: i + 1, label: `${i + 1}翻` }));
 
-function buildPlayerViews(game, roomSeats) {
-  const classMap = { '东': 'dong', '南': 'nan', '西': 'xi', '北': 'bei' };
+function buildPlayerViews(game, roomSeats, mySeat) {
+  const positions = TableView.seatPositions(game.players.length, mySeat);
   const ranks = Shared.rankPlayers(game.players.map(player => player.points));
   const winners = Game.handWinnersOf(game);
   return game.players.map((player, index) => {
@@ -46,7 +47,7 @@ function buildPlayerViews(game, roomSeats) {
     return Object.assign({}, player, {
       index,
       seat,
-      seatClass: classMap[seat],
+      seatPos: positions[index],
       rank: ranks[index],
       won: winners.includes(index),
       avatarFileId: roomSeat && roomSeat.avatarFileId || '',
@@ -76,8 +77,12 @@ function ruleViewOf(game) {
   };
 }
 
-function defaultWin(game) {
-  const winnerIdx = nextActive(game, game.dealerIndex, -1);
+function defaultWin(game, mySeat) {
+  const fallback = nextActive(game, game.dealerIndex, -1);
+  const winnerIdx = TableView.defaultSubject(
+    mySeat, game.playerCount || 4, fallback,
+    idx => !Game.handWinnersOf(game).includes(idx)
+  );
   const count = game.playerCount || 4;
   return {
     winnerIdx, loserIdx: nextActive(game, (winnerIdx + 1) % count, winnerIdx), isTsumo: false,
@@ -228,12 +233,12 @@ Page({
   },
 
   // 一局状态变化后需要刷新的全部派生显示
-  gameView(game, roomSeats) {
+  gameView(game, room) {
     Game.ensureRules(game);
     const rn = Game.roundNames(game);
     return Object.assign({
       game,
-      playerViews: buildPlayerViews(game, roomSeats),
+      playerViews: buildPlayerViews(game, room && room.seats, room && room.mySeat),
       roundName: rn[game.roundIndex] || `第${game.roundIndex + 1}局`,
       roundWind: roundWindOf(game)
     }, ruleViewOf(game));
@@ -498,7 +503,7 @@ Page({
     if (roomAvatarFileId) {
       try { wx.setStorageSync(ROOM_AVATAR_KEY, roomAvatarFileId); } catch (e) {}
     }
-    this.updateRoomWritable(Object.assign(this.gameView(room.game, room.seats), {
+    this.updateRoomWritable(Object.assign(this.gameView(room.game, room), {
       room,
       roomAvatarFileId,
       undoStack: [],
@@ -804,7 +809,7 @@ Page({
   openWin() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
     const g = this.data.game;
-    const win = defaultWin(g);
+    const win = defaultWin(g, this.data.room && this.data.room.mySeat);
     this.setData({
       showWin: true, winStep: 1, win, hand: [], handHistory: [],
       analysisStage: 0, analysisMessage: '', analysisResult: null,

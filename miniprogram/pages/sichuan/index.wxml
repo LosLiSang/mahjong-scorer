@@ -39,7 +39,7 @@
     <view
       wx:for="{{game.players}}"
       wx:key="index"
-      class="player-card seat-{{seatClasses[index]}} sichuan-player"
+      class="player-card seat-{{seatPositions[index]}} sichuan-player"
       data-index="{{index}}"
       bindtap="openPlayerSetup"
     >
