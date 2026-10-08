@@ -28,23 +28,6 @@
     <view class="field-hint">{{roomAvailable ? '显示各模式最近进入的房间，可在对应计分页管理。' : '联机暂不可用，本地计分不受影响。'}}</view>
   </view>
 
-  <!-- 拍照识牌模型 -->
-  <view class="settings-card">
-    <view class="settings-title">拍照识牌模型</view>
-    <view class="settings-desc">默认使用云端配置的模型。也可填写任意 OpenAI 兼容的多模态接口；配置只保存在本机，识牌时经云函数转发。</view>
-    <view class="kv-row"><text class="kv-key">当前</text><text class="kv-value">{{modelCustom ? '自定义：' + modelName : '云端默认'}}</text></view>
-    <view class="field-label">Base URL</view>
-    <serif-input ext-class="setup-name-input serif-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" />
-    <view class="field-label">模型名</view>
-    <serif-input ext-class="setup-name-input serif-input" value="{{modelName}}" bindinput="onModelNameInput" maxlength="80" placeholder="如 qwen-vl-max" />
-    <view class="field-label">API Key</view>
-    <serif-input ext-class="setup-name-input serif-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" />
-    <view class="btn-row model-actions">
-      <button class="btn btn-small" bindtap="saveModel">保存</button>
-      <button class="btn btn-secondary btn-small" bindtap="resetModel">恢复默认</button>
-    </view>
-  </view>
-
   <!-- 关于 -->
   <view class="settings-card">
     <view class="settings-title">关于</view>
@@ -76,6 +59,25 @@
         bindtap="pickBackground"
       >{{item.name}}</view>
     </view>
+  </view>
+
+  <!-- 拍照识牌模型：默认折叠为一行 -->
+  <view class="settings-card">
+    <view class="fold-head" bindtap="toggleModelPanel">
+      <text class="settings-title">拍照识牌模型</text>
+      <text class="fold-value">{{modelCustom ? modelName : '云端默认'}}</text>
+      <text class="fold-arrow {{modelPanelOpen ? 'open' : ''}}">›</text>
+    </view>
+    <block wx:if="{{modelPanelOpen}}">
+      <view class="settings-desc">可改用任意 OpenAI 兼容的多模态接口，仅保存在本机。</view>
+      <view class="inline-field"><text class="inline-label">地址</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" /></view>
+      <view class="inline-field"><text class="inline-label">模型</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelName}}" bindinput="onModelNameInput" maxlength="80" placeholder="qwen-vl-max" /></view>
+      <view class="inline-field"><text class="inline-label">Key</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" /></view>
+      <view class="btn-row model-actions">
+        <button class="btn btn-secondary btn-small" bindtap="resetModel">恢复默认</button>
+        <button class="btn btn-small" bindtap="saveModel">保存</button>
+      </view>
+    </block>
   </view>
 
   <view class="footer-spacer"></view>

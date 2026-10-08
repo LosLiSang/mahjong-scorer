@@ -29,7 +29,8 @@ Page({
     modelBaseUrl: '',
     modelName: '',
     modelApiKey: '',
-    modelCustom: false
+    modelCustom: false,
+    modelPanelOpen: false
   },
 
   onLoad() {
@@ -99,6 +100,8 @@ Page({
     }
   },
 
+  toggleModelPanel() { this.setData({ modelPanelOpen: !this.data.modelPanelOpen }); },
+
   onModelBaseUrlInput(e) { this.setData({ modelBaseUrl: e.detail.value }); },
   onModelNameInput(e) { this.setData({ modelName: e.detail.value }); },
   onModelApiKeyInput(e) { this.setData({ modelApiKey: e.detail.value }); },
@@ -110,7 +113,7 @@ Page({
       apiKey: this.data.modelApiKey
     });
     if (!result.ok) return wx.showToast({ title: result.message, icon: 'none' });
-    this.setData({ modelCustom: !!result.config });
+    this.setData({ modelCustom: !!result.config, modelPanelOpen: false });
     wx.showToast({ title: result.config ? '已使用自定义模型' : '已恢复默认模型', icon: 'success' });
   },
 
