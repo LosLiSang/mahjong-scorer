@@ -8,3 +8,4 @@ project.private.config.json
 
 # 微信小程序 AppID / 云开发环境配置属个人标识，不入库（请本地填写）
 project.config.json
+cloudfunctions/tile-recognizer/worker.config.json

@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mahjong-tile-worker",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-08",
+  "workers_dev": true,
+  // workers.dev 在腾讯云函数中不可达（实测连接被重置 / 超时），绑定自有域名供云函数调用
+  "routes": [
+    { "pattern": "mahjong-tile.lisang.top", "custom_domain": true }
+  ],
+  // 默认用 Cloudflare Workers AI，无需模型 Key
+  "ai": { "binding": "AI" },
+  "vars": {
+    "WORKERS_AI_MODEL": "@cf/qwen/qwen3.8-27b",
+    // 仅当设置了 Secret MODEL_API_KEY 时才改走下面的外部接口
+    "MODEL_BASE_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "MODEL_NAME": "qwen-vl-max"
+  },
+  // WORKER_TOKEN（必填）与 MODEL_API_KEY（可选）用 `wrangler secret put` 设置，不写在这里
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  }
+}

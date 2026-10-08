@@ -17,3 +17,24 @@
 .swatch { padding: 12rpx 20rpx; border-radius: 12rpx; border: 2rpx solid #e8e5d8; color: #fff; font-size: 22rpx; }
 .swatch.active { box-shadow: 0 0 0 4rpx rgba(61,57,41,.25); border-color: #3d3929; }
 .swatch-bg { color: #3d3929; }
+.inline-field { display: flex; align-items: center; gap: 16rpx; margin-top: 14rpx; }
+.inline-label { flex-shrink: 0; width: 64rpx; color: #8a8470; font-size: 24rpx; }
+.inline-input { flex: 1; min-width: 0; }
+.model-actions { margin-top: 18rpx; }
+.settings-tabs { position: sticky; top: 0; z-index: 10; display: flex; gap: 6rpx; margin: 0 24rpx; padding: 6rpx; transform: translateY(16rpx); background: #ebe8de; border-radius: 999rpx; box-shadow: 0 0 0 16rpx var(--bg, #f5f4ee); }
+.settings-tab { flex: 1; padding: 14rpx 0; border-radius: 999rpx; color: #8a8470; font-size: 26rpx; text-align: center; transition: background-color .2s ease, color .2s ease; }
+.settings-tab.active { background: var(--accent, #c96442); color: #fff; font-weight: 600; }
+.settings-body { padding-top: 40rpx; min-height: auto; }
+.inline-btn { flex-shrink: 0; width: auto !important; margin: 0 !important; padding: 0 22rpx !important; }
+.model-list-box { margin-top: 14rpx; padding: 14rpx; background: #f7f5ee; border-radius: 14rpx; }
+.model-list-head { display: flex; justify-content: space-between; color: #8a8470; font-size: 21rpx; }
+.model-list-close { color: var(--accent, #c96442); }
+.model-list { max-height: 320rpx; margin-top: 10rpx; }
+.model-chip { display: inline-block; margin: 0 10rpx 10rpx 0; padding: 8rpx 16rpx; border: 2rpx solid #e3dfd2; border-radius: 10rpx; background: #fff; color: #3d3929; font-size: 22rpx; word-break: break-all; }
+.model-chip.active { border-color: var(--accent, #c96442); color: var(--accent, #c96442); }
+.model-test { display: flex; flex-direction: column; gap: 4rpx; margin-top: 14rpx; padding: 14rpx 16rpx; border-radius: 14rpx; font-size: 22rpx; }
+.model-test.pass { background: #eef4ea; color: #4f6b3f; }
+.model-test.warn { background: #faf3e2; color: #8a6a2a; }
+.model-test.fail { background: #f8ebe6; color: #9b593f; }
+.model-test-title { font-weight: 600; }
+.model-test-detail { opacity: .85; word-break: break-all; }

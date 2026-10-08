@@ -7,6 +7,67 @@ const TutorialData = require('./miniprogram/utils/tutorial-data');
 const SichuanScore = require('./miniprogram/utils/sichuan-score');
 const SichuanRoom = require('./miniprogram/utils/sichuan-room');
 const TableView = require('./miniprogram/utils/table-view');
+const TileRecognition = require('./miniprogram/utils/tile-recognition');
+
+// 拍照识牌：模型返回 → 校验 → 手牌（#6）
+const H14 = ['1m','2m','3m','4p','5p','6p','7s','8s','9s','2z','2z','5m','5m','5m'];
+[
+  { name: '合法 JSON', input: JSON.stringify({ hand: H14, winTile: '6p', confidence: 0.9 }), ok: true, winTile: '6p', len: 14 },
+  { name: '```json 代码块包裹', input: '结果如下：\n```json\n' + JSON.stringify({ hand: H14, winTile: '6p' }) + '\n```', ok: true, winTile: '6p', len: 14 },
+  { name: '赤五 0p 折算为 5p', input: JSON.stringify({ hand: H14.slice(0, 13).concat('0p'), winTile: '0p' }), ok: true, winTile: '5p', aka: 1 },
+  { name: '大小写/空格容错', input: JSON.stringify({ hand: H14.map(t => ' ' + t.toUpperCase()) }), ok: true, winTile: null, len: 14 },
+  { name: '和牌张不在手牌中 → 留空', input: JSON.stringify({ hand: H14, winTile: '9m' }), ok: true, winTile: null },
+  { name: '代码块内漏了结尾 }（Workers AI 实测）', input: '```json\n' + JSON.stringify({ hand: H14, winTile: '6p', confidence: 0.9 }).slice(0, -1) + '\n```', ok: true, winTile: '6p', len: 14 },
+  { name: '非 JSON', input: '看不清', ok: false, msg: /格式/ },
+  { name: '非法牌 ID', input: JSON.stringify({ hand: H14.slice(0, 13).concat('8z') }), ok: false, msg: /8z/ },
+  { name: '张数不足', input: JSON.stringify({ hand: H14.slice(0, 13) }), ok: false, msg: /13 张/ },
+  { name: '张数过多', input: JSON.stringify({ hand: H14.concat(['1m','1m','1m','9p','9p']) }), ok: false, msg: /19 张/ },
+  { name: '同种牌超过 4 张', input: JSON.stringify({ hand: H14.slice(0, 9).concat(['5m','5m','5m','5m','5m']) }), ok: false, msg: /5m/ },
+  { name: '低置信度', input: JSON.stringify({ hand: H14, confidence: 0.3 }), ok: false, msg: /30%/ },
+].forEach(c => {
+  const r = TileRecognition.parseRecognition(c.input);
+  assert.equal(r.ok, c.ok, c.name);
+  if (c.ok) {
+    assert.equal(r.winTile, c.winTile, c.name + ' winTile');
+    if (c.len) assert.equal(r.hand.length, c.len, c.name + ' 张数');
+    if (c.aka) assert.equal(r.akaCount, c.aka, c.name + ' 赤五');
+    assert.deepEqual(r.hand, r.hand.slice().sort((a, b) => TileRecognition.VALID_TILES.indexOf(a) - TileRecognition.VALID_TILES.indexOf(b)), c.name + ' 已排序');
+  } else {
+    assert(c.msg.test(r.message), `${c.name}: ${r.message}`);
+  }
+});
+[
+  { input: {}, ok: true, config: null },
+  { input: { baseUrl: 'https://api.x.com/v1/', model: 'm', apiKey: 'k' }, ok: true, config: { baseUrl: 'https://api.x.com/v1', model: 'm', apiKey: 'k' } },
+  { input: { baseUrl: 'http://api.x.com/v1', model: 'm', apiKey: 'k' }, ok: false },
+  { input: { baseUrl: 'https://api.x.com/v1', model: 'm' }, ok: false },
+].forEach(c => {
+  const r = TileRecognition.normalizeModelConfig(c.input);
+  assert.equal(r.ok, c.ok, JSON.stringify(c.input));
+  if (c.ok) assert.deepEqual(r.config, c.config);
+});
+// 获取 / 测试模型前的草稿校验
+[
+  { draft: {}, needModel: true, ok: true, useDefault: true },
+  { draft: { baseUrl: 'https://a/v1', apiKey: 'k' }, needModel: false, ok: true, useDefault: false },
+  { draft: { baseUrl: 'https://a/v1', apiKey: 'k' }, needModel: true, ok: false, msg: /模型名/ },
+  { draft: { model: 'm' }, needModel: false, ok: false, msg: /地址和 Key/ },
+  { draft: { baseUrl: 'http://a', apiKey: 'k' }, needModel: false, ok: false, msg: /https/ },
+].forEach(c => {
+  const r = TileRecognition.checkModelDraft(c.draft, c.needModel);
+  assert.equal(r.ok, c.ok, JSON.stringify(c.draft));
+  if (c.ok) assert.equal(r.useDefault, c.useDefault);
+  else assert(c.msg.test(r.message), r.message);
+});
+[
+  { input: { ok: true, model: 'qwen-vl-max', reply: '红色', seesImage: true, latencyMs: 1234 }, ok: true, title: /可用 · 1\.2s/ },
+  { input: { ok: true, model: 'gpt-3.5', reply: '我看不到图片', seesImage: false, latencyMs: 800 }, ok: true, title: /看不懂图片/ },
+  { input: { ok: false, message: '识牌模型鉴权失败' }, ok: false, title: /测试失败/ },
+].forEach(c => {
+  const r = TileRecognition.describeModelTest(c.input);
+  assert.equal(r.ok, c.ok);
+  assert(c.title.test(r.title), r.title);
+});
 
 // 以自己为视角：真实座位 index → 展示位置（#5）
 [
@@ -34,7 +95,7 @@ global.wx = {
   getStorageSync: () => null,
   setStorageSync: () => {},
   showToast: () => {},
-  showModal: ({ success }) => success({ confirm: true })
+  showModal: ({ success }) => success && success({ confirm: true })
 };
 require('./miniprogram/pages/index/index');
 assert(pageDefinition, '页面应成功注册');
@@ -66,6 +127,19 @@ const result = Logic.evaluateHand({
 assert(result.valid, result.error);
 const payment = Game.calcWinPayments(page.data.game, 0, result.han, result.fu, true, -1, result.basePoint);
 assert.equal(payment.total, 6000, '亲家3番30符自摸应收6000点');
+
+// 拍照识牌（#6）：整体替换手牌、可撤销；识别失败不改动手牌
+page.openWin();
+page.addTile({ currentTarget: { dataset: { id: '1z' } } });
+page.applyRecognizedHand(TileRecognition.parseRecognition(JSON.stringify({ hand: tiles, winTile: '5m', confidence: 0.9 })));
+assert.equal(page.data.hand.length, 14, '识别结果整体替换手牌');
+assert.equal(page.data.win.winTile, '5m', '识别出的和牌张写入 win');
+page.applyRecognizedHand(TileRecognition.parseRecognition('{"hand":["1m"],"confidence":0.9}'));
+assert.equal(page.data.hand.length, 14, '识别失败时不能静默改动手牌');
+page.undoTile();
+assert.deepEqual(page.data.hand, ['1z'], '撤销一步恢复识别前的手牌');
+assert.equal(page.data.win.winTile, null);
+page.closeWin();
 
 page.openWin();
 // 和牌结算按 基本→牌型→宝牌 分步填写，且切换步骤不丢失中间数据
@@ -406,7 +480,7 @@ global.wx = {
   setStorageSync: (key, value) => { sichuanStore[key] = JSON.parse(JSON.stringify(value)); },
   removeStorageSync: key => { delete sichuanStore[key]; },
   showToast: () => {},
-  showModal: ({ success }) => success({ confirm: true }),
+  showModal: ({ success }) => success && success({ confirm: true }),
   setClipboardData: () => {},
   navigateTo: () => {},
 };

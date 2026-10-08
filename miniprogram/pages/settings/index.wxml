@@ -1,70 +1,137 @@
 <!-- pages/settings/index.wxml — 设置 -->
 
 <view class="page-root" style="{{themeStyle}}">
-  <view class="container">
-  <!-- 玩家资料 -->
-  <view class="settings-card">
-    <view class="settings-title">玩家资料</view>
-    <view class="settings-desc">昵称和头像在加入联机房间后展示给同房间的其他玩家</view>
-    <view class="profile-row">
-      <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseAvatar" loading="{{avatarUploading}}" disabled="{{avatarUploading}}">
-        <image wx:if="{{avatarFileId}}" class="room-avatar-picker-image" src="{{avatarFileId}}" mode="aspectFill" />
-        <text wx:else class="room-avatar-picker-placeholder">选头像</text>
-      </button>
-      <view class="profile-fields">
-        <view class="field-label">微信昵称</view>
-        <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{nickname}}" bindinput="onNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
-        <view class="field-hint">{{nickname ? '已保存，加入房间时使用' : '填写后加入房间时自动带上'}}</view>
+  <!-- 顶部 Tab：吸顶，切换不同设置分组 -->
+  <view class="settings-tabs">
+    <view
+      wx:for="{{settingsTabs}}"
+      wx:key="id"
+      class="settings-tab {{activeTab === item.id ? 'active' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="switchTab"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="container settings-body">
+  <!-- ═══ 玩家 ═══ -->
+  <block wx:if="{{activeTab === 'player'}}">
+    <view class="settings-card">
+      <view class="settings-title">玩家资料</view>
+      <view class="settings-desc">昵称和头像在加入联机房间后展示给同房间的其他玩家</view>
+      <view class="profile-row">
+        <button class="room-avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseAvatar" loading="{{avatarUploading}}" disabled="{{avatarUploading}}">
+          <image wx:if="{{avatarFileId}}" class="room-avatar-picker-image" src="{{avatarFileId}}" mode="aspectFill" />
+          <text wx:else class="room-avatar-picker-placeholder">选头像</text>
+        </button>
+        <view class="profile-fields">
+          <view class="field-label">微信昵称</view>
+          <serif-input ext-class="setup-name-input serif-input" type="nickname" value="{{nickname}}" bindinput="onNicknameInput" maxlength="12" placeholder="选择或填写昵称" />
+          <view class="field-hint">{{nickname ? '已保存，加入房间时使用' : '填写后加入房间时自动带上'}}</view>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 联机房间 -->
-  <view class="settings-card">
-    <view class="settings-title">联机房间</view>
-    <view class="kv-row"><text class="kv-key">联机功能</text><text class="kv-value {{roomAvailable ? '' : 'warn'}}">{{roomAvailable ? '可用' : '暂不可用'}}</text></view>
-    <view class="kv-row"><text class="kv-key">日麻房间</text><text class="kv-value">{{activeRiichiRoom || '无'}}</text></view>
-    <view class="kv-row"><text class="kv-key">川麻房间</text><text class="kv-value">{{activeSichuanRoom || '无'}}</text></view>
-    <view class="field-hint">{{roomAvailable ? '显示各模式最近进入的房间，可在对应计分页管理。' : '联机暂不可用，本地计分不受影响。'}}</view>
-  </view>
-
-  <!-- 关于 -->
-  <view class="settings-card">
-    <view class="settings-title">关于</view>
-    <view class="kv-row"><text class="kv-key">联系与合作</text><text class="kv-value link" bindtap="copyContact">lisangcode@outlook.com</text></view>
-  </view>
-
-  <!-- 外观 -->
-  <view class="settings-card">
-    <view class="settings-title">外观</view>
-    <view class="field-label">强调色</view>
-    <view class="swatch-row">
-      <view
-        wx:for="{{themeAccents}}"
-        wx:key="id"
-        class="swatch {{themeAccentId === item.id ? 'active' : ''}}"
-        style="background: {{item.color}};"
-        data-id="{{item.id}}"
-        bindtap="pickAccent"
-      >{{item.name}}</view>
+    <view class="settings-card">
+      <view class="settings-title">联机房间</view>
+      <view class="kv-row"><text class="kv-key">联机功能</text><text class="kv-value {{roomAvailable ? '' : 'warn'}}">{{roomAvailable ? '可用' : '暂不可用'}}</text></view>
+      <view class="kv-row"><text class="kv-key">日麻房间</text><text class="kv-value">{{activeRiichiRoom || '无'}}</text></view>
+      <view class="kv-row"><text class="kv-key">川麻房间</text><text class="kv-value">{{activeSichuanRoom || '无'}}</text></view>
+      <view class="field-hint">{{roomAvailable ? '显示各模式最近进入的房间，可在对应计分页管理。' : '联机暂不可用，本地计分不受影响。'}}</view>
     </view>
-    <view class="field-label">背景</view>
-    <view class="swatch-row">
-      <view
-        wx:for="{{themeBgs}}"
-        wx:key="id"
-        class="swatch swatch-bg {{themeBgId === item.id ? 'active' : ''}}"
-        style="background: {{item.color}};"
-        data-id="{{item.id}}"
-        bindtap="pickBackground"
-      >{{item.name}}</view>
+  </block>
+
+  <!-- ═══ 外观 ═══ -->
+  <block wx:if="{{activeTab === 'theme'}}">
+    <view class="settings-card">
+      <view class="settings-title">强调色</view>
+      <view class="swatch-row">
+        <view
+          wx:for="{{themeAccents}}"
+          wx:key="id"
+          class="swatch {{themeAccentId === item.id ? 'active' : ''}}"
+          style="background: {{item.color}};"
+          data-id="{{item.id}}"
+          bindtap="pickAccent"
+        >{{item.name}}</view>
+      </view>
     </view>
-  </view>
+    <view class="settings-card">
+      <view class="settings-title">背景</view>
+      <view class="swatch-row">
+        <view
+          wx:for="{{themeBgs}}"
+          wx:key="id"
+          class="swatch swatch-bg {{themeBgId === item.id ? 'active' : ''}}"
+          style="background: {{item.color}};"
+          data-id="{{item.id}}"
+          bindtap="pickBackground"
+        >{{item.name}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ═══ 识牌 ═══ -->
+  <block wx:if="{{activeTab === 'model'}}">
+    <view class="settings-card">
+      <view class="settings-title">拍照识牌模型</view>
+      <view class="kv-row"><text class="kv-key">当前使用</text><text class="kv-value">{{modelCustom ? '自定义 · ' + modelName + '（本机直连）' : '云端默认'}}</text></view>
+      <view class="field-hint">日麻和牌结算中「📷 拍照识牌」使用的多模态模型。留空即用云端默认。</view>
+    </view>
+    <view class="settings-card">
+      <view class="settings-title">自定义模型</view>
+      <view class="settings-desc">任意 OpenAI 兼容的多模态接口。配置只存本机，照片和 Key 直接从手机发给该接口，不经过云端。</view>
+      <view class="field-hint">正式版需该地址已加入小程序「request 合法域名」，否则会被拦截。</view>
+      <view class="inline-field"><text class="inline-label">地址</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" /></view>
+      <view class="inline-field"><text class="inline-label">Key</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" /></view>
+      <view class="inline-field">
+        <text class="inline-label">模型</text>
+        <serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelName}}" bindinput="onModelNameInput" maxlength="80" placeholder="qwen-vl-max" />
+        <button class="btn btn-secondary btn-small inline-btn" bindtap="fetchModels" loading="{{modelListLoading}}" disabled="{{modelListLoading}}">获取</button>
+      </view>
+
+      <!-- 获取到的模型：点选填入；视觉类排在前面 -->
+      <view wx:if="{{modelList.length}}" class="model-list-box">
+        <view class="model-list-head">
+          <text>共 {{modelList.length}} 个，点选填入</text>
+          <text class="model-list-close" bindtap="closeModelList">收起</text>
+        </view>
+        <scroll-view scroll-y class="model-list">
+          <view
+            wx:for="{{modelList}}"
+            wx:key="*this"
+            class="model-chip {{modelName === item ? 'active' : ''}}"
+            data-id="{{item}}"
+            bindtap="pickModel"
+          >{{item}}</view>
+        </scroll-view>
+      </view>
+
+      <!-- 测试结果 -->
+      <view wx:if="{{modelTest}}" class="model-test {{modelTest.ok ? (modelTest.seesImage ? 'pass' : 'warn') : 'fail'}}">
+        <text class="model-test-title">{{modelTest.title}}</text>
+        <text class="model-test-detail">{{modelTest.detail}}</text>
+      </view>
+
+      <view class="btn-row model-actions">
+        <button class="btn btn-secondary btn-small" bindtap="resetModel">恢复默认</button>
+        <button class="btn btn-secondary btn-small" bindtap="testModel" loading="{{modelTesting}}" disabled="{{modelTesting}}">测试</button>
+        <button class="btn btn-small" bindtap="saveModel">保存</button>
+      </view>
+    </view>
+  </block>
+
+  <!-- ═══ 关于 ═══ -->
+  <block wx:if="{{activeTab === 'about'}}">
+    <view class="settings-card">
+      <view class="settings-title">关于</view>
+      <view class="kv-row"><text class="kv-key">联系与合作</text><text class="kv-value link" bindtap="copyContact">lisangcode@outlook.com</text></view>
+    </view>
+    <view class="rights-banner" bindtap="copyContact">
+      <text class="rights-owner">© 2026 Lisang</text>
+      <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
+    </view>
+  </block>
 
   <view class="footer-spacer"></view>
-  <view class="rights-banner" bindtap="copyContact">
-    <text class="rights-owner">© 2026 Lisang</text>
-    <text class="rights-contact">权利与合作联系 · lisangcode@outlook.com</text>
   </view>
-</view>
 </view>
