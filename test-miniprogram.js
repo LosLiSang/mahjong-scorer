@@ -6,6 +6,27 @@ const YakuData = require('./miniprogram/utils/yaku-data');
 const TutorialData = require('./miniprogram/utils/tutorial-data');
 const SichuanScore = require('./miniprogram/utils/sichuan-score');
 const SichuanRoom = require('./miniprogram/utils/sichuan-room');
+const TableView = require('./miniprogram/utils/table-view');
+
+// 以自己为视角：真实座位 index → 展示位置（#5）
+[
+  { count: 4, me: undefined, want: ['bottom', 'right', 'top', 'left'] },
+  { count: 4, me: 0, want: ['bottom', 'right', 'top', 'left'] },
+  { count: 4, me: 1, want: ['left', 'bottom', 'right', 'top'] },
+  { count: 4, me: 2, want: ['top', 'left', 'bottom', 'right'] },
+  { count: 4, me: 3, want: ['right', 'top', 'left', 'bottom'] },
+  { count: 4, me: -1, want: ['bottom', 'right', 'top', 'left'] },
+  { count: 3, me: undefined, want: ['bottom', 'right', 'left'] },
+  { count: 3, me: 1, want: ['left', 'bottom', 'right'] },
+  { count: 3, me: 2, want: ['right', 'left', 'bottom'] },
+  { count: 3, me: 3, want: ['bottom', 'right', 'left'] },
+].forEach(c => assert.deepEqual(TableView.seatPositions(c.count, c.me), c.want, `seatPositions(${c.count}, ${c.me})`));
+[
+  { me: 2, fallback: 0, want: 2 },
+  { me: undefined, fallback: 1, want: 1 },
+  { me: -1, fallback: 0, want: 0 },
+  { me: 2, fallback: 0, selectable: i => i !== 2, want: 0 },
+].forEach(c => assert.equal(TableView.defaultSubject(c.me, 4, c.fallback, c.selectable), c.want, `defaultSubject(${c.me})`));
 
 let pageDefinition = null;
 global.Page = (definition) => { pageDefinition = definition; };
@@ -97,7 +118,7 @@ const sichuanBoardMarkup = fs.readFileSync('./miniprogram/pages/sichuan/index.wx
 assert.equal((sichuanBoardMarkup.match(/class="table-corner corner-/g) || []).length, 4, '川麻牌桌四角应各有一个功能状态');
 assert(/\.table-corner\s*\{/.test(commonStyle), '共享牌桌样式应定义极简四角状态组件');
 assert(/\.table-center\s*\{[^}]*top\s*:\s*50%[^}]*width\s*:\s*182rpx[^}]*translate\(-50%,\s*-50%\)/s.test(commonStyle), '共享中心状态框应固定宽度并做正中定位');
-assert(/\.player-card\.seat-dong\s*\{[^}]*bottom\s*:\s*18rpx[^}]*translateX\(-50%\)/s.test(commonStyle), '玩家卡片应锚定牌桌四边而非悬在中央周围');
+assert(/\.player-card\.seat-bottom\s*\{[^}]*bottom\s*:\s*18rpx[^}]*translateX\(-50%\)/s.test(commonStyle), '玩家卡片应锚定牌桌四边而非悬在中央周围');
 assert(/class="room-management-row"[\s\S]*bindtap="leaveRoom"[\s\S]*<\/view>\s*<button class="btn room-panel-dismiss" bindtap="closeRoomPanel">关闭<\/button>/.test(pageMarkup), '房间管理操作应分组排列，关闭按钮应独占一行');
 assert(/showLesson[^>]*class="[^"]*tab-safe-overlay/.test(tutorialMarkup), '教学课程弹窗应使用 tabBar 安全遮罩');
 assert(
@@ -147,7 +168,7 @@ const sichuanPageScript = fs.readFileSync('./miniprogram/pages/sichuan/index.js'
 assert(/gameType:\s*'sichuan'/.test(sichuanPageScript), '创建川麻房间时应声明 Sichuan gameType');
 assert(/RoomService\.create\([\s\S]*?SichuanRoom\.requireSichuanRoom\(room\)/.test(sichuanPageScript), '创建川麻房间后应立即验证云函数协议');
 assert(/class="table-board sichuan-board">/.test(sichuanMarkup), '川麻牌桌背景本身不应打开设置');
-assert(/class="player-card seat-\{\{seatClasses\[index\]\}\} sichuan-player"[\s\S]*bindtap="openPlayerSetup"/.test(sichuanMarkup), '只有四个玩家卡片应作为设置入口');
+assert(/class="player-card seat-\{\{seatPositions\[index\]\}\} sichuan-player"[\s\S]*bindtap="openPlayerSetup"/.test(sichuanMarkup), '只有四个玩家卡片应作为设置入口');
 assert(!/bindtap="openSetup"/.test(sichuanMarkup), '川麻页面不应保留整张牌桌或独立设置按钮入口');
 assert(/setupPlayerIndex[\s\S]*setupName[\s\S]*setupMissingSuit/.test(sichuanMarkup), '设置弹窗应只编辑当前点击的单个玩家');
 assert(/class="btn-row sichuan-score-actions"[\s\S]*openWin[\s\S]*openGang[\s\S]*openPenalty[\s\S]*<\/view>/.test(sichuanMarkup), '胡牌、杠分、罚分三个主按钮应在同一行');
@@ -525,6 +546,22 @@ assert.equal(sichuanPage.data.game.players[0].name, '甲', '未换座前座位�
 sichuanPage.setData({ moveSeatTarget: -1 });
 sichuanPage.confirmMoveSeat();
 assert.equal(sichuanPage.data.moveSeatChoosing, true, '未选目标确认时应留在换座模式');
+assert.equal(sichuanPage.data.seatPositions[0], 'bottom', '东家视角：自己在下');
+// 换到南家后：视角旋转，记分主体默认选自己（#5）
+sichuanPage.applyRoom(Object.assign({}, moveView, { version: 4, mySeat: 1 }), false);
+sichuanPage.updateRoomWritable({ roomConnected: true, roomOnline: true, roomBusy: false });
+assert.deepEqual(sichuanPage.data.seatPositions, ['left', 'bottom', 'right', 'top'], '南家视角：下南、右西、上北、左东');
+sichuanPage.openWin();
+assert.equal(sichuanPage.data.winReceiver, 1, '胡牌收分者默认选自己');
+sichuanPage.closeWin();
+sichuanPage.openGang();
+assert.equal(sichuanPage.data.gangReceiver, 1, '杠牌者默认选自己');
+assert.notEqual(sichuanPage.data.gangDiscarder, 1, '放杠者不能是自己');
+sichuanPage.closeGang();
+sichuanPage.openPenalty();
+assert.equal(sichuanPage.data.penaltyPayer, 1, '罚分主体默认选自己');
+assert.deepEqual(sichuanPage.data.penaltyReceivers, [true, false, true, true]);
+sichuanPage.closePenalty();
 
 // 日麻页面换座接线：成员移到空座，目标仅限空座
 const riichiMoveView = {
@@ -545,6 +582,15 @@ page.selectMoveSeatTarget({ currentTarget: { dataset: { index: 2 } } });
 assert.equal(page.data.moveSeatTarget, -1, '日麻不能选中已坐人的座位');
 page.selectMoveSeatTarget({ currentTarget: { dataset: { index: 1 } } });
 assert.equal(page.data.moveSeatTarget, 1, '日麻可选中空座作为目标');
+// 日麻以自己为视角（#5）：西家进房→自己在下，和牌者默认选自己
+page.applyRoom(Object.assign({}, riichiMoveView, { mySeat: 2 }), false);
+page.updateRoomWritable({ roomConnected: true, roomOnline: true, roomBusy: false });
+assert.deepEqual(page.data.playerViews.map(v => v.seatPos), ['top', 'left', 'bottom', 'right'], '西家视角：下西、右北、上东、左南');
+assert.equal(page.data.playerViews[2].seat, '西', '座位标签仍显示真实风位');
+page.openWin();
+assert.equal(page.data.win.winnerIdx, 2, '和牌者默认选自己');
+assert.notEqual(page.data.win.loserIdx, 2);
+page.closeWin();
 
 console.log('mini-program tests passed');
 
