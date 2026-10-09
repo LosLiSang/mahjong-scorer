@@ -61,6 +61,8 @@
 /* ── 玩家卡片 ── */
 .sichuan-player { border-color: #d8d1c3; }
 .sichuan-player .name { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* 右上角留给定缺标记，「已胡」放左下角，与右下名次对称 */
+.player-card .sichuan-won-mark { top: auto; right: auto; left: 9rpx; bottom: 6rpx; }
 .sichuan-points { font-size: 34rpx; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ── 定缺标记：收进玩家卡片右上角，避免压住牌桌线和卡片边框 ── */
