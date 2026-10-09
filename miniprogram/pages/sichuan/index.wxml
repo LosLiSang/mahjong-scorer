@@ -311,10 +311,10 @@
       <view
         wx:for="{{game.players}}"
         wx:key="index"
-        class="seg-btn {{gangReceiver === index ? 'active' : ''}}"
+        class="seg-btn {{gangReceiver === index ? 'active' : ''}} {{gangOut[index] ? 'disabled' : ''}}"
         data-index="{{index}}"
         bindtap="selectGangReceiver"
-      >{{seats[index]}} · {{item.name}}</view>
+      >{{seats[index]}} · {{item.name}}{{gangOut[index] ? ' 已胡' : ''}}</view>
     </view>
     <view class="label">杠类型</view>
     <view class="seg-group seg-one-line gang-kind-row">
@@ -333,10 +333,10 @@
           wx:for="{{game.players}}"
           wx:key="index"
           wx:if="{{index !== gangReceiver}}"
-          class="seg-btn {{gangDiscarder === index ? 'active' : ''}}"
+          class="seg-btn {{gangDiscarder === index ? 'active' : ''}} {{gangOut[index] ? 'disabled' : ''}}"
           data-index="{{index}}"
           bindtap="selectGangDiscarder"
-        >{{seats[index]}} · {{item.name}}</view>
+        >{{seats[index]}} · {{item.name}}{{gangOut[index] ? ' 已胡' : ''}}</view>
       </view>
     </block>
     <view wx:if="{{gangPreview}}" class="settlement-preview">

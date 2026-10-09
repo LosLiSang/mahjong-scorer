@@ -2,7 +2,7 @@
 const {
   SICHUAN_FAN_TYPES, SICHUAN_PENALTY_TYPES, SICHUAN_PLAY_MODES, SICHUAN_GANG_KINDS,
   SICHUAN_BASE_SCORE_OPTIONS, SICHUAN_FAN_CAP_OPTIONS,
-  calculateSichuanFan, scoreFromFan, calculateGang, findGangKind,
+  calculateSichuanFan, scoreFromFan, calculateGang, findGangKind, sichuanWonPlayers,
   normalizeSichuanRules, sichuanPlayModeName,
   createSichuanGame, createTransferEntry, applySichuanEntry,
   undoSichuanEntry, setSichuanMissingSuit
@@ -30,8 +30,12 @@ function withRules(game) {
   return Object.assign({}, game, { rules: normalizeSichuanRules(game.rules) });
 }
 
-function firstOther(index) {
-  return index === 0 ? 1 : 0;
+// 第一个仍在场、且不是 exclude 的玩家；没有则返回 -1
+function firstActive(exclude, out, count = 4) {
+  for (let i = 0; i < count; i++) {
+    if (i !== exclude && !out.includes(i)) return i;
+  }
+  return -1;
 }
 const BASE_FAN_IDS = new Set(SICHUAN_FAN_TYPES.filter(type => type.group === 'base').map(type => type.id));
 
@@ -86,6 +90,7 @@ Page({
     gangReceiver: 0,
     gangKind: 'ming',
     gangDiscarder: 1,
+    gangOut: [false, false, false, false],
     gangPreview: null,
     // Penalty modal (罚分)
     showPenalty: false,
@@ -824,8 +829,17 @@ Page({
 
   openGang() {
     if (this.data.room && !this.data.roomWritable) return this.roomError(new Error('房间当前不可写入'));
-    const gangReceiver = this.mySubject();
-    this.setData({ showGang: true, gangReceiver, gangKind: 'ming', gangDiscarder: firstOther(gangReceiver) });
+    // 血战到底：已胡玩家离场，不能杠牌收分，也不付杠分
+    const out = sichuanWonPlayers(this.data.game);
+    const subject = this.mySubject();
+    const gangReceiver = out.includes(subject) ? firstActive(-1, out) : subject;
+    this.setData({
+      showGang: true,
+      gangReceiver,
+      gangKind: 'ming',
+      gangDiscarder: firstActive(gangReceiver, out),
+      gangOut: [0, 1, 2, 3].map(i => out.includes(i))
+    });
     this.previewGang();
   },
 
@@ -835,8 +849,9 @@ Page({
 
   selectGangReceiver(e) {
     const gangReceiver = Number(e.currentTarget.dataset.index);
+    if (this.data.gangOut[gangReceiver]) return;
     const patch = { gangReceiver };
-    if (this.data.gangDiscarder === gangReceiver) patch.gangDiscarder = firstOther(gangReceiver);
+    if (this.data.gangDiscarder === gangReceiver) patch.gangDiscarder = firstActive(gangReceiver, sichuanWonPlayers(this.data.game));
     this.setData(patch);
     this.previewGang();
   },
@@ -848,7 +863,7 @@ Page({
 
   selectGangDiscarder(e) {
     const index = Number(e.currentTarget.dataset.index);
-    if (index === this.data.gangReceiver) return;
+    if (index === this.data.gangReceiver || this.data.gangOut[index]) return;
     this.setData({ gangDiscarder: index });
     this.previewGang();
   },
@@ -860,7 +875,8 @@ Page({
       kind: gangKind,
       receiver: gangReceiver,
       discarder: gangDiscarder,
-      baseScore: rules.baseScore
+      baseScore: rules.baseScore,
+      outPlayers: sichuanWonPlayers(game)
     });
     if (!result) return this.setData({ gangPreview: null });
     const kind = findGangKind(gangKind);
@@ -878,7 +894,13 @@ Page({
   async confirmGang() {
     const { game, gangReceiver, gangKind, gangDiscarder } = this.data;
     const rules = normalizeSichuanRules(game.rules);
-    const result = calculateGang({ kind: gangKind, receiver: gangReceiver, discarder: gangDiscarder, baseScore: rules.baseScore });
+    const result = calculateGang({
+      kind: gangKind,
+      receiver: gangReceiver,
+      discarder: gangDiscarder,
+      baseScore: rules.baseScore,
+      outPlayers: sichuanWonPlayers(game)
+    });
     if (!result) {
       wx.showToast({ title: gangKind === 'ming' ? '请选择放杠者' : '请选择杠类型', icon: 'none' });
       return;
