@@ -53,7 +53,7 @@
       <view class="points">{{item.points}}</view>
       <view wx:if="{{item.riichi}}" class="riichi-mark">立直</view>
       <view wx:if="{{item.won}}" class="won-mark">已和</view>
-      <view class="rank-mark {{item.rank === 1 ? 'rank-first' : ''}}">{{item.rank}}位</view>
+      <view class="rank-mark rank-{{item.rank}}">{{item.rank}}位</view>
     </view>
   </view>
 
