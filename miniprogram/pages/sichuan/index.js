@@ -139,6 +139,7 @@ Page({
     moveSeatTarget: -1,
     themeStyle: '',
     ranks: [1, 2, 3, 4],
+    wonFlags: [false, false, false, false],
     lastAmount: '',
     lastDetail: '暂无记录',
     stateText: '待开局',
@@ -231,6 +232,8 @@ Page({
     }
     const rules = normalizeSichuanRules(game.rules);
     const huCount = history.filter(entry => entry.type === 'win').length;
+    const won = sichuanWonPlayers(game);
+    const wonFlags = game.players.map((_, index) => won.includes(index));
     // 血战到底：胡 3 家终局；血流成河：可以一直胡，不自动终局
     const ended = rules.mode === 'xuezhan' && huCount >= 3;
     const stateText = history.length === 0
@@ -238,7 +241,7 @@ Page({
       : (ended ? '终局' : (rules.mode === 'xueliu' ? `已胡 ${huCount} 次` : `已胡 ${huCount} 家`));
     const centerMain = history.length === 0 ? '待开局' : (ended ? '终局' : '进行中');
     this.setData({
-      ranks, lastAmount, lastDetail, stateText, centerMain,
+      ranks, wonFlags, lastAmount, lastDetail, stateText, centerMain,
       rulesModeName: sichuanPlayModeName(rules.mode)
     });
   },

@@ -39,7 +39,7 @@
     <view
       wx:for="{{game.players}}"
       wx:key="index"
-      class="player-card seat-{{seatPositions[index]}} sichuan-player"
+      class="player-card seat-{{seatPositions[index]}} sichuan-player {{wonFlags[index] ? 'won' : ''}}"
       data-index="{{index}}"
       bindtap="openPlayerSetup"
     >
@@ -54,6 +54,7 @@
         <text class="missing-prefix">缺</text>
         <text class="missing-suit">{{item.missingSuit === 'm' ? '万' : item.missingSuit === 'p' ? '筒' : '索'}}</text>
       </view>
+      <view wx:if="{{wonFlags[index]}}" class="won-mark sichuan-won-mark">已胡</view>
       <view class="rank-mark {{ranks[index] === 1 ? 'rank-first' : ''}}">{{ranks[index]}}位</view>
     </view>
   </view>

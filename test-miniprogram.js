@@ -168,7 +168,7 @@ const sichuanPageScript = fs.readFileSync('./miniprogram/pages/sichuan/index.js'
 assert(/gameType:\s*'sichuan'/.test(sichuanPageScript), '创建川麻房间时应声明 Sichuan gameType');
 assert(/RoomService\.create\([\s\S]*?SichuanRoom\.requireSichuanRoom\(room\)/.test(sichuanPageScript), '创建川麻房间后应立即验证云函数协议');
 assert(/class="table-board sichuan-board">/.test(sichuanMarkup), '川麻牌桌背景本身不应打开设置');
-assert(/class="player-card seat-\{\{seatPositions\[index\]\}\} sichuan-player"[\s\S]*bindtap="openPlayerSetup"/.test(sichuanMarkup), '只有四个玩家卡片应作为设置入口');
+assert(/class="player-card seat-\{\{seatPositions\[index\]\}\} sichuan-player[^"]*"[\s\S]*bindtap="openPlayerSetup"/.test(sichuanMarkup), '只有四个玩家卡片应作为设置入口');
 assert(!/bindtap="openSetup"/.test(sichuanMarkup), '川麻页面不应保留整张牌桌或独立设置按钮入口');
 assert(/setupPlayerIndex[\s\S]*setupName[\s\S]*setupMissingSuit/.test(sichuanMarkup), '设置弹窗应只编辑当前点击的单个玩家');
 assert(/class="btn-row sichuan-score-actions"[\s\S]*openWin[\s\S]*openGang[\s\S]*openPenalty[\s\S]*<\/view>/.test(sichuanMarkup), '胡牌、杠分、罚分三个主按钮应在同一行');
@@ -529,6 +529,7 @@ assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [0, 0, 0, 0]);
   const xz = SichuanScore.createSichuanGame(undefined, 0, { mode: 'xuezhan' });
   xz.history.push({ type: 'win', receiver: 2, payers: [], amountPerPayer: 0, deltas: [0, 0, 0, 0] });
   sichuanPage.initGame(xz);
+  assert.deepEqual(sichuanPage.data.wonFlags, [false, false, true, false], '血战已胡玩家卡片应标绿（#18）');
   sichuanPage.openGang();
   assert.deepEqual(sichuanPage.data.gangOut, [false, false, true, false], '已胡玩家应标记为离场');
   sichuanPage.selectGangDiscarder({ currentTarget: { dataset: { index: 2 } } });
@@ -536,6 +537,8 @@ assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [0, 0, 0, 0]);
   sichuanPage.selectGangKind({ currentTarget: { dataset: { kind: 'an' } } });
   sichuanPage.confirmGang();
   assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [4, -2, 0, -2], '暗杠只向仍在场的玩家收分');
+  sichuanPage.initGame(Object.assign({}, xz, { rules: { mode: 'xueliu', baseScore: 1, fanCap: 6 } }));
+  assert.deepEqual(sichuanPage.data.wonFlags, [false, false, false, false], '血流成河胡后仍在场，不标绿');
   sichuanPage.initGame(saved);
 }
 sichuanPage.openHistory();
