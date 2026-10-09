@@ -5,7 +5,7 @@
   <!-- 联机房间状态 -->
   <view class="room-banner {{room ? 'active' : ''}} {{room && !roomConnected ? 'offline' : ''}}" bindtap="openRoomPanel">
     <view class="room-banner-main">
-      <text class="room-banner-title">{{room ? ('房间 ' + room.roomCode) : '联机房间'}}</text>
+      <text class="room-banner-title">{{room ? ('日麻房间 ' + room.roomCode) : '日麻联机房间'}}</text>
       <text class="room-banner-status" wx:if="{{room}}">{{room.status === 'ended' ? '已结束 · 只读' : (roomConnected && roomOnline ? '实时同步中' : '等待连接')}}</text>
       <text class="room-banner-status" wx:else>{{roomConfigured ? '创建或输入房间码加入' : '配置云环境后启用'}}</text>
     </view>
@@ -84,7 +84,7 @@
 <view wx:if="{{showRoom}}" class="overlay tab-safe-overlay" bindtap="handleOverlayTap" data-id="showRoom">
   <scroll-view scroll-y class="modal room-modal tab-safe-scroll-modal">
     <view class="modal-close room-panel-close" bindtap="closeRoomPanel">✕</view>
-    <view class="modal-title">{{room ? ('房间 ' + room.roomCode) : '联机房间'}}</view>
+    <view class="modal-title">{{room ? ('日麻房间 ' + room.roomCode) : '日麻联机房间'}}</view>
 
     <view wx:if="{{!roomConfigured}}" class="room-config-hint">
       房间代码已经就绪。请先在 <text class="code-text">miniprogram/config.js</text> 填写微信云开发 envId，并部署 <text class="code-text">mahjong-room</text> 云函数。
