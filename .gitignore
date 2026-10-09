@@ -8,3 +8,6 @@ project.private.config.json
 
 # 微信小程序 AppID / 云开发环境配置属个人标识，不入库（请本地填写）
 project.config.json
+
+# 识牌 Worker 地址与令牌：只随云函数上传，不入库
+cloudfunctions/tile-recognizer/worker.config.json
