@@ -250,6 +250,31 @@ const yakuQuizIds = (yakuTraining && yakuTraining.questions || []).map(x => x.id
 const needQuiz = ['q9','q10','q11','q12','q13','q14','q15'];
 const missingQuiz = needQuiz.filter(id => !yakuQuizIds.includes(id));
 assert.equal(missingQuiz.length, 0, '役形判断专项应包含全部判断题：' + missingQuiz.join('、'));
+// 题目配牌（#17）：牌 id 必须合法，optionTiles 与 options 一一对应
+{
+  const { ALL_TILES } = require('./miniprogram/utils/shared');
+  const problems = [];
+  TutorialData.MAHJONG_TUTORIAL.questions.forEach(q => {
+    const ids = (q.tileGroups || []).flatMap(g => g.tiles || [])
+      .concat((q.optionTiles || []).flatMap(t => t || []));
+    ids.filter(id => !ALL_TILES.includes(id)).forEach(id => problems.push(`${q.id}: 非法牌 ${id}`));
+    if (q.optionTiles && q.optionTiles.length !== q.options.length) problems.push(`${q.id}: optionTiles 数量与选项不一致`);
+  });
+  assert.equal(problems.length, 0, '题目配牌数据应合法：' + problems.join('；'));
+  const src = id => '/t/' + id;
+  [
+    { name: '无配牌', q: { options: ['a', 'b'] }, rows: [], optionTiles: [[], []] },
+    { name: '题干白白白', q: { options: ['a'], tileGroups: [{ tiles: ['5z', '5z', '5z'] }] },
+      rows: [['5z', '5z', '5z']], optionTiles: [[]], haku: true },
+    { name: '选项部分配牌', q: { options: ['a', 'b'], optionTiles: [null, ['3m', '4m']] }, rows: [], optionTiles: [[], ['3m', '4m']] },
+  ].forEach(c => {
+    const v = TutorialData.decorateQuestionTiles(c.q, src);
+    assert.deepEqual(v.tileRows.map(r => r.tiles.map(t => t.id)), c.rows, c.name + ' 题干');
+    assert.deepEqual(v.optionViews.map(o => o.tiles.map(t => t.id)), c.optionTiles, c.name + ' 选项');
+    assert.deepEqual(v.optionViews.map(o => o.text), c.q.options, c.name + ' 选项文字保留');
+    if (c.haku) assert(v.tileRows[0].tiles.every(t => t.isHaku && t.src === '/t/5z'), c.name + ' 白板标记');
+  });
+}
 // 教学馆首页（#2）：继续学习指向第一个未学会章节；阶段完成后才推荐对应训练
 {
   const cases = [
@@ -396,6 +421,10 @@ tutorialPage.switchHomeTab({ currentTarget: { dataset: { tab: 'training' } } });
 assert.equal(tutorialPage.data.homeTab, 'training');
 tutorialPage.openTraining({ currentTarget: { dataset: { id: 'yaku-shapes' } } });
 assert.equal(tutorialPage.data.quizQuestions.length, 7, '役形判断专项应载入 7 道题（未推荐也可做）');
+{
+  const q14 = tutorialPage.data.quizQuestions.find(q => q.id === 'q14');
+  assert.deepEqual(q14.tileRows[0].tiles.map(t => t.id), ['5z', '5z', '5z'], '「白白白」题应以牌图展示');
+}
 
 // 川麻交互：番型选中状态预计算；罚分按送分方、收分方和类型结算
 let sichuanPageDefinition = null;

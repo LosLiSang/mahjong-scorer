@@ -1,6 +1,7 @@
 // tutorial-data.js — 日麻入门教学内容与纯逻辑
 // 不依赖 DOM；浏览器与 Node 测试共用。
 // 每课含 points（要点）、terms（术语，term+def）、tileGroups（牌例，可带 win 胡牌张）、tip 与章末小测题号。
+// 题目可选 tileGroups（题干配牌，按面子分组）与 optionTiles（与 options 对齐，每项为牌 id 数组或 null）。
 
 const MAHJONG_TUTORIAL = {
   lessons: [
@@ -256,6 +257,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q1',
       question: '下面哪一组能组成顺子？',
+      optionTiles: [['1z','2z','3z'], ['3m','4m','5m'], ['7p','7p','8p'], ['5z','6z','7z']],
       options: ['东、南、西', '3万、4万、5万', '7筒、7筒、8筒', '白、发、中'],
       answer: 1,
       explanation: '顺子必须是同一花色连续三张数牌；字牌不能组成顺子。',
@@ -277,6 +279,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q4',
       question: '“2筒、4筒，只等3筒”属于什么听牌？',
+      tileGroups: [{ label: '手牌', tiles: ['2p','4p'] }, { label: '等', tiles: ['3p'] }],
       options: ['两面听', '嵌张听', '边张听', '双碰听'],
       answer: 1,
       explanation: '等待顺子中间一张叫嵌张听，计符时通常加 2 符。',
@@ -312,6 +315,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q9',
       question: '手牌「3万4万5万、3筒4筒5筒、5索6索7索、8索8索8索、6万6万」最可能成立什么役？',
+      tileGroups: [{ tiles: ['3m','4m','5m'] }, { tiles: ['3p','4p','5p'] }, { tiles: ['5s','6s','7s'] }, { tiles: ['8s','8s','8s'] }, { tiles: ['6m','6m'] }],
       options: ['清一色', '断幺九', '混一色', '国士无双'],
       answer: 1,
       explanation: '整手不含 1、9 与字牌，满足断幺九；因带一组刻子，所以不是平和。',
@@ -319,6 +323,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q10',
       question: '手牌全是刻子加一对雀头（111万、333筒、555索、777中、22万），是什么役？',
+      tileGroups: [{ tiles: ['1m','1m','1m'] }, { tiles: ['3p','3p','3p'] }, { tiles: ['5s','5s','5s'] }, { tiles: ['7z','7z','7z'] }, { tiles: ['2m','2m'] }],
       options: ['平和', '一杯口', '对对和', '断幺九'],
       answer: 2,
       explanation: '四个面子都是刻子、无顺子的和牌就是对对和。',
@@ -326,6 +331,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q11',
       question: '一手牌全部由顺子组成，雀头是 4万4万（非役牌）、听两面，最可能是什么役？',
+      tileGroups: [{ label: '雀头', tiles: ['4m','4m'] }],
       options: ['对对和', '平和', '混一色', '国士无双'],
       answer: 1,
       explanation: '全顺子 + 非役牌雀头 + 两面听，正是平和的关键条件。',
@@ -333,6 +339,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q12',
       question: '「11万、22万、33筒、44筒、55索、66索、77筒」属于哪种和牌形式？',
+      tileGroups: [{ tiles: ['1m','1m'] }, { tiles: ['2m','2m'] }, { tiles: ['3p','3p'] }, { tiles: ['4p','4p'] }, { tiles: ['5s','5s'] }, { tiles: ['6s','6s'] }, { tiles: ['7p','7p'] }],
       options: ['四面子一雀头', '七对子', '国士无双', '三杠子'],
       answer: 1,
       explanation: '七组互不相同的对子就是七对子，是特殊结构。',
@@ -340,6 +347,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q13',
       question: '手牌全部是万子（123万、456万、789万、234万、11万），是什么役？',
+      tileGroups: [{ tiles: ['1m','2m','3m'] }, { tiles: ['4m','5m','6m'] }, { tiles: ['7m','8m','9m'] }, { tiles: ['2m','3m','4m'] }, { tiles: ['1m','1m'] }],
       options: ['混一色', '清一色', '断幺九', '平和'],
       answer: 1,
       explanation: '整手只用单一花色（万子），不掺字牌，是清一色。',
@@ -347,6 +355,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q14',
       question: '手里有「白、白、白」这一组刻子，就已经能成立什么役？',
+      tileGroups: [{ tiles: ['5z','5z','5z'] }],
       options: ['断幺九', '平和', '役牌（三元牌）', '清一色'],
       answer: 2,
       explanation: '白、发、中的刻子是役牌，成立 1 番；与场风/自风同理。',
@@ -354,6 +363,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q15',
       question: '手牌全是筒子加字牌（123筒、456筒、789筒、中中中、东东），是什么役？',
+      tileGroups: [{ tiles: ['1p','2p','3p'] }, { tiles: ['4p','5p','6p'] }, { tiles: ['7p','8p','9p'] }, { tiles: ['7z','7z','7z'] }, { tiles: ['1z','1z'] }],
       options: ['清一色', '混一色', '断幺九', '平和'],
       answer: 1,
       explanation: '单一花色数牌 + 字牌就是混一色；若混入字牌便不是清一色。',
@@ -382,6 +392,7 @@ const MAHJONG_TUTORIAL = {
     {
       id: 'q19',
       question: '东一局南家，起手有 34万、56筒和一张孤立的北风，通常优先打哪一类牌？',
+      tileGroups: [{ tiles: ['3m','4m'] }, { tiles: ['5p','6p'] }, { tiles: ['4z'] }],
       options: ['34万连张', '56筒连张', '孤立的北风', '任意对子'],
       answer: 2,
       explanation: '中张连张容易发展成两面顺子；无役牌价值的孤张字牌通常更适合先打。',
@@ -444,6 +455,25 @@ function getTrainingTopic(id) {
   return {
     ...topic,
     questions: topic.questionIds.map(getTutorialQuestion).filter(Boolean),
+  };
+}
+
+// 题目配牌视图：把 tileGroups / optionTiles 的牌 id 转成可渲染的牌图；srcOf 由调用方注入（小程序传 Shared.tileSrc）
+function decorateQuestionTiles(question, srcOf) {
+  if (!question) return question;
+  const toTiles = (ids, prefix) => (ids || []).map((id, index) => ({ key: `${prefix}-${index}`, id, src: srcOf(id), isHaku: id === '5z' }));
+  const options = question.options || [];
+  return {
+    ...question,
+    tileRows: (question.tileGroups || []).map((group, index) => ({
+      key: `g${index}`,
+      label: group.label || '',
+      tiles: toTiles(group.tiles, `g${index}`),
+    })),
+    optionViews: options.map((text, index) => {
+      const ids = question.optionTiles && question.optionTiles[index];
+      return { text, tiles: Array.isArray(ids) ? toTiles(ids, `o${index}`) : [] };
+    }),
   };
 }
 
@@ -532,6 +562,7 @@ if (typeof module !== 'undefined' && module.exports) {
     getTutorialLesson,
     getTutorialQuestion,
     getTrainingTopic,
+    decorateQuestionTiles,
     gradeTutorialQuestions,
     gradeTrainingTopic,
     buildTutorialHome,
