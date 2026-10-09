@@ -443,6 +443,30 @@ gangCases.forEach(c => {
 });
 assert.equal(SichuanScore.calculateGang({ kind: 'ming', receiver: 0, discarder: 0 }), null, '明杠放杠者不能是杠牌者自己');
 assert.equal(SichuanScore.calculateGang({ kind: 'xx', receiver: 0 }), null, '未知杠类型应拒绝');
+// 血战到底：已胡玩家不付杠分、不能放杠、不能收杠分（#16）
+[
+  { name: '无人胡·暗杠', kind: 'an', out: [], payers: [1, 2, 3] },
+  { name: '一家已胡·暗杠', kind: 'an', out: [2], payers: [1, 3] },
+  { name: '两家已胡·加杠', kind: 'bu', out: [1, 3], payers: [2] },
+  { name: '三家已胡·无人可收', kind: 'an', out: [1, 2, 3], payers: null },
+  { name: '明杠·放杠者已胡', kind: 'ming', discarder: 2, out: [2], payers: null },
+  { name: '明杠·放杠者在场', kind: 'ming', discarder: 3, out: [2], payers: [3] },
+  { name: '杠牌者已胡', kind: 'an', out: [0], payers: null },
+].forEach(c => {
+  const r = SichuanScore.calculateGang({ kind: c.kind, receiver: 0, discarder: c.discarder, outPlayers: c.out });
+  assert.deepEqual(r && r.payers, c.payers, c.name);
+});
+[
+  { name: '血战·无胡牌', mode: 'xuezhan', wins: [], won: [] },
+  { name: '血战·两家胡', mode: 'xuezhan', wins: [2, 0], won: [2, 0] },
+  { name: '血战·重复记录去重', mode: 'xuezhan', wins: [1, 1], won: [1] },
+  { name: '血流·胡后仍在场', mode: 'xueliu', wins: [1, 2], won: [] },
+].forEach(c => {
+  const game = SichuanScore.createSichuanGame(undefined, 0, { mode: c.mode });
+  game.history = c.wins.map(receiver => ({ type: 'win', receiver, payers: [], amountPerPayer: 1 }))
+    .concat([{ type: 'gang', receiver: 3, payers: [0], amountPerPayer: 2 }]);
+  assert.deepEqual(SichuanScore.sichuanWonPlayers(game), c.won, c.name);
+});
 assert.deepEqual(SichuanScore.normalizeSichuanRules({ mode: 'bad', baseScore: 3, fanCap: 9 }), SichuanScore.DEFAULT_SICHUAN_RULES, '非法规则应回落默认');
 sichuanPage.closeWin();
 // 对局级规则：修改后胡牌弹窗默认读取（#4）
@@ -470,6 +494,21 @@ sichuanPage.confirmGang();
 assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [6, 2, -2, -6], '加杠向其余各家各收 1×底分');
 sichuanPage.undo(); sichuanPage.undo();
 assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [0, 0, 0, 0]);
+// 血战到底：西家已胡后，暗杠不再向其收分（#16）
+{
+  const saved = sichuanPage.data.game;
+  const xz = SichuanScore.createSichuanGame(undefined, 0, { mode: 'xuezhan' });
+  xz.history.push({ type: 'win', receiver: 2, payers: [], amountPerPayer: 0, deltas: [0, 0, 0, 0] });
+  sichuanPage.initGame(xz);
+  sichuanPage.openGang();
+  assert.deepEqual(sichuanPage.data.gangOut, [false, false, true, false], '已胡玩家应标记为离场');
+  sichuanPage.selectGangDiscarder({ currentTarget: { dataset: { index: 2 } } });
+  assert.notEqual(sichuanPage.data.gangDiscarder, 2, '已胡玩家不能被选为放杠者');
+  sichuanPage.selectGangKind({ currentTarget: { dataset: { kind: 'an' } } });
+  sichuanPage.confirmGang();
+  assert.deepEqual(sichuanPage.data.game.players.map(p => p.score), [4, -2, 0, -2], '暗杠只向仍在场的玩家收分');
+  sichuanPage.initGame(saved);
+}
 sichuanPage.openHistory();
 sichuanPage.closeHistory();
 sichuanPage.openPenalty();
