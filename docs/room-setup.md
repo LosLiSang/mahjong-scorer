@@ -66,14 +66,12 @@ module.exports = {
 
 > 各云函数接收的参数、返回值与错误码见 [`cloud-functions.md`](cloud-functions.md)。
 
-在微信开发者工具中找到并分别部署：
+用 CloudBase CLI（`tcb`）部署，配置统一写在根目录 `cloudbaserc.json`（超时、内存、是否云端安装依赖、定时触发器）。详见 [`cloud-functions.md`](cloud-functions.md#部署)。
 
-```text
-cloudfunctions/mahjong-room
-cloudfunctions/mahjong-room-cleanup
+```bash
+npx -p @cloudbase/cli tcb login          # 首次使用，扫码登录
+node scripts/deploy-functions.js         # 部署全部云函数（含触发器）
 ```
-
-右键选择“上传并部署：云端安装依赖”。云函数依赖 `wx-server-sdk`，部署时不得跳过依赖安装。清理函数的 `config.json` 配置为每天 03:20（UTC+8）执行一次。
 
 部署完成后，可在云函数控制台调用：
 
@@ -141,8 +139,7 @@ cloudfunctions/mahjong-room-cleanup
 ### 7.2 微信云函数（`cloudfunctions/tile-recognizer`）
 
 - Worker 地址和令牌放在 `worker.config.json` 中（已被 git 忽略，只随云函数上传；格式见 `worker.config.example.json`）；也可以用环境变量 `TILE_WORKER_URL` / `TILE_WORKER_TOKEN` 覆盖。
-- 部署代码：`cli.bat cloud functions deploy --env <环境ID> --names tile-recognizer --remote-npm-install --project <项目路径>`。
-- **超时必须单独更新**：上传代码不会同步 `config.json` 中的 `timeout`。在项目根目录执行 `tcb fn config update tile-recognizer -e <环境ID>`（读取 `cloudbaserc.json`，超时为 20 秒），或在云开发控制台手动修改。
+- 部署：`node scripts/deploy-functions.js tile-recognizer`。超时（20 秒）等配置来自 `cloudbaserc.json`，`tcb fn deploy` 会一并写入，不用再单独更新。
 
 ### 7.3 自定义模型（本机直连）
 

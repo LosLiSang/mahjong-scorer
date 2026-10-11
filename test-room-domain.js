@@ -184,6 +184,25 @@ assert.throws(() => Room.validateGame(badGang, 'yonma', 'sichuan'), /INVALID_GAM
   const moved = Room.moveSeat(Object.assign({}, riichiRoom, { game: g }), { openId: 'xz-owner', seatIndex: 2 });
   assert.deepEqual(moved.game.handWinners, [0], '换座后已和名单随座位重映射');
 }
+// 计分命令：规则只能由房主通过 *-rules 修改，其他命令沿用房间规则
+{
+  const riichi = Room.createRoomDocument({ code: 'CMD234', mode: 4, ownerOpenId: 'cmd-owner', ownerNickname: '房主', seatIndex: 0 });
+  const withRules = rules => Object.assign({}, riichi.game, { rules });
+  const cases = [
+    { name: '未知命令', room: riichi, cmd: { openId: 'cmd-owner', type: 'hack', nextGame: riichi.game }, error: /INVALID_COMMAND/ },
+    { name: '玩法不符', room: riichi, cmd: { openId: 'cmd-owner', type: 'sichuan-win', nextGame: riichi.game }, error: /INVALID_GAME_TYPE/ },
+    { name: '非房主改规则', room: riichi, cmd: { openId: 'other', type: 'riichi-rules', nextGame: withRules({ xuezhan: true }) }, error: /HOST_ONLY/ },
+    { name: '普通命令忽略规则', room: riichi, cmd: { openId: 'cmd-owner', type: 'win', nextGame: withRules({ xuezhan: true }) }, rules: { xuezhan: false } },
+    { name: '房主改规则', room: riichi, cmd: { openId: 'cmd-owner', type: 'riichi-rules', nextGame: withRules({ xuezhan: true }) }, rules: { xuezhan: true } },
+    { name: '本局已有和牌者时不能关血战', room: Object.assign({}, riichi, { game: Object.assign({}, riichi.game, { rules: { xuezhan: true }, handWinners: [1] }) }), cmd: { openId: 'cmd-owner', type: 'riichi-rules', nextGame: withRules({ xuezhan: false }) }, error: /HAND_IN_PROGRESS/ },
+    { name: '川麻普通命令沿用规则', room: sichuan, cmd: { openId: 'sichuan-owner', type: 'sichuan-win', nextGame: Object.assign({}, sichuan.game, { rules: { mode: 'xueliu', baseScore: 10, fanCap: 3 } }) }, rules: Room.normalizeSichuanRules(sichuan.game.rules) }
+  ];
+  cases.forEach(c => {
+    if (c.error) assert.throws(() => Room.applyGameCommand(c.room, c.cmd), c.error, c.name);
+    else assert.deepEqual(Room.applyGameCommand(c.room, c.cmd).rules, c.rules, c.name);
+  });
+}
+
 assert.equal(Room.publicRoomPreview(sichuan).gameType, 'sichuan');
 assert.equal(Room.roomView(sichuan, 'sichuan-owner').gameType, 'sichuan');
 

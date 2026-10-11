@@ -1,6 +1,6 @@
 # 云函数说明
 
-项目共有 3 个微信云函数，目录在 `cloudfunctions/`。部署步骤见 [`room-setup.md`](room-setup.md) 第 3 节和第 7.2 节；统一管理方案的讨论见 issue #28。
+项目共有 3 个微信云函数，目录在 `cloudfunctions/`。部署见下文「部署」一节，管理方案的讨论见 issue #28。
 
 | 云函数 | 调用方 | 作用 |
 | --- | --- | --- |
@@ -51,17 +51,18 @@
 
 ### 写入范围
 
-每次写操作在一个事务里更新：`rooms` 的 1 条记录、`room_views` 中每个成员的视图（最多 4 条）、`room_events` 的 1 条审计事件。`create` 例外：它不走事务，视图写入失败时会删除刚建的房间。
+除 `create` 外，所有写操作都走 `index.js` 中的 `mutateRoom`：一个事务内读房间 → 校验状态、权限（`anyone` / `member` / `host`）和版本 → 生成新房间 → 版本加 1 并记录动作 → 写库。每次写操作更新：`rooms` 的 1 条记录、`room_views` 中每个成员的视图（最多 4 条）、`room_events` 的 1 条审计事件。`create` 不走事务，视图写入失败时会删除刚建的房间。
+
+计分命令的规则（`commandType` 与玩法匹配、只有房主能改规则等）是纯函数 `Domain.applyGameCommand`，在 `packages/room-core` 中，由 `test-room-domain.js` 覆盖。
 
 ## 2. `mahjong-room-cleanup`
 
-**没有参数**，由 `config.json` 中的定时触发器调用（cron `0 20 3 * * * *`，即每天 03:20）。
+**没有参数**，由定时触发器 `daily-room-cleanup` 调用（cron `0 20 3 * * * *`，即每天 03:20）。
 
-- 查找 `status = 'ended'` 且 `expiresAt` 早于当前时间的房间，每次最多 100 个。
-- 依次删除这些房间在 `room_views`、`room_events` 中的记录，最后删除 `rooms` 记录。
-- 返回 `{ checkedAt, deletedCount, deletedRooms }`。
-
-过期房间超过 100 个时，剩下的留到第二天处理。
+- 每批查找 100 个 `status = 'ended'` 且 `expiresAt` 早于当前时间的房间，用 `where({ roomCode }).remove()` 批量删除它们的 `room_views`、`room_events`，最后删除 `rooms` 记录。
+- 在 45 秒的时间预算内反复分批处理（函数超时 60 秒）；处理不完的留到第二天。
+- 单个房间删除失败只记录日志，跳过它继续处理；房间记录最后删，所以下次还会重试。
+- 返回 `{ checkedAt, deletedCount, deletedRooms, failedRooms, timedOut }`。
 
 ## 3. `tile-recognizer`
 
@@ -92,6 +93,50 @@
 ### 配置
 
 Worker 地址和令牌优先读环境变量 `TILE_WORKER_URL` / `TILE_WORKER_TOKEN`，其次读同目录的 `worker.config.json`（已被 git 忽略，格式见 `worker.config.example.json`）。云函数超时必须设为 20 秒，否则 19 秒的转发超时不起作用。
+
+## 部署
+
+用 CloudBase CLI（`tcb`，通过 `npx -p @cloudbase/cli` 运行，不需要全局安装）。**配置唯一来源是根目录 `cloudbaserc.json`**：
+
+| 云函数 | 超时 | 内存 | 云端安装依赖 | 触发器 |
+| --- | --- | --- | --- | --- |
+| `mahjong-room` | 10 秒 | 256 MB | 是（`wx-server-sdk`） | — |
+| `mahjong-room-cleanup` | 60 秒 | 256 MB | 是 | `daily-room-cleanup` 每天 03:20 |
+| `tile-recognizer` | 20 秒 | 128 MB | 否（无依赖） | — |
+
+```bash
+npx -p @cloudbase/cli tcb login                    # 首次使用，扫码登录
+node scripts/deploy-functions.js                   # 部署全部
+node scripts/deploy-functions.js tile-recognizer   # 只部署一个
+node scripts/deploy-functions.js --dry-run         # 只打印命令
+```
+
+脚本做的事：
+
+1. 环境 ID 取环境变量 `ENV_ID`，没有时取 `miniprogram/config.js` 的 `cloudEnvId`。
+2. 部署 `mahjong-room` 前先运行 `scripts/sync-room-core.js`，同步领域代码。
+3. 部署 `tile-recognizer` 前检查 `worker.config.json` 是否存在。
+4. 执行 `tcb fn deploy <name> --force`，同时写入 `cloudbaserc.json` 中的超时、内存等配置。
+5. 有触发器的函数再执行 `tcb fn trigger create`；触发器已存在时报错可以忽略。
+
+各函数目录里的 `config.json` 只供微信开发者工具右键部署使用，以 `cloudbaserc.json` 为准。`test-deploy-functions.js` 会检查 `cloudbaserc.json` 登记了全部云函数，且关键配置没有丢。
+
+### 部署后核对与排查
+
+```bash
+npx -p @cloudbase/cli tcb fn detail <函数名> -e <环境ID>   # 超时、内存、触发器
+npx -p @cloudbase/cli tcb fn log <函数名> -e <环境ID>      # 调用日志
+npx -p @cloudbase/cli tcb fn invoke mahjong-room-cleanup -e <环境ID>
+npx -p @cloudbase/cli tcb fn invoke tile-recognizer -e <环境ID> --params '{"action":"testModel"}'
+```
+
+`mahjong-room` 在命令行调用时没有小程序上下文，一定返回 `IDENTITY_UNAVAILABLE`，要用真机验证。
+
+### 密钥轮换（`WORKER_TOKEN`）
+
+1. `cd apps/tile-worker && npx wrangler secret put WORKER_TOKEN` 写入新令牌。
+2. 修改 `cloudfunctions/tile-recognizer/worker.config.json` 的 `workerToken`，执行 `node scripts/deploy-functions.js tile-recognizer`。
+3. 两步之间默认识牌会返回 `WORKER_UNAUTHORIZED`，尽量连续完成。
 
 ## 两种错误风格
 

@@ -90,6 +90,8 @@ node test-logic.js          # 日麻计分核心（含血战到底）
 node test-miniprogram.js    # 小程序页面交互与川麻计分
 node test-room-domain.js    # 联机房间领域逻辑
 node test-room-service.js   # 联机房间服务
+node test-tile-recognizer.js # 拍照识牌
+node test-deploy-functions.js # 云函数部署计划与 cloudbaserc.json
 ```
 
 ## 牌图

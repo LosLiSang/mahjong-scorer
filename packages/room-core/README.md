@@ -21,6 +21,6 @@ node scripts/sync-room-core.js
 
 ## 动作协议（当前云函数对外支持的 type）
 
-`identity` / `create` / `inspect` / `join` / `updateProfile` / `command`（`win`、`draw`、`riichi`、`sichuan-win`、`sichuan-gang`、`sichuan-penalty`、`sichuan-setup`）/ `undo` / `reset` / `releaseSeat` / `moveSeat` / `end`
+`identity` / `create` / `inspect` / `join` / `updateProfile` / `command`（见 `GAME_COMMANDS`，由 `applyGameCommand` 校验）/ `undo` / `reset` / `releaseSeat` / `moveSeat` / `end`
 
 将来的 TS 后端按同一套动作与版本语义实现即可无缝替换云开发。

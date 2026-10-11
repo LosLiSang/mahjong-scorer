@@ -521,8 +521,38 @@ function roomView(room, openId) {
   };
 }
 
+const GAME_COMMANDS = ['win', 'draw', 'riichi', 'riichi-rules', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup', 'sichuan-rules'];
+
+// 计分命令：由客户端算好的 nextGame 推导出服务端认可的新对局。
+// 规则只能由房主通过 *-rules 命令修改；其他命令一律沿用房间现有规则。
+function applyGameCommand(room, { openId, type, nextGame }) {
+  if (!GAME_COMMANDS.includes(type)) throw new Error('INVALID_COMMAND');
+  const roomGameType = normalizeGameType(room.gameType);
+  if (roomGameType !== (type.startsWith('sichuan-') ? 'sichuan' : 'riichi')) throw new Error('INVALID_GAME_TYPE');
+
+  let game = applySeatNames(normalizeGame(nextGame, room.gameType), room.seats);
+  validateGame(game, room.mode, room.gameType);
+  if (type.endsWith('-rules')) {
+    if (room.hostOpenId !== openId) throw new Error('HOST_ONLY');
+    const rules = game.rules;
+    game = clone(room.game);
+    game.rules = rules;
+    if (roomGameType === 'riichi' && !rules.xuezhan && (room.game.handWinners || []).length) {
+      throw new Error('HAND_IN_PROGRESS');
+    }
+  } else if (roomGameType === 'sichuan') {
+    game.rules = normalizeSichuanRules(room.game && room.game.rules);
+  } else {
+    game.rules = normalizeRiichiRules(room.game && room.game.rules);
+    if (!game.rules.xuezhan) game.handWinners = [];
+  }
+  return game;
+}
+
 module.exports = {
   ROOM_CODE_ALPHABET,
+  GAME_COMMANDS,
+  applyGameCommand,
   ROOM_CODE_LENGTH,
   ROOM_RETENTION_MS,
   clone,
