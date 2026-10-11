@@ -1,0 +1,4 @@
+{
+  "workerUrl": "https://mahjong-tile.example.com",
+  "workerToken": "与 Worker 的 WORKER_TOKEN 相同"
+}

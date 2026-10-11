@@ -293,6 +293,7 @@
         </view>
       </view>
       <view class="btn-row" style="margin:14rpx 0">
+        <button wx:if="{{recognizeAvailable}}" class="btn btn-secondary btn-small" bindtap="recognizeHand" loading="{{recognizing}}" disabled="{{recognizing}}">📷 拍照识牌</button>
         <button class="btn btn-secondary btn-small" bindtap="clearHand">清空</button>
         <button class="btn btn-secondary btn-small" bindtap="undoTile">撤销</button>
       </view>

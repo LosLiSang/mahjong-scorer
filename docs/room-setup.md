@@ -115,3 +115,40 @@ cloudfunctions/mahjong-room-cleanup
 - `room_events`
 
 部署后必须在云开发控制台确认 `daily-room-cleanup` 触发器已存在并实际产生执行记录；仅上传代码但触发器未生效时，过期数据不会自动删除。
+
+## 7. 拍照识牌（可选）
+
+日麻和牌结算第 2 步的「📷 拍照识牌」有两条通道：
+
+| 情况 | 请求路径 |
+| --- | --- |
+| 用户在「设置 → 识牌」填了自定义模型 | 小程序本机 `wx.request` 直连该接口，Key 只存在手机本地 |
+| 未填写（云端默认） | 小程序 → 微信云函数 `tile-recognizer` → Cloudflare Worker（`https://mahjong-tile.lisang.top`）→ Cloudflare Workers AI |
+
+为什么要经过云函数中转：小程序正式版只能请求已登记的「request 合法域名」，而合法域名要求 ICP 备案。此外实测腾讯云函数连不上 `*.workers.dev`（连接被重置或超时），所以 Worker 绑定了自定义域名 `mahjong-tile.lisang.top`，云函数通过这个域名调用。
+
+### 7.1 Cloudflare Worker（`apps/tile-worker`）
+
+- 默认模型是 Workers AI 的 `@cf/qwen/qwen3.8-27b`（`wrangler.jsonc` 中的 `WORKERS_AI_MODEL`），通过 `AI` 绑定调用，不需要任何模型 Key。已关闭该模型的思考模式（`enable_thinking: false`），否则 token 会全部耗在推理上，导致回复为空。
+- 想改用外部 OpenAI 兼容接口时，执行 `wrangler secret put MODEL_API_KEY`，然后在 `vars` 中设置 `MODEL_BASE_URL` / `MODEL_NAME`。
+- 共享令牌：`wrangler secret put WORKER_TOKEN`。
+- 部署：`cd apps/tile-worker && npx wrangler deploy`，会同时发布 workers.dev 地址和自定义域名。
+- 接口：`POST /recognize`、`POST /test`，都要求请求头带 `Authorization: Bearer <WORKER_TOKEN>`。Workers Logs 与 Traces 已开启。
+- 免费额度：Workers 每天 10 万次请求；Workers AI 每天 10,000 neurons，实测一次识牌约 37 neurons、一次测试约 4 neurons，约合每天 250 次识牌。
+
+### 7.2 微信云函数（`cloudfunctions/tile-recognizer`）
+
+- Worker 地址和令牌放在 `worker.config.json` 中（已被 git 忽略，只随云函数上传；格式见 `worker.config.example.json`）；也可以用环境变量 `TILE_WORKER_URL` / `TILE_WORKER_TOKEN` 覆盖。
+- 部署代码：`cli.bat cloud functions deploy --env <环境ID> --names tile-recognizer --remote-npm-install --project <项目路径>`。
+- **超时必须单独更新**：上传代码不会同步 `config.json` 中的 `timeout`。在项目根目录执行 `tcb fn config update tile-recognizer -e <环境ID>`（读取 `cloudbaserc.json`，超时为 20 秒），或在云开发控制台手动修改。
+
+### 7.3 自定义模型（本机直连）
+
+- 正式版只能请求登记过的合法域名。请提前登记允许用户使用的厂商域名（如 `dashscope.aliyuncs.com`、`open.bigmodel.cn`），未登记的地址会提示“该地址不在小程序合法域名中”。
+- 「获取」按钮直连 `GET {地址}/models`；「测试」按钮发送一张纯红小图，检查连通、鉴权和看图能力。地址和 Key 都留空时，「测试」检查的是云端默认通道。
+
+### 共同约定
+
+- 请求构造与响应解析的唯一真源是 `miniprogram/utils/model-protocol.js`，小程序与 Worker 共用。
+- 照片在手机上压缩后以 base64 发出，不上传云存储，不落盘。
+- 识别结果必须通过前端校验（合法牌 ID、14–18 张、同种牌不超过 4 张、置信度 ≥ 0.6）才会替换手牌；失败时只提示，不改动当前手牌。识别并不完全可靠，填入后需要用户核对。
