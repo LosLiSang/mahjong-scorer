@@ -56,7 +56,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 - 云环境配置：`miniprogram/config.js` 中的 `cloudEnvId`。
 - 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-room-core.js`。
 - 部署步骤、集合权限与真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。
-- 云函数位于 `cloudfunctions/mahjong-room` 与 `cloudfunctions/mahjong-room-cleanup`。
+- 云函数位于 `cloudfunctions/`（`mahjong-room`、`mahjong-room-cleanup`、`tile-recognizer`），各自的参数、返回与错误码见 [`docs/cloud-functions.md`](docs/cloud-functions.md)。
 - Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
 
 ## 项目结构

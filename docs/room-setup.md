@@ -64,6 +64,8 @@ module.exports = {
 
 ## 3. 部署云函数
 
+> 各云函数接收的参数、返回值与错误码见 [`cloud-functions.md`](cloud-functions.md)。
+
 在微信开发者工具中找到并分别部署：
 
 ```text
