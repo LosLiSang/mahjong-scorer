@@ -54,7 +54,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 实时房间功能默认关闭；**未配置云环境时，本地日麻与川麻计分完全不受影响**。
 
 - 云环境配置：`miniprogram/config.js` 中的 `cloudEnvId`。
-- 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-room-core.js`。
+- 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-shared.js`。
 - 部署步骤、集合权限与真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。
 - 云函数位于 `cloudfunctions/`（`mahjong-room`、`mahjong-room-cleanup`、`tile-recognizer`），各自的参数、返回与错误码见 [`docs/cloud-functions.md`](docs/cloud-functions.md)。
 - Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
@@ -77,7 +77,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 ├── cloudfunctions/             # 微信云函数
 │   ├── mahjong-room/           # 联机房间（domain.js 由 room-core 同步）
 │   └── mahjong-room-cleanup/   # 房间清理
-├── scripts/                    # sync-room-core 等脚本
+├── scripts/                    # sync-shared、deploy-functions 等脚本
 ├── docs/                       # 部署、研究与 agent 文档
 ├── project.config.json         # 小程序项目配置（本地填写，不入库）
 └── .gitattributes              # 强制 LF 行尾，保证跨平台一致
@@ -92,6 +92,7 @@ node test-room-domain.js    # 联机房间领域逻辑
 node test-room-service.js   # 联机房间服务
 node test-tile-recognizer.js # 拍照识牌
 node test-deploy-functions.js # 云函数部署计划与 cloudbaserc.json
+node test-cloud-response.js # 云函数统一返回结构 { code, msg, data }
 ```
 
 ## 牌图

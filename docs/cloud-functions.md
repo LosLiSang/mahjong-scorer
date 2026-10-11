@@ -10,6 +10,26 @@
 
 所有参数都放在 `wx.cloud.callFunction({ name, data })` 的 `data` 里，云函数从 `event` 读取，并用 `event.action` 区分操作。
 
+## 统一返回结构
+
+所有云函数**都通过返回值告知结果，不向调用方抛异常**：
+
+```js
+{ code: 'OK', msg: '', data: <业务数据> }                         // 成功
+{ code: 'ROOM_NOT_FOUND', msg: '没有找到这个房间', data: null }    // 失败
+```
+
+- `code`：`'OK'` 表示成功，其他值是错误码（大写下划线）。
+- `msg`：给用户看的中文提示；成功时为空字符串。
+- `data`：成功时的业务数据（下文各表中的「返回」指的就是 `data`）；失败时为 `null`。
+
+实现：
+- 真源 `packages/cloud-response/index.js`，由 `node scripts/sync-shared.js` 复制为各云函数目录下的 `response.js`（部署脚本会自动同步）。
+- 云函数入口写成 `exports.main = event => Response.handle(run, MESSAGES)`。业务代码里仍可 `Response.fail('CODE')` 或 `throw new Error('CODE')`（领域层 `domain.js` 就是这样），由 `handle` 统一转成返回值。
+- 每个云函数用 `MESSAGES` 登记自己的错误码和提示；**没有登记的异常一律返回 `INTERNAL_ERROR`**，详情只写到云函数日志，不下发给客户端。新增错误码时记得登记。
+- 小程序端统一用 `miniprogram/utils/cloud-result.js` 的 `unwrap` 解析，失败时抛出 `err.code` / `err.message`（取服务端 `msg`）给页面。过渡期仍兼容旧版云函数的返回格式。
+- `test-cloud-response.js` 覆盖包装、解析，以及每个云函数入口失败时确实返回统一结构。
+
 ## 1. `mahjong-room`
 
 调用者身份**只取微信注入的 `OPENID`**（`cloud.getWXContext()`），参数里传的 openid 一律忽略。取不到时报 `IDENTITY_UNAVAILABLE`。
@@ -45,9 +65,9 @@
 
 ### 错误
 
-出错时**抛出异常**，`err.code` 或错误消息就是错误码；小程序端由 `room-service.js` 的 `parseError` 转成提示。
+错误码与提示登记在 `index.js` 的 `MESSAGES` 中：
 
-常见错误码：`UNKNOWN_ACTION`、`IDENTITY_UNAVAILABLE`、`INVALID_ROOM_CODE`、`ROOM_NOT_FOUND`、`ROOM_ENDED`、`ROOM_NOT_ACTIVE`、`NOT_ROOM_MEMBER`、`HOST_ONLY`、`VERSION_CONFLICT`、`INVALID_COMMAND`、`INVALID_GAME_TYPE`、`INVALID_GAME`、`INVALID_GAME_MODE`、`POINT_TOTAL_MISMATCH`、`HAND_IN_PROGRESS`、`NOTHING_TO_UNDO`、`INVALID_SEAT`、`SEAT_OCCUPIED`、`SEAT_EMPTY`、`HOST_SEAT_LOCKED`、`NICKNAME_REQUIRED`、`ROOM_CODE_EXHAUSTED`。
+`UNKNOWN_ACTION`、`IDENTITY_UNAVAILABLE`、`INVALID_ROOM_CODE`、`ROOM_NOT_FOUND`、`ROOM_ENDED`、`ROOM_NOT_ACTIVE`、`NOT_ROOM_MEMBER`、`HOST_ONLY`、`VERSION_CONFLICT`、`INVALID_COMMAND`、`INVALID_GAME_TYPE`、`INVALID_GAME`、`INVALID_GAME_MODE`、`POINT_TOTAL_MISMATCH`、`HAND_IN_PROGRESS`、`NOTHING_TO_UNDO`、`INVALID_SEAT`、`SEAT_OCCUPIED`、`SEAT_EMPTY`、`HOST_SEAT_LOCKED`、`NICKNAME_REQUIRED`、`ROOM_CODE_EXHAUSTED`、`INTERNAL_ERROR`。
 
 ### 写入范围
 
@@ -62,7 +82,7 @@
 - 每批查找 100 个 `status = 'ended'` 且 `expiresAt` 早于当前时间的房间，用 `where({ roomCode }).remove()` 批量删除它们的 `room_views`、`room_events`，最后删除 `rooms` 记录。
 - 在 45 秒的时间预算内反复分批处理（函数超时 60 秒）；处理不完的留到第二天。
 - 单个房间删除失败只记录日志，跳过它继续处理；房间记录最后删，所以下次还会重试。
-- 返回 `{ checkedAt, deletedCount, deletedRooms, failedRooms, timedOut }`。
+- `data` 为 `{ checkedAt, deletedCount, deletedRooms, failedRooms, timedOut }`；整体失败时 `code` 为 `INTERNAL_ERROR`。
 
 ## 3. `tile-recognizer`
 
@@ -77,8 +97,8 @@
 
 ### 返回
 
-- 成功：原样返回 Worker 的结果，形如 `{ ok: true, text, ... }`。
-- 失败：**不抛异常**，返回 `{ ok: false, code }`。
+- 成功：`data` 是 Worker 结果去掉 `ok` 后的字段。`recognize` 为 `{ text }`，`testModel` 为 `{ model, reply, seesImage, latencyMs }`。
+- 失败：`code` 见下表。Worker 自身是 HTTP 服务，仍返回 `{ ok, code }`，由云函数转换。
 
 | `code` | 含义 |
 | --- | --- |
@@ -88,7 +108,7 @@
 | `MODEL_NOT_CONFIGURED` | 没有配置 Worker 地址或令牌，或地址不是 https |
 | `WORKER_UNREACHABLE` | 连不上 Worker，或返回内容不是 JSON |
 | `MODEL_TIMEOUT` | 请求 Worker 超过 19 秒 |
-| `WORKER_UNAUTHORIZED` 等 | Worker 返回的错误码，原样透传 |
+| `WORKER_UNAUTHORIZED`、`MODEL_RATE_LIMITED` 等 | Worker 返回的错误码；已登记的原样透传，未登记的归为 `MODEL_REQUEST_FAILED` |
 
 ### 配置
 
@@ -114,7 +134,7 @@ node scripts/deploy-functions.js --dry-run         # 只打印命令
 脚本做的事：
 
 1. 环境 ID 取环境变量 `ENV_ID`，没有时取 `miniprogram/config.js` 的 `cloudEnvId`。
-2. 部署 `mahjong-room` 前先运行 `scripts/sync-room-core.js`，同步领域代码。
+2. 先运行 `scripts/sync-shared.js`，把 `packages/` 下的共享代码同步到云函数目录（`domain.js`、`response.js`）。
 3. 部署 `tile-recognizer` 前检查 `worker.config.json` 是否存在。
 4. 执行 `tcb fn deploy <name> --force`，同时写入 `cloudbaserc.json` 中的超时、内存等配置。
 5. 有触发器的函数再执行 `tcb fn trigger create`；触发器已存在时报错可以忽略。
@@ -138,6 +158,3 @@ npx -p @cloudbase/cli tcb fn invoke tile-recognizer -e <环境ID> --params '{"ac
 2. 修改 `cloudfunctions/tile-recognizer/worker.config.json` 的 `workerToken`，执行 `node scripts/deploy-functions.js tile-recognizer`。
 3. 两步之间默认识牌会返回 `WORKER_UNAUTHORIZED`，尽量连续完成。
 
-## 两种错误风格
-
-`mahjong-room` 通过抛异常报错，`tile-recognizer` 通过返回 `{ ok: false, code }` 报错。新增云函数或修改调用方时，要注意两者的处理方式不同。

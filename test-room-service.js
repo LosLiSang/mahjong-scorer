@@ -15,11 +15,15 @@ global.wx = {
     },
     async callFunction(options) {
       lastCall = options;
-      if (options.data.action === 'identity') return { result: { openId: 'openid-self' } };
+      if (options.data.action === 'identity') return { result: { code: 'OK', msg: '', data: { openId: 'openid-self' } } };
       if (options.data.action === 'inspect') {
+        // 旧版云函数直接返回数据，过渡期仍兼容
         return { result: { roomCode: options.data.roomCode, mode: 'yonma', seats: [] } };
       }
-      return { result: { ok: true } };
+      if (options.data.roomCode === 'CNF234') {
+        return { result: { code: 'VERSION_CONFLICT', msg: '服务端：版本冲突', data: null } };
+      }
+      return { result: { code: 'OK', msg: '', data: { version: 2 } } };
     },
     database() {
       return {
@@ -88,6 +92,10 @@ const RoomService = require('./miniprogram/utils/room-service');
 
   RoomService.stopWatch();
   assert.equal(watcherClosed, true);
+
+  // 云函数通过返回值报错：抛出带 code 的异常，消息取服务端 msg
+  await assert.rejects(RoomService.undo('cnf234', 1), err => err.code === 'VERSION_CONFLICT' && err.message === '服务端：版本冲突');
+  assert.deepEqual(await RoomService.undo('abc234', 1), { version: 2 }, '成功时只返回 data');
 
   const parsed = RoomService.parseError({ message: 'cloud function failed: VERSION_CONFLICT' });
   assert.equal(parsed.code, 'VERSION_CONFLICT');

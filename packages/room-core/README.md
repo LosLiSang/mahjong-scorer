@@ -8,7 +8,7 @@
 - **同步产物**：`cloudfunctions/mahjong-room/domain.js`。微信云函数上传时只能包含函数目录内的文件，所以部署前需要运行：
 
 ```bash
-node scripts/sync-room-core.js
+node scripts/sync-shared.js
 ```
 
 `test-room-domain.js` 会校验两份文件一致，直接改云函数目录里的副本会导致测试失败。

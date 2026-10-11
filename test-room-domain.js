@@ -2,13 +2,13 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-// 防漂移：云函数目录里的 domain.js 必须与 packages/room-core 真源一致（先跑 node scripts/sync-room-core.js）。
+// 防漂移：云函数目录里的 domain.js 必须与 packages/room-core 真源一致（先跑 node scripts/sync-shared.js）。
 const canonical = path.join(__dirname, 'packages', 'room-core', 'domain.js');
 const synced = path.join(__dirname, 'cloudfunctions', 'mahjong-room', 'domain.js');
 assert.equal(
   fs.readFileSync(canonical, 'utf8'),
   fs.readFileSync(synced, 'utf8'),
-  'room-core 领域文件已漂移：请改 packages/room-core/domain.js 后运行 node scripts/sync-room-core.js'
+  'room-core 领域文件已漂移：请改 packages/room-core/domain.js 后运行 node scripts/sync-shared.js'
 );
 
 const Room = require('./packages/room-core');

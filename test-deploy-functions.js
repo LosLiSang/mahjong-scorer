@@ -19,7 +19,6 @@ const cases = [
     assert.deepEqual(plan[0].requiredFiles, ['worker.config.json']);
     assert.deepEqual(plan[0].commands, [['fn', 'deploy', 'tile-recognizer', '--force', '-e', 'env-1']]);
   } },
-  { name: '房间函数先同步领域代码', args: ['mahjong-room'], expect: plan => assert.equal(plan[0].syncRoomCore, true) },
   { name: '定时函数附带触发器', args: ['mahjong-room-cleanup', '--dry-run'], expect: plan => assert.deepEqual(plan[0].commands[1],
     ['fn', 'trigger', 'create', 'mahjong-room-cleanup', '--trigger-name', 'daily-room-cleanup', '--cron', '0 20 3 * * * *', '-e', 'env-1']) },
   { name: '未知函数', args: ['nope'], error: /没有这些函数/ },

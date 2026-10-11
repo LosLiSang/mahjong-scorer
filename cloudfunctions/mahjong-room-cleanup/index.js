@@ -4,6 +4,7 @@
 // 用 where().remove() 按房间批量删除；时间预算内反复分批处理，处理不完的留到下次。
 
 const cloud = require('wx-server-sdk');
+const Response = require('./response');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -19,7 +20,9 @@ async function removeRoom(roomCode) {
   await db.collection('rooms').doc(roomCode).remove();
 }
 
-exports.main = async () => {
+const MESSAGES = { INTERNAL_ERROR: '清理失败' };
+
+async function cleanup() {
   const startedAt = Date.now();
   const now = new Date(startedAt);
   const deletedRooms = [];
@@ -59,4 +62,7 @@ exports.main = async () => {
   };
   console.log('cleanup done', JSON.stringify({ deletedCount: result.deletedCount, failed: failedRooms.length, timedOut: result.timedOut }));
   return result;
-};
+}
+
+// 返回 { code, msg, data }，data 为清理结果
+exports.main = () => Response.handle(cleanup, MESSAGES);

@@ -2,6 +2,7 @@
 
 const cloud = require('wx-server-sdk');
 const Domain = require('./domain');
+const Response = require('./response');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -11,11 +12,34 @@ const VIEWS = 'room_views';
 const EVENTS = 'room_events';
 let collectionsReady = null;
 
-function error(code) {
-  const err = new Error(code);
-  err.code = code;
-  throw err;
-}
+// 错误码 → 给用户看的提示（随返回值的 msg 下发；领域层 domain.js 抛出的错误码也在这里登记）
+const MESSAGES = {
+  IDENTITY_UNAVAILABLE: '无法取得微信身份，请稍后重试',
+  UNKNOWN_ACTION: '未知的房间操作',
+  INVALID_ROOM_CODE: '房间码格式不正确',
+  ROOM_NOT_FOUND: '没有找到这个房间',
+  ROOM_NOT_ACTIVE: '房间已经结束',
+  ROOM_ENDED: '房间已经结束，只能查看记录',
+  ROOM_CODE_EXHAUSTED: '暂时无法生成房间码，请稍后重试',
+  NICKNAME_REQUIRED: '请填写微信昵称',
+  INVALID_SEAT: '请选择有效座位',
+  SEAT_OCCUPIED: '该座位已被其他玩家占用',
+  SEAT_EMPTY: '该座位当前无人占用',
+  HOST_SEAT_LOCKED: '房主座位不能释放，请先结束房间',
+  NOT_ROOM_MEMBER: '你已不在该房间中',
+  HOST_ONLY: '只有房主可以执行此操作',
+  VERSION_CONFLICT: '房间状态已更新，请确认后重试',
+  INVALID_COMMAND: '不支持的房间操作',
+  INVALID_GAME: '对局数据不完整，请重新同步',
+  INVALID_GAME_MODE: '房间人数模式不一致',
+  INVALID_GAME_TYPE: '房间计分类型不一致',
+  POINT_TOTAL_MISMATCH: '点数总计异常，已拒绝同步',
+  NOTHING_TO_UNDO: '没有可撤销的最新计分',
+  HAND_IN_PROGRESS: '本局已有人和牌，结束本局后才能关闭血战到底',
+  INTERNAL_ERROR: '房间服务暂时不可用，请稍后重试'
+};
+
+const error = Response.fail;
 
 function withoutId(document) {
   const data = Object.assign({}, document);
@@ -327,34 +351,27 @@ function endRoom(event, openId) {
   });
 }
 
-exports.main = async (event) => {
+const ACTIONS = {
+  identity: (event, openId) => ({ openId }),
+  create: createRoom,
+  inspect: inspectRoom,
+  join: joinRoom,
+  updateProfile: updateRoomProfile,
+  command: submitGame,
+  undo: undoGame,
+  reset: resetGame,
+  releaseSeat: releaseRoomSeat,
+  moveSeat: moveRoomSeat,
+  end: endRoom
+};
+
+// 返回 { code, msg, data }，不抛异常
+exports.main = event => Response.handle(() => {
   const { OPENID } = cloud.getWXContext();
   if (!OPENID) error('IDENTITY_UNAVAILABLE');
+  const action = ACTIONS[event && event.action];
+  if (!action) error('UNKNOWN_ACTION');
+  return action(event, OPENID);
+}, MESSAGES);
 
-  switch (event && event.action) {
-    case 'identity':
-      return { openId: OPENID };
-    case 'create':
-      return createRoom(event, OPENID);
-    case 'inspect':
-      return inspectRoom(event);
-    case 'join':
-      return joinRoom(event, OPENID);
-    case 'updateProfile':
-      return updateRoomProfile(event, OPENID);
-    case 'command':
-      return submitGame(event, OPENID);
-    case 'undo':
-      return undoGame(event, OPENID);
-    case 'reset':
-      return resetGame(event, OPENID);
-    case 'releaseSeat':
-      return releaseRoomSeat(event, OPENID);
-    case 'moveSeat':
-      return moveRoomSeat(event, OPENID);
-    case 'end':
-      return endRoom(event, OPENID);
-    default:
-      error('UNKNOWN_ACTION');
-  }
-};
+exports._internal = { MESSAGES };

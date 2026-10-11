@@ -27,8 +27,6 @@ function planDeploy(config, { names, envId }) {
 
   return all.filter(fn => wanted.includes(fn.name)).map(fn => ({
     name: fn.name,
-    // mahjong-room 的 domain.js 是 packages/room-core 的同步产物，部署前必须先同步
-    syncRoomCore: fn.name === 'mahjong-room',
     requiredFiles: fn.name === 'tile-recognizer' ? ['worker.config.json'] : [],
     commands: [['fn', 'deploy', fn.name, '--force', '-e', envId]]
       .concat((fn.triggers || []).map(trigger => ['fn', 'trigger', 'create', fn.name, '--trigger-name', trigger.name, '--cron', trigger.config, '-e', envId]))
@@ -63,12 +61,13 @@ function main() {
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'cloudbaserc.json'), 'utf8'));
   const plan = planDeploy(config, { names: options.names, envId: readEnvId() });
   const functionRoot = path.join(ROOT, config.functionRoot || 'cloudfunctions');
+  // domain.js、response.js 是 packages/ 的同步产物，部署前必须先同步
+  if (!options.dryRun) require('./sync-shared').syncShared();
 
   for (const step of plan) {
     console.log(`\n== ${step.name}`);
     const missing = step.requiredFiles.filter(file => !fs.existsSync(path.join(functionRoot, step.name, file)));
     if (missing.length) throw new Error(`${step.name} 缺少 ${missing.join(', ')}（见同目录 *.example.json）`);
-    if (step.syncRoomCore && !options.dryRun) require('./sync-room-core');
     for (const args of step.commands) {
       // 触发器已存在时 create 会报错，不影响代码部署结果
       const ok = run(args, options.dryRun);
