@@ -13,15 +13,31 @@
 
 const https = require('https');
 const { URL } = require('url');
+const Response = require('./response');
+
+// 错误码 → 给用户看的提示。Worker 返回的错误码也在这里登记，原样透传
+const MESSAGES = {
+  UNKNOWN_ACTION: '识牌服务版本过旧，请重新部署',
+  IMAGE_REQUIRED: '没有取得照片',
+  IMAGE_TOO_LARGE: '照片太大，请靠近手牌重拍',
+  MODEL_NOT_CONFIGURED: '云端默认模型尚未配置，可在设置页填写自定义模型',
+  MODEL_AUTH_FAILED: '模型鉴权失败，请检查 API Key',
+  MODEL_NOT_FOUND: '接口地址或模型名不存在，请检查',
+  MODEL_RATE_LIMITED: '模型调用太频繁或额度不足，请稍后再试',
+  MODEL_TIMEOUT: '识牌超时，请重试或手动选牌',
+  MODEL_EMPTY_RESPONSE: '模型没有返回结果，请重试',
+  WORKER_UNAUTHORIZED: '云端识牌服务令牌不匹配，请检查部署配置',
+  WORKER_UNREACHABLE: '连不上云端识牌服务，请稍后重试或手动选牌',
+  MODEL_REQUEST_FAILED: '识牌服务暂时不可用，请手动选牌',
+  INTERNAL_ERROR: '识牌服务暂时不可用，请手动选牌'
+};
 
 const MAX_IMAGE_BASE64 = 3 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 19000;
 const ROUTES = { recognize: '/recognize', testModel: '/test' };
 
 function error(code) {
-  const err = new Error(code);
-  err.code = code;
-  return err;
+  return new Response.CodedError(code);
 }
 
 function readLocalConfig() {
@@ -56,7 +72,7 @@ function buildForward(action, event, env, local) {
   };
 }
 
-// Worker 返回 { ok, ... } / { ok:false, code }；网络层失败映射为错误码
+// Worker（HTTP 服务）返回 { ok, ... } / { ok:false, code }；网络层失败映射为错误码
 function postJson(request) {
   return new Promise((resolve, reject) => {
     const url = new URL(request.url);
@@ -82,21 +98,19 @@ function postJson(request) {
   });
 }
 
+// 返回 Worker 结果中除 ok 以外的字段；Worker 未登记的错误码归为 MODEL_REQUEST_FAILED
 async function relay(event, env, send, local) {
   const action = event && event.action || 'recognize';
   const result = await send(buildForward(action, event || {}, env, local));
   if (!result || typeof result !== 'object') throw error('WORKER_UNREACHABLE');
-  if (!result.ok) throw error(result.code || 'MODEL_REQUEST_FAILED');
-  return result;
+  if (!result.ok) throw error(MESSAGES[result.code] ? result.code : 'MODEL_REQUEST_FAILED');
+  const data = Object.assign({}, result);
+  delete data.ok;
+  return data;
 }
 
-exports.main = async event => {
-  try {
-    return await relay(event, process.env, postJson, readLocalConfig());
-  } catch (err) {
-    return { ok: false, code: err && err.code || 'MODEL_REQUEST_FAILED' };
-  }
-};
+// 返回 { code, msg, data }，不抛异常
+exports.main = event => Response.handle(() => relay(event, process.env, postJson, readLocalConfig()), MESSAGES);
 
 // 供单测使用
-exports._internal = { workerConfig, buildForward, relay, MAX_IMAGE_BASE64 };
+exports._internal = { workerConfig, buildForward, relay, MAX_IMAGE_BASE64, MESSAGES };

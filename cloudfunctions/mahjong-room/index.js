@@ -2,6 +2,7 @@
 
 const cloud = require('wx-server-sdk');
 const Domain = require('./domain');
+const Response = require('./response');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -9,14 +10,36 @@ const db = cloud.database();
 const ROOMS = 'rooms';
 const VIEWS = 'room_views';
 const EVENTS = 'room_events';
-const GAME_COMMANDS = new Set(['win', 'draw', 'riichi', 'sichuan-win', 'sichuan-gang', 'sichuan-penalty', 'sichuan-setup', 'sichuan-rules', 'riichi-rules']);
 let collectionsReady = null;
 
-function error(code) {
-  const err = new Error(code);
-  err.code = code;
-  throw err;
-}
+// 错误码 → 给用户看的提示（随返回值的 msg 下发；领域层 domain.js 抛出的错误码也在这里登记）
+const MESSAGES = {
+  IDENTITY_UNAVAILABLE: '无法取得微信身份，请稍后重试',
+  UNKNOWN_ACTION: '未知的房间操作',
+  INVALID_ROOM_CODE: '房间码格式不正确',
+  ROOM_NOT_FOUND: '没有找到这个房间',
+  ROOM_NOT_ACTIVE: '房间已经结束',
+  ROOM_ENDED: '房间已经结束，只能查看记录',
+  ROOM_CODE_EXHAUSTED: '暂时无法生成房间码，请稍后重试',
+  NICKNAME_REQUIRED: '请填写微信昵称',
+  INVALID_SEAT: '请选择有效座位',
+  SEAT_OCCUPIED: '该座位已被其他玩家占用',
+  SEAT_EMPTY: '该座位当前无人占用',
+  HOST_SEAT_LOCKED: '房主座位不能释放，请先结束房间',
+  NOT_ROOM_MEMBER: '你已不在该房间中',
+  HOST_ONLY: '只有房主可以执行此操作',
+  VERSION_CONFLICT: '房间状态已更新，请确认后重试',
+  INVALID_COMMAND: '不支持的房间操作',
+  INVALID_GAME: '对局数据不完整，请重新同步',
+  INVALID_GAME_MODE: '房间人数模式不一致',
+  INVALID_GAME_TYPE: '房间计分类型不一致',
+  POINT_TOTAL_MISMATCH: '点数总计异常，已拒绝同步',
+  NOTHING_TO_UNDO: '没有可撤销的最新计分',
+  HAND_IN_PROGRESS: '本局已有人和牌，结束本局后才能关闭血战到底',
+  INTERNAL_ERROR: '房间服务暂时不可用，请稍后重试'
+};
+
+const error = Response.fail;
 
 function withoutId(document) {
   const data = Object.assign({}, document);
@@ -166,425 +189,189 @@ async function inspectRoom(event) {
   return Domain.publicRoomPreview(room);
 }
 
-async function joinRoom(event, openId) {
+// 房间写操作的统一流程（单个事务内）：
+//   读房间 → 校验状态 / 权限 / 版本 → spec.apply 产生新房间 → 版本 +1、记录动作
+//   → 写 rooms、同步成员视图、追加审计事件 → 返回操作者的视图
+// spec:
+//   type         事件类型
+//   access       'anyone'（不校验成员与版本，仅 join）| 'member' | 'host'
+//   apply        (room, ctx) => ({ room, summary(nickname), gameChanged?, eventData?, removedOpenId? })
+async function mutateRoom(event, openId, spec) {
   const code = Domain.normalizeRoomCode(event.roomCode);
   const result = await db.runTransaction(async transaction => {
-    let room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    if (event.gameType && Domain.normalizeGameType(room.gameType) !== Domain.normalizeGameType(event.gameType)) {
-      error('INVALID_GAME_TYPE');
+    const current = await readRoom(transaction.collection(ROOMS), code);
+    assertActive(current);
+    if (spec.access === 'host' && current.hostOpenId !== openId) error('HOST_ONLY');
+    if (spec.access === 'member') assertMember(current, openId);
+    if (spec.access !== 'anyone') assertVersion(current, event.expectedVersion);
+
+    const now = new Date();
+    const beforeGame = Domain.clone(current.game);
+    const change = await spec.apply(current, { transaction, now });
+    const room = change.room;
+    const nickname = operatorNickname(room, openId);
+    room.version = current.version + 1;
+    room.updatedAt = now;
+    const id = eventId(code, room.version, spec.type);
+    if (change.gameChanged) room.lastGameEventId = id;
+    recordActivity(room, actionRecord({ id, type: spec.type, summary: change.summary(nickname), openId, nickname, now }));
+
+    await setDocument(transaction.collection(ROOMS), code, room);
+    if (change.removedOpenId) {
+      await transaction.collection(VIEWS).doc(`${code}_${change.removedOpenId}`).remove();
     }
-    room = Domain.joinSeat(room, {
-      openId,
-      nickname: event.nickname,
-      avatarFileId: event.avatarFileId,
-      seatIndex: event.seatIndex
-    });
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    room.version += 1;
-    room.updatedAt = now;
-    const id = eventId(code, room.version, 'join');
-    recordActivity(room, actionRecord({
-      id,
-      type: 'join',
-      summary: `${nickname} 加入了房间`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
     await syncViews(transaction, room);
-    await addEvent(transaction, {
+    await addEvent(transaction, Object.assign({
       _id: id,
       roomCode: code,
       version: room.version,
-      type: 'join',
+      type: spec.type,
       operatorOpenId: openId,
       operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      createdAt: now
-    });
+      summary: room.lastAction.summary
+    }, change.gameChanged ? { beforeGame, afterGame: Domain.clone(room.game) } : {}, change.eventData, { createdAt: now }));
     return Domain.roomView(room, openId);
   });
   return transactionValue(result);
 }
 
-async function updateRoomProfile(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    let room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    assertMember(room, openId);
-    assertVersion(room, event.expectedVersion);
-    room = Domain.updateSeatProfile(room, {
-      openId,
-      avatarFileId: event.avatarFileId
-    });
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    room.version += 1;
-    room.updatedAt = now;
-    const id = eventId(code, room.version, 'profile');
-    recordActivity(room, actionRecord({
-      id,
-      type: 'profile',
-      summary: `${nickname} 更新了头像`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'profile',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
-  });
-  return transactionValue(result);
-}
-
-async function submitGame(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const type = String(event.commandType || '');
-  if (!GAME_COMMANDS.has(type)) error('INVALID_COMMAND');
-
-  const result = await db.runTransaction(async transaction => {
-    const room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    const roomGameType = Domain.normalizeGameType(room.gameType);
-    const commandGameType = type.startsWith('sichuan-') ? 'sichuan' : 'riichi';
-    const isRulesCommand = type === 'sichuan-rules' || type === 'riichi-rules';
-    if (roomGameType !== commandGameType) error('INVALID_GAME_TYPE');
-    assertMember(room, openId);
-    assertVersion(room, event.expectedVersion);
-
-    let nextGame = Domain.normalizeGame(event.nextGame, room.gameType);
-    nextGame = Domain.applySeatNames(nextGame, room.seats);
-    Domain.validateGame(nextGame, room.mode, room.gameType);
-    // 对局规则只能由房主通过 *-rules 命令修改；其他命令一律沿用房间现有规则
-    if (isRulesCommand) {
-      if (room.hostOpenId !== openId) error('HOST_ONLY');
-      // 规则命令只替换 rules，分数 / 历史一律沿用房间现状
-      const rules = nextGame.rules;
-      nextGame = Domain.clone(room.game);
-      nextGame.rules = rules;
-      if (roomGameType === 'riichi' && !rules.xuezhan && (room.game.handWinners || []).length) {
-        error('HAND_IN_PROGRESS');
+function joinRoom(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'join',
+    access: 'anyone',
+    apply: room => {
+      if (event.gameType && Domain.normalizeGameType(room.gameType) !== Domain.normalizeGameType(event.gameType)) {
+        error('INVALID_GAME_TYPE');
       }
-    } else if (roomGameType === 'sichuan') {
-      nextGame.rules = Domain.normalizeSichuanRules(room.game && room.game.rules);
-    } else {
-      nextGame.rules = Domain.normalizeRiichiRules(room.game && room.game.rules);
-      if (!nextGame.rules.xuezhan) nextGame.handWinners = [];
+      return {
+        room: Domain.joinSeat(room, { openId, nickname: event.nickname, avatarFileId: event.avatarFileId, seatIndex: event.seatIndex }),
+        summary: nickname => `${nickname} 加入了房间`
+      };
     }
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    const nextVersion = room.version + 1;
-    const id = eventId(code, nextVersion, type);
-    const beforeGame = Domain.clone(room.game);
-    room.game = nextGame;
-    room.version = nextVersion;
-    room.updatedAt = now;
-    room.lastGameEventId = id;
-    recordActivity(room, actionRecord({
-      id,
-      type,
-      summary: cleanSummary(event.summary, `${nickname} 更新了计分`),
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type,
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      beforeGame,
-      afterGame: Domain.clone(room.game),
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
   });
-  return transactionValue(result);
 }
 
-async function undoGame(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    const room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    assertMember(room, openId);
-    assertVersion(room, event.expectedVersion);
-    if (!room.lastGameEventId) error('NOTHING_TO_UNDO');
-
-    const previousResult = await transaction.collection(EVENTS).doc(room.lastGameEventId).get();
-    const previousEvent = previousResult && previousResult.data;
-    if (!previousEvent || !previousEvent.beforeGame || previousEvent.type === 'undo') error('NOTHING_TO_UNDO');
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    const nextVersion = room.version + 1;
-    const id = eventId(code, nextVersion, 'undo');
-    const beforeGame = Domain.clone(room.game);
-    room.game = Domain.applySeatNames(Domain.normalizeGame(previousEvent.beforeGame, room.gameType), room.seats);
-    Domain.validateGame(room.game, room.mode, room.gameType);
-    room.version = nextVersion;
-    room.updatedAt = now;
-    room.lastGameEventId = id;
-    recordActivity(room, actionRecord({
-      id,
-      type: 'undo',
-      summary: `${nickname} 撤销了最新计分`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'undo',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      beforeGame,
-      afterGame: Domain.clone(room.game),
-      undoneEventId: previousEvent._id,
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
+function updateRoomProfile(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'profile',
+    access: 'member',
+    apply: room => ({
+      room: Domain.updateSeatProfile(room, { openId, avatarFileId: event.avatarFileId }),
+      summary: nickname => `${nickname} 更新了头像`
+    })
   });
-  return transactionValue(result);
 }
 
-async function resetGame(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    const room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    if (room.hostOpenId !== openId) error('HOST_ONLY');
-    assertVersion(room, event.expectedVersion);
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    const nextVersion = room.version + 1;
-    const id = eventId(code, nextVersion, 'reset');
-    const beforeGame = Domain.clone(room.game);
-    room.game = Domain.applySeatNames(Domain.newGame(room.mode, room.gameType, room.game), room.seats);
-    room.version = nextVersion;
-    room.updatedAt = now;
-    room.lastGameEventId = id;
-    recordActivity(room, actionRecord({
-      id,
-      type: 'reset',
-      summary: `${nickname} 重置了整场`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'reset',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      beforeGame,
-      afterGame: Domain.clone(room.game),
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
+function submitGame(event, openId) {
+  const type = String(event.commandType || '');
+  if (!Domain.GAME_COMMANDS.includes(type)) error('INVALID_COMMAND');
+  return mutateRoom(event, openId, {
+    type,
+    access: 'member',
+    apply: room => ({
+      room: Object.assign({}, room, { game: Domain.applyGameCommand(room, { openId, type, nextGame: event.nextGame }) }),
+      summary: nickname => cleanSummary(event.summary, `${nickname} 更新了计分`),
+      gameChanged: true
+    })
   });
-  return transactionValue(result);
 }
 
-async function releaseRoomSeat(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    let room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    if (room.hostOpenId !== openId) error('HOST_ONLY');
-    assertVersion(room, event.expectedVersion);
-
-    const target = room.seats[Number(event.seatIndex)];
-    const removedOpenId = target && target.openId;
-    const removedNickname = target && target.nickname;
-    room = Domain.releaseSeat(room, event.seatIndex);
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    room.version += 1;
-    room.updatedAt = now;
-    const id = eventId(code, room.version, 'release-seat');
-    recordActivity(room, actionRecord({
-      id,
-      type: 'release-seat',
-      summary: `${nickname} 释放了 ${removedNickname || '玩家'} 的座位`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    if (removedOpenId) {
-      await transaction.collection(VIEWS).doc(`${code}_${removedOpenId}`).remove();
+function undoGame(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'undo',
+    access: 'member',
+    apply: async (room, { transaction }) => {
+      if (!room.lastGameEventId) error('NOTHING_TO_UNDO');
+      const previousResult = await transaction.collection(EVENTS).doc(room.lastGameEventId).get();
+      const previousEvent = previousResult && previousResult.data;
+      if (!previousEvent || !previousEvent.beforeGame || previousEvent.type === 'undo') error('NOTHING_TO_UNDO');
+      const game = Domain.applySeatNames(Domain.normalizeGame(previousEvent.beforeGame, room.gameType), room.seats);
+      Domain.validateGame(game, room.mode, room.gameType);
+      return {
+        room: Object.assign({}, room, { game }),
+        summary: nickname => `${nickname} 撤销了最新计分`,
+        gameChanged: true,
+        eventData: { undoneEventId: previousEvent._id }
+      };
     }
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'release-seat',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
   });
-  return transactionValue(result);
 }
 
-async function moveRoomSeat(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    let room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    assertMember(room, openId);
-    assertVersion(room, event.expectedVersion);
-
-    const sourceIndex = Domain.findSeatByOpenId(room, openId);
-    room = Domain.moveSeat(room, { openId, seatIndex: event.seatIndex });
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    room.version += 1;
-    room.updatedAt = now;
-    const id = eventId(code, room.version, 'move-seat');
-    recordActivity(room, actionRecord({
-      id,
-      type: 'move-seat',
-      summary: `${nickname} 换座`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'move-seat',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      fromSeat: sourceIndex,
-      toSeat: Number(event.seatIndex),
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
+function resetGame(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'reset',
+    access: 'host',
+    apply: room => ({
+      room: Object.assign({}, room, { game: Domain.applySeatNames(Domain.newGame(room.mode, room.gameType, room.game), room.seats) }),
+      summary: nickname => `${nickname} 重置了整场`,
+      gameChanged: true
+    })
   });
-  return transactionValue(result);
 }
 
-async function endRoom(event, openId) {
-  const code = Domain.normalizeRoomCode(event.roomCode);
-  const result = await db.runTransaction(async transaction => {
-    const room = await readRoom(transaction.collection(ROOMS), code);
-    assertActive(room);
-    if (room.hostOpenId !== openId) error('HOST_ONLY');
-    assertVersion(room, event.expectedVersion);
-
-    const now = new Date();
-    const nickname = operatorNickname(room, openId);
-    room.status = 'ended';
-    room.endedAt = now;
-    room.expiresAt = new Date(now.getTime() + Domain.ROOM_RETENTION_MS);
-    room.version += 1;
-    room.updatedAt = now;
-    const id = eventId(code, room.version, 'end');
-    recordActivity(room, actionRecord({
-      id,
-      type: 'end',
-      summary: `${nickname} 结束了房间`,
-      openId,
-      nickname,
-      now
-    }));
-
-    await setDocument(transaction.collection(ROOMS), code, room);
-    await syncViews(transaction, room);
-    await addEvent(transaction, {
-      _id: id,
-      roomCode: code,
-      version: room.version,
-      type: 'end',
-      operatorOpenId: openId,
-      operatorNickname: nickname,
-      summary: room.lastAction.summary,
-      createdAt: now
-    });
-    return Domain.roomView(room, openId);
+function releaseRoomSeat(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'release-seat',
+    access: 'host',
+    apply: room => {
+      const target = room.seats[Number(event.seatIndex)];
+      return {
+        room: Domain.releaseSeat(room, event.seatIndex),
+        summary: nickname => `${nickname} 释放了 ${(target && target.nickname) || '玩家'} 的座位`,
+        removedOpenId: target && target.openId
+      };
+    }
   });
-  return transactionValue(result);
 }
 
-exports.main = async (event) => {
+function moveRoomSeat(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'move-seat',
+    access: 'member',
+    apply: room => ({
+      room: Domain.moveSeat(room, { openId, seatIndex: event.seatIndex }),
+      summary: nickname => `${nickname} 换座`,
+      eventData: { fromSeat: Domain.findSeatByOpenId(room, openId), toSeat: Number(event.seatIndex) }
+    })
+  });
+}
+
+function endRoom(event, openId) {
+  return mutateRoom(event, openId, {
+    type: 'end',
+    access: 'host',
+    apply: (room, { now }) => ({
+      room: Object.assign({}, room, {
+        status: 'ended',
+        endedAt: now,
+        expiresAt: new Date(now.getTime() + Domain.ROOM_RETENTION_MS)
+      }),
+      summary: nickname => `${nickname} 结束了房间`
+    })
+  });
+}
+
+const ACTIONS = {
+  identity: (event, openId) => ({ openId }),
+  create: createRoom,
+  inspect: inspectRoom,
+  join: joinRoom,
+  updateProfile: updateRoomProfile,
+  command: submitGame,
+  undo: undoGame,
+  reset: resetGame,
+  releaseSeat: releaseRoomSeat,
+  moveSeat: moveRoomSeat,
+  end: endRoom
+};
+
+// 返回 { code, msg, data }，不抛异常
+exports.main = event => Response.handle(() => {
   const { OPENID } = cloud.getWXContext();
   if (!OPENID) error('IDENTITY_UNAVAILABLE');
+  const action = ACTIONS[event && event.action];
+  if (!action) error('UNKNOWN_ACTION');
+  return action(event, OPENID);
+}, MESSAGES);
 
-  switch (event && event.action) {
-    case 'identity':
-      return { openId: OPENID };
-    case 'create':
-      return createRoom(event, OPENID);
-    case 'inspect':
-      return inspectRoom(event);
-    case 'join':
-      return joinRoom(event, OPENID);
-    case 'updateProfile':
-      return updateRoomProfile(event, OPENID);
-    case 'command':
-      return submitGame(event, OPENID);
-    case 'undo':
-      return undoGame(event, OPENID);
-    case 'reset':
-      return resetGame(event, OPENID);
-    case 'releaseSeat':
-      return releaseRoomSeat(event, OPENID);
-    case 'moveSeat':
-      return moveRoomSeat(event, OPENID);
-    case 'end':
-      return endRoom(event, OPENID);
-    default:
-      error('UNKNOWN_ACTION');
-  }
-};
+exports._internal = { MESSAGES };

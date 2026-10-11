@@ -6,6 +6,7 @@
 const Config = require('../config');
 const TileRecognition = require('./tile-recognition');
 const Protocol = require('./model-protocol');
+const CloudResult = require('./cloud-result');
 
 const MODEL_CONFIG_KEY = 'mj_tile_model_v1';
 const COMPRESSED_WIDTH = 1280;
@@ -124,9 +125,13 @@ async function callCloud(data) {
   } catch (err) {
     throw fail(/timeout|超时/i.test(err && (err.errMsg || err.message) || '') ? 'MODEL_TIMEOUT' : 'MODEL_REQUEST_FAILED');
   }
-  const result = response && response.result;
-  if (!result || !result.ok) throw fail(result && result.code);
-  return result;
+  const result = CloudResult.unwrap(response && response.result);
+  if (!result.ok) {
+    const err = fail(result.code);
+    if (result.msg) err.message = result.msg;
+    throw err;
+  }
+  return result.data || {};
 }
 
 // 设置页草稿 → 模型配置；全空返回 null（= 云端默认）

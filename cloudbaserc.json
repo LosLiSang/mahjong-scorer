@@ -1,13 +1,39 @@
 {
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
   "version": "2.0",
   "envId": "{{env.ENV_ID}}",
   "functionRoot": "./cloudfunctions",
   "functions": [
     {
-      "name": "tile-recognizer",
-      "timeout": 20,
+      "name": "mahjong-room",
+      "description": "联机房间读写",
+      "timeout": 10,
+      "memorySize": 256,
       "runtime": "Nodejs16.13",
-      "installDependency": false
+      "handler": "index.main",
+      "installDependency": true
+    },
+    {
+      "name": "mahjong-room-cleanup",
+      "description": "每天清理已结束且过期的房间",
+      "timeout": 60,
+      "memorySize": 256,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "installDependency": true,
+      "triggers": [
+        { "name": "daily-room-cleanup", "type": "timer", "config": "0 20 3 * * * *" }
+      ]
+    },
+    {
+      "name": "tile-recognizer",
+      "description": "拍照识牌：转发到 Cloudflare Worker",
+      "timeout": 20,
+      "memorySize": 128,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "installDependency": false,
+      "ignore": ["worker.config.example.json"]
     }
   ]
 }

@@ -8,7 +8,7 @@
 - **同步产物**：`cloudfunctions/mahjong-room/domain.js`。微信云函数上传时只能包含函数目录内的文件，所以部署前需要运行：
 
 ```bash
-node scripts/sync-room-core.js
+node scripts/sync-shared.js
 ```
 
 `test-room-domain.js` 会校验两份文件一致，直接改云函数目录里的副本会导致测试失败。
@@ -21,6 +21,6 @@ node scripts/sync-room-core.js
 
 ## 动作协议（当前云函数对外支持的 type）
 
-`identity` / `create` / `inspect` / `join` / `updateProfile` / `command`（`win`、`draw`、`riichi`、`sichuan-win`、`sichuan-gang`、`sichuan-penalty`、`sichuan-setup`）/ `undo` / `reset` / `releaseSeat` / `moveSeat` / `end`
+`identity` / `create` / `inspect` / `join` / `updateProfile` / `command`（见 `GAME_COMMANDS`，由 `applyGameCommand` 校验）/ `undo` / `reset` / `releaseSeat` / `moveSeat` / `end`
 
 将来的 TS 后端按同一套动作与版本语义实现即可无缝替换云开发。

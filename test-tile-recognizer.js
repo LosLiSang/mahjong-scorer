@@ -129,7 +129,11 @@ assert.deepEqual(
   assert.throws(() => Cloud.buildForward('recognize', { imageBase64: 'x'.repeat(Cloud.MAX_IMAGE_BASE64 + 1) }, cloudEnv), err => err.code === 'IMAGE_TOO_LARGE');
   assert.deepEqual(
     await Cloud.relay({ action: 'recognize', imageBase64: 'IMG' }, cloudEnv, async () => ({ ok: true, text: 'T' })),
-    { ok: true, text: 'T' }
+    { text: 'T' }, '成功时去掉 ok，其余字段作为 data'
+  );
+  await assert.rejects(
+    Cloud.relay({ action: 'testModel' }, cloudEnv, async () => ({ ok: false, code: 'SOMETHING_NEW' })),
+    err => err.code === 'MODEL_REQUEST_FAILED', '未登记的 Worker 错误码归为 MODEL_REQUEST_FAILED'
   );
   await assert.rejects(
     Cloud.relay({ action: 'testModel' }, cloudEnv, async () => ({ ok: false, code: 'WORKER_UNAUTHORIZED' })),
@@ -139,6 +143,7 @@ assert.deepEqual(
   // ── 小程序端：自定义模型本地直连，未配置走云函数 ──
   const store = {};
   let cloudCalls = [];
+  let cloudReply = () => ({ code: 'OK', msg: '', data: { text: '{"hand":["1z"]}', model: 'qwen-vl-max', reply: '红', seesImage: true, latencyMs: 5 } });
   let requests = [];
   let requestReply = () => ({ statusCode: 200, data: { choices: [{ message: { content: '{"hand":[]}' } }] } });
   global.wx = {
@@ -148,7 +153,7 @@ assert.deepEqual(
     cloud: {
       async callFunction(options) {
         cloudCalls.push(options.data);
-        return { result: { ok: true, text: '{"hand":["1z"]}', model: 'qwen-vl-max', reply: '红', seesImage: true, latencyMs: 5 } };
+        return { result: cloudReply() };
       }
     },
     request(options) {
@@ -209,6 +214,14 @@ assert.deepEqual(
   const viaCloud = await Service.testModel({});
   assert.equal(viaCloud.via, 'cloud');
   assert.deepEqual(cloudCalls[0], { action: 'testModel' });
+  assert.equal(viaCloud.reply, '红');
+
+  // 云函数返回失败：用服务端下发的 msg；兼容旧版 { ok:false, code }
+  Service.saveModelConfig(null);
+  cloudReply = () => ({ code: 'WORKER_UNAUTHORIZED', msg: '服务端提示', data: null });
+  await assert.rejects(Service.testModel({}), err => err.code === 'WORKER_UNAUTHORIZED' && err.message === '服务端提示');
+  cloudReply = () => ({ ok: false, code: 'MODEL_TIMEOUT' });
+  await assert.rejects(Service.testModel({}), err => err.code === 'MODEL_TIMEOUT' && err.message.includes('超时'));
 
   console.log('tile recognizer tests passed');
 })().catch(err => { console.error(err); process.exit(1); });

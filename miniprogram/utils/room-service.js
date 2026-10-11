@@ -1,4 +1,5 @@
 const Config = require('../config');
+const CloudResult = require('./cloud-result');
 
 let watcher = null;
 let openId = '';
@@ -55,21 +56,31 @@ function parseError(err) {
   return parsed;
 }
 
+// 云函数返回的业务错误：优先用服务端下发的 msg，没有时查本地提示表
+function serviceError(code, msg) {
+  const err = new Error(msg || ERROR_MESSAGES[code] || '房间服务暂时不可用，请检查网络后重试');
+  err.code = code || 'ROOM_SERVICE_ERROR';
+  return err;
+}
+
 async function call(action, data) {
   if (!isConfigured()) {
     const err = new Error('请先在 miniprogram/config.js 中填写微信云开发 envId');
     err.code = 'CLOUD_NOT_CONFIGURED';
     throw err;
   }
+  let response;
   try {
-    const response = await wx.cloud.callFunction({
+    response = await wx.cloud.callFunction({
       name: Config.roomFunctionName,
       data: Object.assign({ action }, data || {})
     });
-    return response.result;
   } catch (err) {
     throw parseError(err);
   }
+  const result = CloudResult.unwrap(response && response.result);
+  if (!result.ok) throw serviceError(result.code, result.msg);
+  return result.data;
 }
 
 async function identity() {

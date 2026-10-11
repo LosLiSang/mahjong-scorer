@@ -54,10 +54,43 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 实时房间功能默认关闭；**未配置云环境时，本地日麻与川麻计分完全不受影响**。
 
 - 云环境配置：`miniprogram/config.js` 中的 `cloudEnvId`。
-- 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-room-core.js`。
+- 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-shared.js`。
 - 部署步骤、集合权限与真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。
-- 云函数位于 `cloudfunctions/mahjong-room` 与 `cloudfunctions/mahjong-room-cleanup`。
+- 云函数位于 `cloudfunctions/`（`mahjong-room`、`mahjong-room-cleanup`、`tile-recognizer`），各自的参数、返回与错误码见 [`docs/cloud-functions.md`](docs/cloud-functions.md)。
 - Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
+
+## 部署
+
+### 云函数
+
+用 CloudBase CLI（`tcb`）部署，配置的唯一来源是根目录 `cloudbaserc.json`（超时、内存、依赖、定时触发器）。
+
+```bash
+npx -p @cloudbase/cli tcb login                    # 首次使用，扫码登录
+node scripts/deploy-functions.js                   # 部署全部云函数（自动同步 packages/ 共享代码）
+node scripts/deploy-functions.js tile-recognizer   # 只部署一个
+node scripts/deploy-functions.js --dry-run         # 只打印将要执行的命令
+```
+
+部署后核对、日志排查和密钥轮换见 [`docs/cloud-functions.md`](docs/cloud-functions.md#部署)。
+
+### 上线顺序：先发小程序，再部署云函数
+
+云函数返回结构改成 `{ code, msg, data }` 后（#28），用户手里的旧版小程序只认旧结构。先部署云函数会导致旧版联机房间和拍照识牌异常。必须按下面的顺序上线：
+
+1. **先发布新版小程序**。新版的 `miniprogram/utils/cloud-result.js` 新旧两种结构都能读。
+2. **等大部分用户更新后**，再运行 `node scripts/deploy-functions.js` 部署云函数。
+3. 真机验证联机房间和拍照识牌（清单见 [`docs/room-setup.md`](docs/room-setup.md) 第 4 节）。
+
+以后修改云函数的参数或返回结构时也遵循同一原则：小程序先兼容新旧两种格式并发布，然后再部署云函数。
+
+### Cloudflare Worker（拍照识牌默认模型）
+
+```bash
+cd apps/tile-worker && npx wrangler deploy
+```
+
+配置见 [`docs/room-setup.md`](docs/room-setup.md) 第 7.1 节。
 
 ## 项目结构
 
@@ -77,7 +110,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 ├── cloudfunctions/             # 微信云函数
 │   ├── mahjong-room/           # 联机房间（domain.js 由 room-core 同步）
 │   └── mahjong-room-cleanup/   # 房间清理
-├── scripts/                    # sync-room-core 等脚本
+├── scripts/                    # sync-shared、deploy-functions 等脚本
 ├── docs/                       # 部署、研究与 agent 文档
 ├── project.config.json         # 小程序项目配置（本地填写，不入库）
 └── .gitattributes              # 强制 LF 行尾，保证跨平台一致
@@ -90,6 +123,9 @@ node test-logic.js          # 日麻计分核心（含血战到底）
 node test-miniprogram.js    # 小程序页面交互与川麻计分
 node test-room-domain.js    # 联机房间领域逻辑
 node test-room-service.js   # 联机房间服务
+node test-tile-recognizer.js # 拍照识牌
+node test-deploy-functions.js # 云函数部署计划与 cloudbaserc.json
+node test-cloud-response.js # 云函数统一返回结构 { code, msg, data }
 ```
 
 ## 牌图
