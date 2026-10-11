@@ -116,14 +116,20 @@ label, .label { display: block; font-size: 24rpx; color: #8a8470; margin: 24rpx 
 .player-card .delta { color: #5a7a4a; font-size: 20rpx; height: 26rpx; }
 .player-card .delta.minus { color: var(--accent, #c96442); }
 .player-card .riichi-mark { position: absolute; top: 8rpx; right: 9rpx; padding: 2rpx 8rpx; border-radius: 8rpx; background: var(--accent, #c46645); color: #fff; font-size: 15rpx; }
-.player-card.won { background: #f3f6ef; border-color: #a9bd98; }
+/* 血战已和/已胡：整张卡片标绿，一眼看出谁已离场 */
+.player-card.won { background: #e4efdc; border-color: #6f9a5a; box-shadow: 0 4rpx 14rpx rgba(90,122,74,.18); }
+.player-card.won .points { color: #3f5c33; }
 .player-card .won-mark { position: absolute; top: 8rpx; right: 9rpx; padding: 2rpx 8rpx; border-radius: 8rpx; background: #5a7a4a; color: #fff; font-size: 15rpx; }
 .rule-corner { pointer-events: auto; padding: 4rpx 6rpx; margin: -4rpx -6rpx; border-radius: 10rpx; }
 .rule-corner:active { background: rgba(201,100,66,.08); }
 .rule-corner .corner-value { color: var(--accent, #c96442); }
 .xuezhan-hint { margin: 14rpx 0 6rpx; padding: 14rpx 16rpx; border-radius: 12rpx; background: #f1f5ee; color: #536349; font-size: 21rpx; line-height: 1.6; }
 .rank-mark { position: absolute; right: 9rpx; bottom: 6rpx; padding: 1rpx 8rpx; border-radius: 8rpx; background: #f1ede2; color: #746e5c; font-size: 15rpx; font-weight: 600; line-height: 1.4; }
-.rank-mark.rank-first { background: var(--accent, #c46645); color: #fff; }
+/* 名次配色：金 / 银 / 铜 / 灰，避开主题红与「已和」绿 */
+.rank-mark.rank-1 { background: #c99a2e; color: #fff; }
+.rank-mark.rank-2 { background: #8d96a0; color: #fff; }
+.rank-mark.rank-3 { background: #a8704a; color: #fff; }
+.rank-mark.rank-4 { background: #f1ede2; color: #746e5c; }
 
 /* 计分页操作区（日麻 / 川麻共用）：主按钮行、工具栏行等距排列，提示在最下方 */
 .score-actions { display: flex; flex-direction: column; gap: 14rpx; }

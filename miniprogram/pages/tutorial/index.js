@@ -5,8 +5,11 @@ const {
   MAHJONG_TUTORIAL,
   getTutorialQuestion,
   getTrainingTopic,
+  decorateQuestionTiles,
   buildTutorialHome,
 } = require('../../utils/tutorial-data');
+
+const withTiles = question => decorateQuestionTiles(question, Shared.tileSrc);
 
 const PROGRESS_KEY = 'mj_tutorial_progress_v1';
 
@@ -78,7 +81,7 @@ Page({
     const lessons = rawLessons.map(lesson => ({
       ...lesson,
       learned: false,
-      check: getTutorialQuestion(lesson.checkQuestionId),
+      check: withTiles(getTutorialQuestion(lesson.checkQuestionId)),
       tileGroups: (lesson.tileGroups || []).map(group => {
         const tiles = group.tiles || [];
         const win = group.win || '';
@@ -97,7 +100,8 @@ Page({
     }));
     const trainingTopics = (MAHJONG_TUTORIAL.trainingTopics || [])
       .map(topic => getTrainingTopic(topic.id))
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(topic => ({ ...topic, questions: topic.questions.map(withTiles) }));
     this.setData({
       lessons,
       trainingTopics,

@@ -84,19 +84,31 @@
     return SICHUAN_GANG_KINDS.find(item => item.id === kind) || null;
   }
 
+  // 血战到底：本局已胡玩家离场（按胡牌记录的收分者去重）；血流成河胡后仍在场，返回空
+  function sichuanWonPlayers(game) {
+    if (!game || normalizeSichuanRules(game.rules).mode !== 'xuezhan') return [];
+    const won = [];
+    (game.history || []).forEach(entry => {
+      if (entry && entry.type === 'win' && Number.isInteger(entry.receiver) && !won.includes(entry.receiver)) won.push(entry.receiver);
+    });
+    return won;
+  }
+
   // 计算一次杠分：返回付款者列表与每人金额；参数不合法时返回 null
-  function calculateGang({ kind, receiver, baseScore = 1, discarder = -1, payers = null, playerCount = 4 }) {
+  // outPlayers：已离场玩家（血战已胡），既不能杠牌收分，也不付杠分
+  function calculateGang({ kind, receiver, baseScore = 1, discarder = -1, payers = null, playerCount = 4, outPlayers = [] }) {
     const type = findGangKind(kind);
     const r = Number(receiver);
-    if (!type || !Number.isInteger(r) || r < 0 || r >= playerCount) return null;
+    const out = Array.isArray(outPlayers) ? outPlayers.map(Number) : [];
+    if (!type || !Number.isInteger(r) || r < 0 || r >= playerCount || out.includes(r)) return null;
     const amountPerPayer = type.multiplier * (Number(baseScore) || 1);
     let list;
     if (type.payerMode === 'single') {
       const d = Number(discarder);
-      if (!Number.isInteger(d) || d < 0 || d >= playerCount || d === r) return null;
+      if (!Number.isInteger(d) || d < 0 || d >= playerCount || d === r || out.includes(d)) return null;
       list = [d];
     } else {
-      const all = Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== r);
+      const all = Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== r && !out.includes(i));
       list = Array.isArray(payers) ? all.filter(i => payers.includes(i)) : all;
       if (!list.length) return null;
     }
@@ -195,6 +207,7 @@
     sichuanPlayModeName,
     findGangKind,
     calculateGang,
+    sichuanWonPlayers,
     calculateSichuanFan,
     setSichuanMissingSuit,
     scoreFromFan,

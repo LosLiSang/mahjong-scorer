@@ -39,7 +39,7 @@
     <view
       wx:for="{{game.players}}"
       wx:key="index"
-      class="player-card seat-{{seatPositions[index]}} sichuan-player"
+      class="player-card seat-{{seatPositions[index]}} sichuan-player {{wonFlags[index] ? 'won' : ''}}"
       data-index="{{index}}"
       bindtap="openPlayerSetup"
     >
@@ -54,7 +54,8 @@
         <text class="missing-prefix">缺</text>
         <text class="missing-suit">{{item.missingSuit === 'm' ? '万' : item.missingSuit === 'p' ? '筒' : '索'}}</text>
       </view>
-      <view class="rank-mark {{ranks[index] === 1 ? 'rank-first' : ''}}">{{ranks[index]}}位</view>
+      <view wx:if="{{wonFlags[index]}}" class="won-mark sichuan-won-mark">已胡</view>
+      <view class="rank-mark rank-{{ranks[index]}}">{{ranks[index]}}位</view>
     </view>
   </view>
 
@@ -311,10 +312,10 @@
       <view
         wx:for="{{game.players}}"
         wx:key="index"
-        class="seg-btn {{gangReceiver === index ? 'active' : ''}}"
+        class="seg-btn {{gangReceiver === index ? 'active' : ''}} {{gangOut[index] ? 'disabled' : ''}}"
         data-index="{{index}}"
         bindtap="selectGangReceiver"
-      >{{seats[index]}} · {{item.name}}</view>
+      >{{seats[index]}} · {{item.name}}{{gangOut[index] ? ' 已胡' : ''}}</view>
     </view>
     <view class="label">杠类型</view>
     <view class="seg-group seg-one-line gang-kind-row">
@@ -333,10 +334,10 @@
           wx:for="{{game.players}}"
           wx:key="index"
           wx:if="{{index !== gangReceiver}}"
-          class="seg-btn {{gangDiscarder === index ? 'active' : ''}}"
+          class="seg-btn {{gangDiscarder === index ? 'active' : ''}} {{gangOut[index] ? 'disabled' : ''}}"
           data-index="{{index}}"
           bindtap="selectGangDiscarder"
-        >{{seats[index]}} · {{item.name}}</view>
+        >{{seats[index]}} · {{item.name}}{{gangOut[index] ? ' 已胡' : ''}}</view>
       </view>
     </block>
     <view wx:if="{{gangPreview}}" class="settlement-preview">

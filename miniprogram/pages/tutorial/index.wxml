@@ -167,16 +167,25 @@
           <view wx:if="{{activeLessonLearned}}" class="lesson-learned-badge">已学会 ✓</view>
         </view>
         <view class="lesson-check-question">{{activeLesson.check.question}}</view>
+        <view wx:if="{{activeLesson.check.tileRows.length}}" class="question-tiles">
+          <view wx:for="{{activeLesson.check.tileRows}}" wx:key="key" wx:for-item="row" class="question-tile-group">
+            <text wx:if="{{row.label}}" class="question-tile-label">{{row.label}}</text>
+            <image wx:for="{{row.tiles}}" wx:key="key" wx:for-item="tile" class="question-tile-img {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+          </view>
+        </view>
         <view class="quiz-options lesson-check-options">
           <view
-            wx:for="{{activeLesson.check.options}}"
-            wx:key="*this"
+            wx:for="{{activeLesson.check.optionViews}}"
+            wx:key="text"
             class="quiz-option {{lessonCheckAnswer === index ? 'selected' : ''}} {{lessonCheckSubmitted && index === activeLesson.check.answer ? 'correct' : ''}} {{lessonCheckSubmitted && lessonCheckAnswer === index && !lessonCheckCorrect ? 'wrong' : ''}}"
             data-answer="{{index}}"
             bindtap="selectLessonCheckOption"
           >
             <text class="option-letter">{{['A','B','C','D'][index]}}</text>
-            <text class="option-text">{{item}}</text>
+            <text class="option-text">{{item.text}}</text>
+            <view wx:if="{{item.tiles.length}}" class="option-tiles">
+              <image wx:for="{{item.tiles}}" wx:key="key" wx:for-item="tile" class="question-tile-img {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+            </view>
           </view>
         </view>
         <view wx:if="{{lessonCheckSubmitted}}" class="quiz-explanation lesson-check-explanation">
@@ -218,18 +227,27 @@
 
       <!-- 题目 -->
       <view class="quiz-question">{{quizQuestions[quizIndex].question}}</view>
+      <view wx:if="{{quizQuestions[quizIndex].tileRows.length}}" class="question-tiles">
+        <view wx:for="{{quizQuestions[quizIndex].tileRows}}" wx:key="key" wx:for-item="row" class="question-tile-group">
+          <text wx:if="{{row.label}}" class="question-tile-label">{{row.label}}</text>
+          <image wx:for="{{row.tiles}}" wx:key="key" wx:for-item="tile" class="question-tile-img {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+        </view>
+      </view>
 
       <!-- 选项 -->
       <view class="quiz-options">
         <view
-          wx:for="{{quizQuestions[quizIndex].options}}"
-          wx:key="*this"
+          wx:for="{{quizQuestions[quizIndex].optionViews}}"
+          wx:key="text"
           class="quiz-option {{quizAnswer === index ? 'selected' : ''}} {{quizSubmitted && index === quizQuestions[quizIndex].answer ? 'correct' : ''}} {{quizSubmitted && quizAnswer === index && !quizCorrect ? 'wrong' : ''}}"
           data-answer="{{index}}"
           bindtap="selectQuizOption"
         >
           <text class="option-letter">{{['A','B','C','D'][index]}}</text>
-          <text class="option-text">{{item}}</text>
+          <text class="option-text">{{item.text}}</text>
+          <view wx:if="{{item.tiles.length}}" class="option-tiles">
+            <image wx:for="{{item.tiles}}" wx:key="key" wx:for-item="tile" class="question-tile-img {{tile.isHaku ? 'haku-tile' : ''}}" src="{{tile.src}}" mode="aspectFit" />
+          </view>
         </view>
       </view>
 

@@ -167,6 +167,13 @@
 .option-letter { font-weight: 700; min-width: 36rpx; color: var(--accent, #c96442); }
 .option-text { flex: 1; }
 
+/* 题目配牌：题干按面子分组，选项牌放在文字右侧 */
+.question-tiles { display: flex; flex-wrap: wrap; gap: 10rpx 14rpx; align-items: center; padding: 12rpx; margin: -8rpx 0 20rpx; background: #eeeadd; border-radius: 14rpx; }
+.question-tile-group { display: flex; gap: 2rpx; align-items: center; }
+.question-tile-label { font-size: 20rpx; color: #746e5c; margin-right: 6rpx; }
+.question-tile-img { width: 32rpx; height: 44rpx; flex: 0 0 auto; border-radius: 4rpx; }
+.option-tiles { display: flex; gap: 2rpx; flex: 0 0 auto; }
+
 .quiz-explanation { margin-top: 20rpx; padding: 20rpx; border-radius: 16rpx; }
 .quiz-explanation-header { font-size: 26rpx; font-weight: 700; margin-bottom: 10rpx; }
 .quiz-explanation-header.correct { color: #4f6743; }
