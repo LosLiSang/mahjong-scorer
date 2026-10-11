@@ -76,7 +76,7 @@ node scripts/deploy-functions.js --dry-run         # 只打印将要执行的命
 
 ### 上线顺序：先发小程序，再部署云函数
 
-云函数返回结构改成 `{ code, msg, data }` 后（提交 `5a3a8da`），用户手里的旧版小程序只认旧结构。先部署云函数会导致旧版联机房间和拍照识牌异常。必须按下面的顺序上线：
+云函数返回结构改成 `{ code, msg, data }` 后（#28），用户手里的旧版小程序只认旧结构。先部署云函数会导致旧版联机房间和拍照识牌异常。必须按下面的顺序上线：
 
 1. **先发布新版小程序**。新版的 `miniprogram/utils/cloud-result.js` 新旧两种结构都能读。
 2. **等大部分用户更新后**，再运行 `node scripts/deploy-functions.js` 部署云函数。
