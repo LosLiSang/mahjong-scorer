@@ -78,8 +78,10 @@ Page({
   initPage() {
     const rawLessons = MAHJONG_TUTORIAL.lessons || [];
     // pre-process lesson tileGroups to include full image paths
-    const lessons = rawLessons.map(lesson => ({
+    const lessons = rawLessons.map((lesson, lessonIndex) => ({
       ...lesson,
+      // 章节号按顺序生成，插入新章节不用改数据
+      eyebrow: `第${lessonIndex + 1}章 · ${lesson.eyebrow}`,
       learned: false,
       check: withTiles(getTutorialQuestion(lesson.checkQuestionId)),
       tileGroups: (lesson.tileGroups || []).map(group => {

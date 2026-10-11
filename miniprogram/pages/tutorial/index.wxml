@@ -139,7 +139,7 @@
             <image
               wx:for="{{item.displayTiles}}"
               wx:key="id"
-              class="lesson-tile-img"
+              class="lesson-tile-img {{item.id === '5z' ? 'haku-tile' : ''}}"
               src="{{item.src}}"
               mode="aspectFit"
             />
