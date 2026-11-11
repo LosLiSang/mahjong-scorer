@@ -817,7 +817,7 @@ Page({
       recognizeAvailable: Recognizer.isAvailable(),
       analysisStage: 0, analysisMessage: '', analysisResult: null,
       melds: [], decompositions: [], decompIndex: 0,
-      showDora: false, showUra: false,
+      showDora: false, showUra: false, recognizeHelpOpen: false,
       previewTotal: 0, previewBreakdown: '', fuIndex: 2, hanIndex: 2
     });
     this.refreshTiles();

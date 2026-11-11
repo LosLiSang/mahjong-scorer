@@ -139,13 +139,13 @@ assert.equal(page.data.hand.length, 14, '识别失败时不能静默改动手牌
 page.undoTile();
 assert.deepEqual(page.data.hand, ['1z'], '撤销一步恢复识别前的手牌');
 assert.equal(page.data.win.winTile, null);
-// 识牌说明（#29）：默认收起不打扰，点一下展开、再点收起
+// 识牌说明（#29）：默认收起不打扰，点一下展开；重开和牌弹窗回到收起态
 assert.equal(page.data.recognizeHelpOpen, false, '识牌说明默认收起');
 page.toggleRecognizeHelp();
 assert.equal(page.data.recognizeHelpOpen, true, '点击后展开识牌说明');
-page.toggleRecognizeHelp();
-assert.equal(page.data.recognizeHelpOpen, false, '再次点击收起识牌说明');
 page.closeWin();
+page.openWin();
+assert.equal(page.data.recognizeHelpOpen, false, '展开状态下重开和牌弹窗，识牌说明复位为收起');
 
 page.openWin();
 // 和牌结算按 基本→牌型→宝牌 分步填写，且切换步骤不丢失中间数据
