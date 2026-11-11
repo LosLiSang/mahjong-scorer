@@ -57,7 +57,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 - 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-shared.js`。
 - 部署步骤、集合权限与真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。
 - 云函数位于 `cloudfunctions/`（`mahjong-room`、`mahjong-room-cleanup`、`tile-recognizer`），各自的参数、返回与错误码见 [`docs/cloud-functions.md`](docs/cloud-functions.md)。
-- 拍照识牌的调用链、使用说明与自定义模型配置见 [`docs/tile-recognition.md`](docs/tile-recognition.md)。
+- 拍照识牌的调用链、使用说明、自定义模型配置、计费成本表与防滥用方案见 [`docs/tile-recognition.md`](docs/tile-recognition.md)。
 - Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
 
 ## 部署
