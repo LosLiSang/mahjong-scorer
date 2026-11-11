@@ -139,6 +139,12 @@ assert.equal(page.data.hand.length, 14, '识别失败时不能静默改动手牌
 page.undoTile();
 assert.deepEqual(page.data.hand, ['1z'], '撤销一步恢复识别前的手牌');
 assert.equal(page.data.win.winTile, null);
+// 识牌说明（#29）：默认收起不打扰，点一下展开、再点收起
+assert.equal(page.data.recognizeHelpOpen, false, '识牌说明默认收起');
+page.toggleRecognizeHelp();
+assert.equal(page.data.recognizeHelpOpen, true, '点击后展开识牌说明');
+page.toggleRecognizeHelp();
+assert.equal(page.data.recognizeHelpOpen, false, '再次点击收起识牌说明');
 page.closeWin();
 
 page.openWin();
@@ -263,6 +269,12 @@ assert(
 // 和牌结算最后一页（宝牌）也要能展示牌型分析结果
 const step3Block = pageMarkup.match(/<block wx:if="\{\{winStep === 3\}\}">[\s\S]*?<\/block>/);
 assert(step3Block && /analysisResult[\s\S]*result-card/.test(step3Block[0]), '和牌结算最后一页应展示牌型分析结果');
+
+// 识牌说明（#29）：拍照识牌按钮旁提供默认收起的说明，涵盖张数、核对、撤销与设置入口
+assert(
+  /wx:if="\{\{recognizeAvailable\}\}"[\s\S]*?bindtap="toggleRecognizeHelp"[\s\S]*?wx:if="\{\{recognizeHelpOpen\}\}"[\s\S]*?14–18 张[\s\S]*?核对[\s\S]*?撤销[\s\S]*?设置 → 识牌/.test(pageMarkup),
+  '第 2 步识牌说明应默认收起，内容涵盖拍齐 14–18 张、核对、撤销与设置入口'
+);
 
 // 役种牌例数据完整性：每个例必须是 14 张完成和牌（等待形为 13 张）并带胡牌张
 let yakuProblems = [];
@@ -736,6 +748,40 @@ page.openWin();
 assert.equal(page.data.win.winnerIdx, 2, '和牌者默认选自己');
 assert.notEqual(page.data.win.loserIdx, 2);
 page.closeWin();
+
+// 设置页识牌说明（#29）：常用接口示例默认收起，展开可见各厂商地址；识牌 Tab 可切换
+let settingsPageDefinition = null;
+global.Page = (definition) => { settingsPageDefinition = definition; };
+global.wx = {
+  getStorageSync: () => null,
+  setStorageSync: () => {},
+  removeStorageSync: () => {},
+  showToast: () => {},
+  showModal: ({ success }) => success && success({ confirm: true }),
+  setClipboardData: () => {},
+  navigateTo: () => {}
+};
+require('./miniprogram/pages/settings/index');
+assert(settingsPageDefinition, '设置页应成功注册');
+const settingsPage = Object.assign({}, settingsPageDefinition, {
+  data: JSON.parse(JSON.stringify(settingsPageDefinition.data)),
+  setData(patch) { Object.assign(this.data, patch); }
+});
+settingsPage.onLoad();
+assert.equal(settingsPage.data.modelExamplesOpen, false, '常用接口示例默认收起');
+settingsPage.toggleModelExamples();
+assert.equal(settingsPage.data.modelExamplesOpen, true, '点击后展开常用接口示例');
+settingsPage.toggleModelExamples();
+assert.equal(settingsPage.data.modelExamplesOpen, false, '再次点击收起常用接口示例');
+settingsPage.switchTab({ currentTarget: { dataset: { id: 'model' } } });
+assert.equal(settingsPage.data.activeTab, 'model', '可切换到识牌 Tab');
+assert.equal(settingsPage.data.settingsTabs.filter(tab => tab.id === 'model').length, 1, '设置页应保留识牌 Tab');
+const settingsMarkup = fs.readFileSync('./miniprogram/pages/settings/index.wxml', 'utf8');
+assert(
+  /bindtap="toggleModelExamples"[\s\S]*?wx:if="\{\{modelExamplesOpen\}\}"[\s\S]*?dashscope\.aliyuncs\.com\/compatible-mode\/v1[\s\S]*?open\.bigmodel\.cn\/api\/paas\/v4[\s\S]*?qwen-vl-max/.test(settingsMarkup),
+  '识牌 Tab 的常用接口示例应默认收起，并列出通义、智谱等兼容接口地址'
+);
+assert(/request 合法域名/.test(settingsMarkup), '识牌 Tab 应保留合法域名提示');
 
 console.log('mini-program tests passed');
 

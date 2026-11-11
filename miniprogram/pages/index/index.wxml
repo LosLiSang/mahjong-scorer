@@ -297,6 +297,16 @@
         <button class="btn btn-secondary btn-small" bindtap="clearHand">清空</button>
         <button class="btn btn-secondary btn-small" bindtap="undoTile">撤销</button>
       </view>
+      <!-- 识牌说明：默认收起，点开才占位，不打扰老用户 -->
+      <view wx:if="{{recognizeAvailable}}" class="recognize-help">
+        <text class="recognize-help-toggle" bindtap="toggleRecognizeHelp">{{recognizeHelpOpen ? '收起识牌说明 ▲' : '识牌说明 ▼'}}</text>
+        <view wx:if="{{recognizeHelpOpen}}" class="recognize-help-body">
+          <text class="recognize-help-line">· 拍齐整手 14–18 张（含和牌张），正对俯拍，光线均匀防反光</text>
+          <text class="recognize-help-line">· 和了的那张单独放开，更容易识别</text>
+          <text class="recognize-help-line">· 填入后请逐张核对牌面与赤五，点「撤销」可恢复原手牌</text>
+          <text class="recognize-help-line">· 识别不了时可换模型：设置 → 识牌</text>
+        </view>
+      </view>
 
       <!-- 分析按钮 -->
       <button class="btn analyze-btn" bindtap="analyzeHand">{{analysisStage ? '重新分析并更新结果' : '分析牌型'}}</button>

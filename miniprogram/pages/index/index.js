@@ -114,7 +114,7 @@ Page({
     // win modal
     showWin: false, winStep: 1,
     hand: [], handDisplay: [], handHistory: [], win: null,
-    recognizing: false, recognizeAvailable: Recognizer.isAvailable(),
+    recognizing: false, recognizeAvailable: Recognizer.isAvailable(), recognizeHelpOpen: false,
     winTileOptions: [], winTileName: '未选择',
     tileRows: [], doraTiles: [], uraTiles: [],
     showDora: false, showUra: false,
@@ -906,6 +906,11 @@ Page({
     this.invalidateAnalysis();
     this.refreshTiles();
   },
+  // 识牌说明：默认收起，点一下展开/收起，不占常用路径空间
+  toggleRecognizeHelp() {
+    this.setData({ recognizeHelpOpen: !this.data.recognizeHelpOpen });
+  },
+
   // 拍照识牌：识别成功才整体替换手牌；失败或低置信度只提示，不改动当前手牌
   async recognizeHand() {
     if (this.data.recognizing) return;

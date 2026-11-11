@@ -116,3 +116,9 @@
 .compact-label { margin-top: 0; }
 .picker-control { display: flex; align-items: center; justify-content: space-between; padding: 18rpx 20rpx; background: #fff; border: 2rpx solid #e8e5d8; border-radius: 14rpx; color: #3d3929; font-size: 26rpx; }
 .picker-arrow { color: var(--accent, #c96442); font-size: 28rpx; }
+
+/* 识牌说明：默认收起的一行小链接，展开后是几行浅色提示 */
+.recognize-help { margin-top: -6rpx; text-align: center; }
+.recognize-help-toggle { display: inline-block; padding: 8rpx 16rpx; color: #98917d; font-size: 21rpx; }
+.recognize-help-body { margin: 4rpx 8rpx 0; padding: 14rpx 18rpx; background: #f7f5ee; border-radius: 14rpx; text-align: left; }
+.recognize-help-line { display: block; color: #716b59; font-size: 21rpx; line-height: 1.8; }

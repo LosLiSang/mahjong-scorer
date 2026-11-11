@@ -38,3 +38,10 @@
 .model-test.fail { background: #f8ebe6; color: #9b593f; }
 .model-test-title { font-weight: 600; }
 .model-test-detail { opacity: .85; word-break: break-all; }
+
+/* 常用接口示例：默认收起的一行小链接，展开后列出各厂商地址与模型名 */
+.model-examples { margin-top: 4rpx; }
+.model-examples-toggle { display: inline-block; padding: 6rpx 0; color: var(--accent, #c96442); font-size: 21rpx; }
+.model-examples-body { margin-top: 4rpx; padding: 14rpx 16rpx; background: #f7f5ee; border-radius: 14rpx; }
+.model-examples-line { display: block; color: #716b59; font-size: 21rpx; line-height: 1.8; word-break: break-all; }
+.model-examples-note { display: block; margin-top: 6rpx; color: #98917d; font-size: 20rpx; line-height: 1.7; }
