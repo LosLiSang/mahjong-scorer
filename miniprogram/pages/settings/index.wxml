@@ -81,6 +81,18 @@
       <view class="settings-title">自定义模型</view>
       <view class="settings-desc">任意 OpenAI 兼容的多模态接口。配置只存本机，照片和 Key 直接从手机发给该接口，不经过云端。</view>
       <view class="field-hint">正式版需该地址已加入小程序「request 合法域名」，否则会被拦截。</view>
+
+      <!-- 常用接口示例：默认收起，点开查看各厂商地址与模型名 -->
+      <view class="model-examples">
+        <text class="model-examples-toggle" bindtap="toggleModelExamples">{{modelExamplesOpen ? '收起示例 ▲' : '常用接口示例 ▼'}}</text>
+        <view wx:if="{{modelExamplesOpen}}" class="model-examples-body">
+          <text class="model-examples-line">阿里云百炼：https://dashscope.aliyuncs.com/compatible-mode/v1（qwen-vl-max、qwen-vl-plus）</text>
+          <text class="model-examples-line">智谱 AI：https://open.bigmodel.cn/api/paas/v4（glm-4v-plus）</text>
+          <text class="model-examples-line">OpenAI：https://api.openai.com/v1（gpt-4o）</text>
+          <text class="model-examples-note">先填地址和 Key 点「获取」选模型（没有列表就手填），再点「测试」，显示「可用」即能看图。拍照时拍齐 14–18 张、光线均匀防反光，填入后核对并可用「撤销」恢复。</text>
+        </view>
+      </view>
+
       <view class="inline-field"><text class="inline-label">地址</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelBaseUrl}}" bindinput="onModelBaseUrlInput" maxlength="200" placeholder="https://…/v1" /></view>
       <view class="inline-field"><text class="inline-label">Key</text><serif-input ext-class="setup-name-input serif-input inline-input" value="{{modelApiKey}}" bindinput="onModelApiKeyInput" maxlength="200" placeholder="sk-…" /></view>
       <view class="inline-field">

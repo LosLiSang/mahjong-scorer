@@ -35,6 +35,7 @@ Page({
     modelListLoading: false,
     modelTesting: false,
     modelTest: null,
+    modelExamplesOpen: false,
     settingsTabs: [
       { id: 'player', label: '玩家' },
       { id: 'theme', label: '外观' },
@@ -113,6 +114,11 @@ Page({
 
   switchTab(e) {
     this.setData({ activeTab: e.currentTarget.dataset.id });
+  },
+
+  // 常用接口示例：默认收起，点一下展开/收起
+  toggleModelExamples() {
+    this.setData({ modelExamplesOpen: !this.data.modelExamplesOpen });
   },
 
   // 改了地址 / Key 后，旧的模型列表和测试结果不再可信

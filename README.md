@@ -26,7 +26,7 @@
 - **日麻计分**（`pages/index`）：日麻整场计分主界面。
 - **川麻积分**（`pages/sichuan`）：川麻规则、杠分、罚分与积分。
 - **教学馆**（`pages/tutorial`）：玩法学习与测试。
-- **设置**（`pages/settings`）：昵称、主题与房间服务。
+- **设置**（`pages/settings`）：昵称、主题、识牌模型与房间服务。
 - **役种图鉴**（`pages/yaku-catalog`）：役种一览与牌例。
 - **算分详解**（`pages/scoring-guide`）：和牌结算分步向导。
 
@@ -57,6 +57,7 @@ npm run build    # 产物在 apps/web/dist/，纯静态可部署
 - 房间核心领域逻辑在 [`packages/room-core`](packages/room-core/README.md)（纯函数、零依赖）。云函数目录里的 `domain.js` 是同步产物，改动领域规则请改 `packages/room-core` 后运行 `node scripts/sync-shared.js`。
 - 部署步骤、集合权限与真机验证清单见 [`docs/room-setup.md`](docs/room-setup.md)。
 - 云函数位于 `cloudfunctions/`（`mahjong-room`、`mahjong-room-cleanup`、`tile-recognizer`），各自的参数、返回与错误码见 [`docs/cloud-functions.md`](docs/cloud-functions.md)。
+- 拍照识牌的调用链、使用说明、自定义模型配置、计费成本表与防滥用方案见 [`docs/tile-recognition.md`](docs/tile-recognition.md)。
 - Supabase 可行性评估见 [`docs/research/supabase-wechat-room.md`](docs/research/supabase-wechat-room.md)。
 
 ## 部署
@@ -90,7 +91,7 @@ node scripts/deploy-functions.js --dry-run         # 只打印将要执行的命
 cd apps/tile-worker && npx wrangler deploy
 ```
 
-配置见 [`docs/room-setup.md`](docs/room-setup.md) 第 7.1 节。
+配置与模型切换见 [`docs/tile-recognition.md`](docs/tile-recognition.md#维护者指南)。
 
 ## 项目结构
 
